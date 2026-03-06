@@ -3,6 +3,21 @@ spring:
     virtual:
       enabled: true
 
+  security:
+    oauth2:
+      client:
+        registration:
+          mock:
+            client-id: ${OAUTH_CLIENT_ID}
+            client-secret: ${OAUTH_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${OAUTH_REDIRECT_URI}
+            scope: openid,email,profile
+            client-name: Mock OAuth
+        provider:
+          mock:
+            issuer-uri: ${OAUTH_ISSUER_URI}
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -30,6 +45,9 @@ server:
 jwt:
   secret: ${JWT_SECRET}
   expiry-hours: ${JWT_EXPIRY_HOURS:24}
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
 # OAuth config — consumed by the auth service layer (not Spring Security auto-config)
 oauth:
