@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: weeklycommit
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d weeklycommit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mock-oauth2:
+    image: soluto/oidc-server-mock:latest
+    ports:
+      - "8090:80"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      CLIENTS_CONFIGURATION_INLINE: |
+        [
+          {
+            "ClientId": "weekly-commit-client",
+            "ClientSecrets": ["client-secret"],
+            "AllowedGrantTypes": ["authorization_code"],
+            "RedirectUris": ["http://localhost:8080/api/auth/callback"],
+            "AllowedScopes": ["openid", "email", "profile"]
+          }
+        ]
+      USERS_CONFIGURATION_INLINE: |
+        [
+          {
+            "SubjectId": "mock|manager",
+            "Claims": [
+              {"Type": "email", "Value": "manager@acme.com"},
+              {"Type": "name", "Value": "Alex Manager"}
+            ]
+          },
+          {
+            "SubjectId": "mock|employee",
+            "Claims": [
+              {"Type": "email", "Value": "employee@acme.com"},
+              {"Type": "name", "Value": "Sarah Employee"}
+            ]
+          }
+        ]
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mock-oauth2:
+        condition: service_started
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/weeklycommit
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
+      OAUTH_ISSUER_URI: ${OAUTH_ISSUER_URI}
+      OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS}
+
+  remote:
+    build: ./remote
+    ports:
+      - "3001:3001"
+
+  host:
+    build:
+      context: ./host
+      args:
+        REMOTE_URL: ${REMOTE_URL:-http://localhost:3001}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - remote
+
+volumes:
+  postgres_data:

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-backend:
+    name: Build & Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and test
+        run: mvn -f backend/pom.xml verify -q
+
+  build-frontend:
+    name: Build & Test Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and test remote
+        run: |
+          cd remote
+          npm ci
+          npm test
+
+      - name: Install and test host
+        run: |
+          cd host
+          npm ci
+          npm test
+
+  docker-build:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build ./backend -t weekly-commit-backend
+
+      - name: Build remote image
+        run: docker build ./remote -t weekly-commit-remote
+
+      - name: Build host image
+        run: docker build ./host --build-arg REMOTE_URL=http://localhost:3001 -t weekly-commit-host
