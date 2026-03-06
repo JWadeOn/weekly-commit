@@ -2,6 +2,7 @@ package com.weeklycommit.security;
 
 import com.weeklycommit.model.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,25 +41,50 @@ public class JwtService {
                 .compact();
     }
 
-    public Claims validateToken(String token) {
+    public boolean validateToken(String token) {
+        try {
+            parseClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public UUID extractUserId(String token) {
+        return UUID.fromString(parseClaims(token).getSubject());
+    }
+
+    public UUID extractOrgId(String token) {
+        return UUID.fromString((String) parseClaims(token).get("orgId"));
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        return (List<String>) parseClaims(token).get("roles");
+    }
+
+    public String extractEmail(String token) {
+        return (String) parseClaims(token).get("email");
+    }
+
+    public String extractFullName(String token) {
+        return (String) parseClaims(token).get("fullName");
+    }
+
+    public Instant extractExpiry(String token) {
+        return parseClaims(token).getExpiration().toInstant();
+    }
+
+    public long getExpiryHours() {
+        return expiryHours;
+    }
+
+    private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(signingKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    public UUID extractUserId(String token) {
-        return UUID.fromString(validateToken(token).getSubject());
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<String> extractRoles(String token) {
-        return (List<String>) validateToken(token).get("roles");
-    }
-
-    public long getExpiryHours() {
-        return expiryHours;
     }
 
     private SecretKey signingKey() {

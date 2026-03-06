@@ -10,31 +10,22 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "organizations")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class Organization {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "org_id", nullable = false)
-    private UUID orgId;
+    @Column(nullable = false)
+    private String name;
 
-    @Column(unique = true, nullable = false)
-    private String email;
-
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
-
-    @Column(name = "oauth_subject", unique = true, nullable = false)
-    private String oauthSubject;
-
-    @Column(name = "manager_id")
-    private UUID managerId;
+    @Column(name = "alignment_threshold")
+    private Integer alignmentThreshold;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;

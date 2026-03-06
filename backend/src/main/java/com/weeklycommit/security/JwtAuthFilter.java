@@ -1,6 +1,5 @@
 package com.weeklycommit.security;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -35,17 +34,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String jwt = extractJwtFromCookie(request);
 
-        if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null
+                && jwtService.validateToken(jwt)) {
             try {
-                Claims claims = jwtService.validateToken(jwt);
+                String userId = jwtService.extractUserId(jwt).toString();
+                String orgId = jwtService.extractOrgId(jwt).toString();
+                String email = jwtService.extractEmail(jwt);
+                String fullName = jwtService.extractFullName(jwt);
+                List<String> roles = jwtService.extractRoles(jwt);
 
-                String userId = claims.getSubject();
-                String orgId = (String) claims.get("orgId");
-                String email = (String) claims.get("email");
-                String fullName = (String) claims.get("fullName");
-
-                @SuppressWarnings("unchecked")
-                List<String> roles = (List<String>) claims.getOrDefault("roles", Collections.emptyList());
+                if (roles == null) {
+                    roles = Collections.emptyList();
+                }
 
                 List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
@@ -57,7 +57,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 details.put("email", email);
                 details.put("fullName", fullName);
                 details.put("roles", roles);
-                details.put("expiresAt", claims.getExpiration().toInstant());
+                details.put("expiresAt", jwtService.extractExpiry(jwt));
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userId, null, authorities);
@@ -65,7 +65,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (JwtException ex) {
-                // Invalid token — leave SecurityContext empty; auth check will reject the request
+                // Token failed claim extraction — leave SecurityContext empty
             }
         }
 
