@@ -7,16 +7,17 @@ spring:
     oauth2:
       client:
         registration:
-          mock:
-            client-id: ${OAUTH_CLIENT_ID}
-            client-secret: ${OAUTH_CLIENT_SECRET}
+          oidc:
+            provider: oidc-provider
+            client-id: ${OAUTH_CLIENT_ID:weekly-commit-client}
+            client-secret: ${OAUTH_CLIENT_SECRET:client-secret}
             authorization-grant-type: authorization_code
-            redirect-uri: ${OAUTH_REDIRECT_URI}
-            scope: openid,email,profile
-            client-name: Mock OAuth
+            redirect-uri: ${OAUTH_REDIRECT_URI:http://localhost:8080/login/oauth2/code/oidc}
+            scope: openid, email, profile
+            client-name: Weekly Commit
         provider:
-          mock:
-            issuer-uri: ${OAUTH_ISSUER_URI}
+          oidc-provider:
+            issuer-uri: ${OAUTH_ISSUER_URI:http://localhost:8090}
 
   datasource:
     url: ${DB_URL}
@@ -49,12 +50,6 @@ jwt:
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
-# OAuth config — consumed by the auth service layer (not Spring Security auto-config)
-oauth:
-  client-id: ${OAUTH_CLIENT_ID}
-  client-secret: ${OAUTH_CLIENT_SECRET}
-  issuer-uri: ${OAUTH_ISSUER_URI}
-  redirect-uri: ${OAUTH_REDIRECT_URI}
 
 management:
   endpoints:

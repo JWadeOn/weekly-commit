@@ -27,7 +27,7 @@ services:
             "ClientId": "weekly-commit-client",
             "ClientSecrets": ["client-secret"],
             "AllowedGrantTypes": ["authorization_code"],
-            "RedirectUris": ["http://localhost:8080/api/auth/callback"],
+            "RedirectUris": ["http://localhost:8080/login/oauth2/code/oidc"],
             "AllowedScopes": ["openid", "email", "profile"]
           }
         ]
