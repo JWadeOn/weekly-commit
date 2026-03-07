@@ -28,13 +28,17 @@ services:
             "ClientSecrets": ["client-secret"],
             "AllowedGrantTypes": ["authorization_code"],
             "RedirectUris": ["http://localhost:8080/login/oauth2/code/oidc"],
-            "AllowedScopes": ["openid", "email", "profile"]
+            "AllowedScopes": ["openid", "email", "profile"],
+            "RequirePkce": false,
+            "AlwaysIncludeUserClaimsInIdToken": true
           }
         ]
       USERS_CONFIGURATION_INLINE: |
         [
           {
             "SubjectId": "mock|manager",
+            "Username": "manager@acme.com",
+            "Password": "password",
             "Claims": [
               {"Type": "email", "Value": "manager@acme.com"},
               {"Type": "name", "Value": "Alex Manager"}
@@ -42,6 +46,8 @@ services:
           },
           {
             "SubjectId": "mock|employee",
+            "Username": "employee@acme.com",
+            "Password": "password",
             "Claims": [
               {"Type": "email", "Value": "employee@acme.com"},
               {"Type": "name", "Value": "Sarah Employee"}
@@ -65,9 +71,11 @@ services:
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
       OAUTH_ISSUER_URI: http://mock-oauth2
+      OAUTH_AUTHORIZATION_URI: http://localhost:8090/connect/authorize
       OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS}
+      FRONTEND_URL: http://localhost:3000
 
   remote:
     build: ./remote

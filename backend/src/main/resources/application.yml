@@ -18,6 +18,10 @@ spring:
         provider:
           oidc-provider:
             issuer-uri: ${OAUTH_ISSUER_URI:http://localhost:8090}
+            # Override the authorization endpoint so the browser is redirected to the
+            # host-accessible URL (localhost:8090) even when the backend fetches OIDC
+            # discovery via the internal Docker network name (mock-oauth2).
+            authorization-uri: ${OAUTH_AUTHORIZATION_URI:http://localhost:8090/connect/authorize}
 
   datasource:
     url: ${DB_URL}
