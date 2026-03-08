@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
@@ -34,7 +36,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String jwt = extractJwtFromCookie(request);
 
-        if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null
+        if (jwt == null) {
+            log.debug("No JWT cookie found, skipping filter");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        log.debug("JWT cookie found, validating...");
+
+        if (SecurityContextHolder.getContext().getAuthentication() == null
                 && jwtService.validateToken(jwt)) {
             try {
                 String userId = jwtService.extractUserId(jwt).toString();
@@ -64,8 +74,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 auth.setDetails(details);
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
+                log.debug("JWT valid for userId: {}", userId);
+
             } catch (JwtException ex) {
-                // Token failed claim extraction — leave SecurityContext empty
+                log.warn("JWT validation failed: {}", ex.getMessage());
             }
         }
 

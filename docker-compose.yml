@@ -21,6 +21,14 @@ services:
       - "8090:80"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ISSUER_URI: http://mock-oauth2
+      SERVER_OPTIONS_INLINE: |
+        {
+          "Authentication": {
+            "CookieSameSiteMode": "Lax",
+            "CheckSessionCookieSameSiteMode": "Lax"
+          }
+        }
       CLIENTS_CONFIGURATION_INLINE: |
         [
           {
@@ -30,6 +38,7 @@ services:
             "RedirectUris": ["http://localhost:8080/login/oauth2/code/oidc"],
             "AllowedScopes": ["openid", "email", "profile"],
             "RequirePkce": false,
+            "RequireConsent": false,
             "AlwaysIncludeUserClaimsInIdToken": true
           }
         ]
@@ -71,6 +80,7 @@ services:
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
       OAUTH_ISSUER_URI: http://mock-oauth2
+      OAUTH_JWK_SET_URI: http://mock-oauth2/.well-known/openid-configuration/jwks
       OAUTH_AUTHORIZATION_URI: http://localhost:8090/connect/authorize
       OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI}
       JWT_SECRET: ${JWT_SECRET}

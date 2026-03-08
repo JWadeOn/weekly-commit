@@ -11,16 +11,19 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -43,6 +46,12 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            // IF_REQUIRED: session created only for the OAuth2 dance (stores state/nonce).
+            // OAuthSuccessHandler invalidates it after issuing the JWT cookie, so all
+            // subsequent API calls are stateless JWT-only.
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            )
             .headers(headers -> headers
                 .contentSecurityPolicy(csp ->
                     csp.policyDirectives("default-src 'self'; frame-ancestors 'none'")))
@@ -66,6 +75,10 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oAuthUserService))
                 .successHandler(oAuthSuccessHandler)
+                .failureHandler((request, response, exception) -> {
+                    log.error("OAuth authentication failed: {}", exception.getMessage(), exception);
+                    response.sendRedirect("http://localhost:3000/auth-error");
+                })
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

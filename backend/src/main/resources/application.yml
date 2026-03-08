@@ -17,11 +17,12 @@ spring:
             client-name: Weekly Commit
         provider:
           oidc-provider:
-            issuer-uri: ${OAUTH_ISSUER_URI:http://localhost:8090}
-            # Override the authorization endpoint so the browser is redirected to the
-            # host-accessible URL (localhost:8090) even when the backend fetches OIDC
-            # discovery via the internal Docker network name (mock-oauth2).
+            # issuer-uri uses the Docker-internal hostname so Spring can fetch discovery
+            # at startup and token iss claims match. Browser auth redirect is overridden
+            # below via authorization-uri to use the host-accessible localhost:8090.
+            issuer-uri: ${OAUTH_ISSUER_URI:http://mock-oauth2}
             authorization-uri: ${OAUTH_AUTHORIZATION_URI:http://localhost:8090/connect/authorize}
+            jwk-set-uri: ${OAUTH_JWK_SET_URI:http://mock-oauth2/.well-known/openid-configuration/jwks}
 
   datasource:
     url: ${DB_URL}
@@ -46,6 +47,11 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        http-only: true
 
 jwt:
   secret: ${JWT_SECRET}
@@ -69,3 +75,8 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: TRACE
