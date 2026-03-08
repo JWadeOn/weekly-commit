@@ -1,0 +1,4 @@
+com/weeklycommit/WeeklyCommitApplicationTests.class
+com/weeklycommit/service/StateMachineServiceTest.class
+com/weeklycommit/service/CommitServiceTest.class
+com/weeklycommit/service/ManagerServiceTest.class

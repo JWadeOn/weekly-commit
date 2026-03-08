@@ -1,0 +1,4 @@
+/app/src/test/java/com/weeklycommit/WeeklyCommitApplicationTests.java
+/app/src/test/java/com/weeklycommit/service/CommitServiceTest.java
+/app/src/test/java/com/weeklycommit/service/StateMachineServiceTest.java
+/app/src/test/java/com/weeklycommit/service/ManagerServiceTest.java
