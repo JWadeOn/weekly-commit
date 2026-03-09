@@ -102,12 +102,14 @@ export interface OutcomeDto {
 export interface DefiningObjectiveDto {
   id: string
   title: string
+  description?: string | null
   outcomes: OutcomeDto[]
 }
 
 export interface RallyCryDto {
   id: string
   title: string
+  description?: string | null
   definingObjectives: DefiningObjectiveDto[]
 }
 

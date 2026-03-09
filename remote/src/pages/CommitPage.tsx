@@ -38,6 +38,7 @@ import {
 import { CommitItem } from '@/components/CommitItem'
 import { AddItemModal } from '@/components/AddItemModal'
 import { StatusBadge } from '@/components/StatusBadge'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   useCurrentCommit,
   useUpdateStatus,
@@ -48,8 +49,9 @@ import {
   useReconcileItem,
   useCompleteReconciliation,
 } from '@/hooks/useCurrentCommit'
+import { useRcdo } from '@/hooks/useRcdo'
 import { formatWeekRange } from '@/utils/formatDate'
-import type { CommitItemResponse, ChessPiece, CompletionStatus } from '@/types'
+import type { CommitItemResponse, ChessPiece, CompletionStatus, RallyCryDto } from '@/types'
 import { CHESS_ICON, CHESS_WEIGHT } from '@/types'
 
 const CHESS_PIECE_ORDER: ChessPiece[] = ['KING', 'QUEEN', 'ROOK', 'BISHOP', 'KNIGHT', 'PAWN']
@@ -78,8 +80,46 @@ function WeightSummaryBar({ items }: { items: CommitItemResponse[] }): React.Rea
   )
 }
 
+// Read-only Rally Cry & Defining Objectives for employee context
+function StrategySummary({ rallyCries }: { rallyCries: RallyCryDto[] }): React.ReactElement | null {
+  if (!rallyCries?.length) return null
+  return (
+    <Card className="bg-muted/30 border-muted-foreground/20">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Rally Cry & Objectives</CardTitle>
+        <CardDescription>Your organization&apos;s focus — align your commit items to these</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {rallyCries.map((rc) => (
+          <div key={rc.id} className="space-y-2">
+            <div>
+              <h3 className="font-semibold text-foreground">{rc.title}</h3>
+              {rc.description && (
+                <p className="text-sm text-muted-foreground mt-0.5">{rc.description}</p>
+              )}
+            </div>
+            {rc.definingObjectives?.length > 0 && (
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
+                {rc.definingObjectives.map((do_) => (
+                  <li key={do_.id}>
+                    <span className="text-foreground/90">{do_.title}</span>
+                    {do_.description && (
+                      <span className="text-muted-foreground"> — {do_.description}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function CommitPage(): React.ReactElement {
   const { data: commit, isLoading, error } = useCurrentCommit()
+  const { data: rcdoData } = useRcdo()
   const updateStatus = useUpdateStatus()
   const createItem = useCreateItem()
   const updateItem = useUpdateItem()
@@ -181,6 +221,9 @@ export function CommitPage(): React.ReactElement {
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
+      {/* Rally Cry & DOs — context for employees */}
+      <StrategySummary rallyCries={rcdoData?.rallyCries ?? []} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

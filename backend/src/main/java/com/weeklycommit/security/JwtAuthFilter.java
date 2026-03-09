@@ -78,6 +78,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             } catch (JwtException ex) {
                 log.warn("JWT validation failed: {}", ex.getMessage());
+            } catch (Exception ex) {
+                log.warn("JWT parsing/setup failed, request will be unauthenticated: {}", ex.getMessage());
             }
         }
 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TrendingUp, TrendingDown, Minus, Eye, AlertTriangle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Eye, AlertTriangle, Target } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -119,27 +119,14 @@ function TeamMemberCard({ member }: { member: TeamMemberResponse }): React.React
 }
 
 export function ManagerDashboard(): React.ReactElement {
+  const navigate = useNavigate()
   const { data: team, isLoading, error } = useTeamDashboard()
   const { data: alignment } = useTeamAlignment()
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading team...</div>
-  if (error) return <div className="p-8 text-center text-destructive">Failed to load team</div>
-  if (!team) return <div className="p-8 text-center">No team data</div>
-
-  const teamMembers: TeamMemberResponse[] = team.teamMembers ?? []
-  const teamAlignmentScore = team.teamAlignmentScore ?? 0
-  const underSupportedRallyCries =
-    (alignment?.underSupportedRallyCries?.length ?? 0) > 0
-      ? alignment!.underSupportedRallyCries!.map((r) => ({
-          id: r.rallyCryId,
-          title: r.title,
-          supportPercentage: r.supportPercentage,
-        }))
-      : (team.underSupportedRallyCries ?? [])
-  const rallyCryBreakdown = alignment?.rallyCryBreakdown ?? []
-
   type SortKey = 'name' | 'status' | 'itemCount' | 'alignment' | 'lastUpdated'
   const [sortBy, setSortBy] = useState<SortKey>('name')
+
+  const teamMembers: TeamMemberResponse[] = team?.teamMembers ?? []
   const sortedMembers = useMemo(() => {
     const list = [...teamMembers]
     switch (sortBy) {
@@ -173,19 +160,41 @@ export function ManagerDashboard(): React.ReactElement {
     }
   }, [teamMembers, sortBy])
 
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading team...</div>
+  if (error) return <div className="p-8 text-center text-destructive">Failed to load team</div>
+  if (!team) return <div className="p-8 text-center">No team data</div>
+
+  const teamAlignmentScore = team.teamAlignmentScore ?? 0
+  const underSupportedRallyCries =
+    (alignment?.underSupportedRallyCries?.length ?? 0) > 0
+      ? alignment!.underSupportedRallyCries!.map((r) => ({
+          id: r.rallyCryId,
+          title: r.title,
+          supportPercentage: r.supportPercentage,
+        }))
+      : (team.underSupportedRallyCries ?? [])
+  const rallyCryBreakdown = alignment?.rallyCryBreakdown ?? []
+
   const membersWithLowAlignment = teamMembers.filter(
     (m) => m.currentCommit?.alignmentScore !== null && (m.currentCommit?.alignmentScore ?? 100) < 70
   ).length
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Team Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Current week overview for your team
           </p>
         </div>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate('/manager/strategy')}>
+          <Target className="h-4 w-4 mr-2" />
+          Open Strategy
+        </Button>
+      </div>
+      <div className="flex items-center justify-between">
+        <div />
         <div className="text-right">
           <p
             className={`text-3xl font-bold ${teamAlignmentScore < 70 ? 'text-red-600' : 'text-foreground'}`}

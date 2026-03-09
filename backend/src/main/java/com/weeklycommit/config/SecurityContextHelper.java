@@ -21,11 +21,21 @@ public class SecurityContextHelper {
     }
 
     public static UUID getCurrentUserId() {
-        return UUID.fromString((String) getDetails().get("userId"));
+        Map<String, Object> details = getDetails();
+        Object userId = details.get("userId");
+        if (userId == null || !(userId instanceof String)) {
+            throw new IllegalStateException("Missing or invalid userId in token (userId=" + userId + ")");
+        }
+        return UUID.fromString((String) userId);
     }
 
     public static UUID getCurrentOrgId() {
-        return UUID.fromString((String) getDetails().get("orgId"));
+        Map<String, Object> details = getDetails();
+        Object orgId = details.get("orgId");
+        if (orgId == null || !(orgId instanceof String)) {
+            throw new IllegalStateException("Missing or invalid orgId in token (orgId=" + orgId + ")");
+        }
+        return UUID.fromString((String) orgId);
     }
 
     @SuppressWarnings("unchecked")

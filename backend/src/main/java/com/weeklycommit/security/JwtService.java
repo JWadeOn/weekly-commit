@@ -51,16 +51,49 @@ public class JwtService {
     }
 
     public UUID extractUserId(String token) {
-        return UUID.fromString(parseClaims(token).getSubject());
+        Claims claims = parseClaims(token);
+        String sub = claims.getSubject();
+        if (sub == null || sub.isBlank()) {
+            throw new JwtException("Missing or empty subject (userId) in token");
+        }
+        try {
+            return UUID.fromString(sub);
+        } catch (IllegalArgumentException e) {
+            throw new JwtException("Invalid userId in token: " + sub, e);
+        }
     }
 
     public UUID extractOrgId(String token) {
-        return UUID.fromString((String) parseClaims(token).get("orgId"));
+        Claims claims = parseClaims(token);
+        Object orgIdObj = claims.get("orgId");
+        if (orgIdObj == null) {
+            throw new JwtException("Missing orgId in token");
+        }
+        String orgIdStr = orgIdObj.toString();
+        if (orgIdStr.isBlank()) {
+            throw new JwtException("Empty orgId in token");
+        }
+        try {
+            return UUID.fromString(orgIdStr);
+        } catch (IllegalArgumentException e) {
+            throw new JwtException("Invalid orgId in token: " + orgIdStr, e);
+        }
     }
 
     @SuppressWarnings("unchecked")
     public List<String> extractRoles(String token) {
-        return (List<String>) parseClaims(token).get("roles");
+        Object rolesObj = parseClaims(token).get("roles");
+        if (rolesObj == null) return List.of();
+        if (rolesObj instanceof List<?> list) {
+            return list.stream()
+                    .filter(o -> o != null)
+                    .map(Object::toString)
+                    .toList();
+        }
+        if (rolesObj instanceof String s && !s.isBlank()) {
+            return List.of(s);
+        }
+        return List.of();
     }
 
     public String extractEmail(String token) {

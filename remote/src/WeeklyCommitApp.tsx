@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { setAuthExpiredHandler } from '@/api/client'
 import { CommitPage } from '@/pages/CommitPage'
 import { ManagerDashboard } from '@/pages/ManagerDashboard'
+import { StrategyPage } from '@/pages/StrategyPage'
 import { CommitDetailPage } from '@/pages/CommitDetailPage'
 import { CommitHistoryPage } from '@/pages/CommitHistoryPage'
 import { AppNav } from '@/components/AppNav'
@@ -68,6 +69,7 @@ function AppContent({ onAuthExpired }: { onAuthExpired: () => void }): React.Rea
           <Route path="/commits/:id" element={<CommitDetailPage />} />
           <Route path="/history" element={<CommitHistoryPage />} />
           <Route path="/manager" element={<ManagerDashboard />} />
+          <Route path="/manager/strategy" element={<StrategyPage />} />
         </Routes>
       </main>
     </div>

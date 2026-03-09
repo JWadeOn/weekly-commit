@@ -61,6 +61,15 @@ services:
               {"Type": "email", "Value": "employee@acme.com"},
               {"Type": "name", "Value": "Sarah Employee"}
             ]
+          },
+          {
+            "SubjectId": "mock|dual",
+            "Username": "dual@acme.com",
+            "Password": "password",
+            "Claims": [
+              {"Type": "email", "Value": "dual@acme.com"},
+              {"Type": "name", "Value": "Jordan Dual"}
+            ]
           }
         ]
 

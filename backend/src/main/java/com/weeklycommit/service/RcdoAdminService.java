@@ -47,9 +47,10 @@ public class RcdoAdminService {
                                 List<Outcome> outcomes = outcomeRepository.findByDefiningObjectiveIdOrderByCreatedAtAsc(do_.getId());
                                 List<RcDoAdminResponse.AdminOutcomeDto> outcomeDtos = outcomes.stream()
                                         .map(o -> {
-                                            String ownerName = userRepository.findById(o.getOwnerId())
-                                                    .map(User::getFullName)
-                                                    .orElse("Unknown");
+                                            String ownerName = o.getOwnerId() == null ? "Unassigned"
+                                                    : userRepository.findById(o.getOwnerId())
+                                                            .map(User::getFullName)
+                                                            .orElse("Unknown");
                                             return RcDoAdminResponse.AdminOutcomeDto.builder()
                                                     .id(o.getId())
                                                     .definingObjectiveId(o.getDefiningObjectiveId())
@@ -266,9 +267,10 @@ public class RcdoAdminService {
     }
 
     private RcDoAdminResponse.AdminOutcomeDto toAdminOutcomeDto(Outcome o) {
-        String ownerName = userRepository.findById(o.getOwnerId())
-                .map(User::getFullName)
-                .orElse("Unknown");
+        String ownerName = o.getOwnerId() == null ? "Unassigned"
+                : userRepository.findById(o.getOwnerId())
+                        .map(User::getFullName)
+                        .orElse("Unknown");
         return RcDoAdminResponse.AdminOutcomeDto.builder()
                 .id(o.getId())
                 .definingObjectiveId(o.getDefiningObjectiveId())
