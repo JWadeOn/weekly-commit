@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Write files",
+      "Read files",
+      "Delete files",
+      "Bash"
+    ]
+  }
+}
