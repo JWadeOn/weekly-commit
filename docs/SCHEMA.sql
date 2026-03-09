@@ -2,6 +2,11 @@
 -- Weekly Commit Module — Database Schema
 -- Flyway Migrations V1, V2, V3
 -- ============================================================
+--
+-- Hierarchy aligns with Lencioni's "The Advantage" Playbook:
+--   Rally Cry (Thematic Goal) → Defining Objectives → Outcomes → Commit Items
+-- Standard Operating Objectives (SOOs) are not yet modeled; see docs/THE_ADVANTAGE.md.
+-- ============================================================
 
 -- ============================================================
 -- V1__initial_schema.sql
@@ -38,6 +43,7 @@ CREATE TABLE rally_cries (
   active      BOOLEAN DEFAULT true,
   created_at  TIMESTAMP DEFAULT NOW()
 );
+-- Rally Cry = Lencioni "Thematic Goal" — single most important org priority (typically 3–12 months)
 
 CREATE TABLE defining_objectives (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -47,6 +53,7 @@ CREATE TABLE defining_objectives (
   active        BOOLEAN DEFAULT true,
   created_at    TIMESTAMP DEFAULT NOW()
 );
+-- Defining Objectives (DOs) = 4–6 categories of work that achieve the Rally Cry. SOOs (KTLO) not in schema yet.
 
 CREATE TABLE outcomes (
   id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -73,6 +80,7 @@ CREATE TABLE weekly_commits (
   updated_at       TIMESTAMP DEFAULT NOW(),
   UNIQUE (user_id, week_start_date)
 );
+-- LOCKED prevents "revisionist history" (The Advantage): goals cannot be edited after submit. Reconcile only after LOCKED.
 
 CREATE TABLE commit_items (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),

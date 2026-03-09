@@ -27,6 +27,104 @@ var PopStateEventType = "popstate";
 function isLocation(obj) {
   return typeof obj === "object" && obj != null && "pathname" in obj && "search" in obj && "hash" in obj && "state" in obj && "key" in obj;
 }
+function createMemoryHistory(options = {}) {
+  let { initialEntries = ["/"], initialIndex, v5Compat = false } = options;
+  let entries;
+  entries = initialEntries.map(
+    (entry, index2) => createMemoryLocation(
+      entry,
+      typeof entry === "string" ? null : entry.state,
+      index2 === 0 ? "default" : void 0,
+      typeof entry === "string" ? void 0 : entry.unstable_mask
+    )
+  );
+  let index = clampIndex(
+    initialIndex == null ? entries.length - 1 : initialIndex
+  );
+  let action = "POP";
+  let listener = null;
+  function clampIndex(n) {
+    return Math.min(Math.max(n, 0), entries.length - 1);
+  }
+  function getCurrentLocation() {
+    return entries[index];
+  }
+  function createMemoryLocation(to, state = null, key, unstable_mask) {
+    let location = createLocation(
+      entries ? getCurrentLocation().pathname : "/",
+      to,
+      state,
+      key,
+      unstable_mask
+    );
+    warning(
+      location.pathname.charAt(0) === "/",
+      `relative pathnames are not supported in memory history: ${JSON.stringify(
+        to
+      )}`
+    );
+    return location;
+  }
+  function createHref2(to) {
+    return typeof to === "string" ? to : createPath(to);
+  }
+  let history = {
+    get index() {
+      return index;
+    },
+    get action() {
+      return action;
+    },
+    get location() {
+      return getCurrentLocation();
+    },
+    createHref: createHref2,
+    createURL(to) {
+      return new URL(createHref2(to), "http://localhost");
+    },
+    encodeLocation(to) {
+      let path = typeof to === "string" ? parsePath(to) : to;
+      return {
+        pathname: path.pathname || "",
+        search: path.search || "",
+        hash: path.hash || ""
+      };
+    },
+    push(to, state) {
+      action = "PUSH";
+      let nextLocation = isLocation(to) ? to : createMemoryLocation(to, state);
+      index += 1;
+      entries.splice(index, entries.length, nextLocation);
+      if (v5Compat && listener) {
+        listener({ action, location: nextLocation, delta: 1 });
+      }
+    },
+    replace(to, state) {
+      action = "REPLACE";
+      let nextLocation = isLocation(to) ? to : createMemoryLocation(to, state);
+      entries[index] = nextLocation;
+      if (v5Compat && listener) {
+        listener({ action, location: nextLocation, delta: 0 });
+      }
+    },
+    go(delta) {
+      action = "POP";
+      let nextIndex = clampIndex(index + delta);
+      let nextLocation = entries[nextIndex];
+      index = nextIndex;
+      if (listener) {
+        listener({ action, location: nextLocation, delta });
+      }
+    },
+    listen(fn) {
+      listener = fn;
+      return () => {
+        listener = null;
+      };
+    }
+  };
+  return history;
+}
 function createBrowserHistory(options = {}) {
   function createBrowserLocation(window2, globalHistory) {
     let maskedLocation = globalHistory.state?.masked;
@@ -1318,6 +1416,49 @@ function DataRoutes({
   onError
 }) {
   return useRoutesImpl(routes, void 0, { state, isStatic, onError});
+}
+function MemoryRouter({
+  basename,
+  children,
+  initialEntries,
+  initialIndex,
+  unstable_useTransitions
+}) {
+  let historyRef = React3.useRef();
+  if (historyRef.current == null) {
+    historyRef.current = createMemoryHistory({
+      initialEntries,
+      initialIndex,
+      v5Compat: true
+    });
+  }
+  let history = historyRef.current;
+  let [state, setStateImpl] = React3.useState({
+    action: history.action,
+    location: history.location
+  });
+  let setState = React3.useCallback(
+    (newState) => {
+      if (unstable_useTransitions === false) {
+        setStateImpl(newState);
+      } else {
+        React3.startTransition(() => setStateImpl(newState));
+      }
+    },
+    [unstable_useTransitions]
+  );
+  React3.useLayoutEffect(() => history.listen(setState), [history, setState]);
+  return /* @__PURE__ */ React3.createElement(
+    Router,
+    {
+      basename,
+      children,
+      location: state.location,
+      navigationType: state.action,
+      navigator: history,
+      unstable_useTransitions
+    }
+  );
 }
 function Navigate({
   to,
@@ -5691,7 +5832,7 @@ const useAuthStore = create((set) => {
         await auth.logout();
       } finally {
         set({ user: null, isAuthenticated: false });
-        window.location.href = "/";
+        window.location.href = window.location.origin + "/";
       }
     },
     fetchUser: async () => {
@@ -6040,7 +6181,7 @@ function findFirstFocusableNode(element) {
 }
 
 const React$O = await importShared('react');
-const {useState: useState$6,useCallback: useCallback$1} = React$O;
+const {useState: useState$7,useCallback: useCallback$1} = React$O;
 
 
 const hiddenStyles = {
@@ -6088,7 +6229,7 @@ function LiveRegion(_ref) {
 }
 
 function useAnnouncement() {
-  const [announcement, setAnnouncement] = useState$6('');
+  const [announcement, setAnnouncement] = useState$7('');
   const announce = useCallback$1(value => {
     if (value != null) {
       setAnnouncement(value);
@@ -6101,7 +6242,7 @@ function useAnnouncement() {
 }
 
 const React$N = await importShared('react');
-const {createContext,useContext: useContext$1,useEffect: useEffect$1,useState: useState$5,useCallback,useMemo: useMemo$1,useRef: useRef$1,memo,useReducer,cloneElement,forwardRef: forwardRef$1} = React$N;
+const {createContext,useContext: useContext$1,useEffect: useEffect$1,useState: useState$6,useCallback,useMemo: useMemo$1,useRef: useRef$1,memo,useReducer,cloneElement,forwardRef: forwardRef$1} = React$N;
 
 const {createPortal,unstable_batchedUpdates} = await importShared('react-dom');
 
@@ -6120,7 +6261,7 @@ function useDndMonitor(listener) {
 }
 
 function useDndMonitorProvider() {
-  const [listeners] = useState$5(() => new Set());
+  const [listeners] = useState$6(() => new Set());
   const registerListener = useCallback(listener => {
     listeners.add(listener);
     return () => listeners.delete(listener);
@@ -6197,7 +6338,7 @@ function Accessibility(_ref) {
     announcement
   } = useAnnouncement();
   const liveRegionId = useUniqueId("DndLiveRegion");
-  const [mounted, setMounted] = useState$5(false);
+  const [mounted, setMounted] = useState$6(false);
   useEffect$1(() => {
     setMounted(true);
   }, []);
@@ -7991,7 +8132,7 @@ function useDroppableMeasuring(containers, _ref) {
     dependencies,
     config
   } = _ref;
-  const [queue, setQueue] = useState$5(null);
+  const [queue, setQueue] = useState$6(null);
   const {
     frequency,
     measure,
@@ -8181,7 +8322,7 @@ function useRect(element, measure, fallbackRect) {
     measure = defaultMeasure;
   }
 
-  const [rect, setRect] = useState$5(null);
+  const [rect, setRect] = useState$6(null);
 
   function measureRect() {
     setRect(currentRect => {
@@ -8273,7 +8414,7 @@ function useScrollableAncestors(node) {
 }
 
 function useScrollOffsets(elements) {
-  const [scrollCoordinates, setScrollCoordinates] = useState$5(null);
+  const [scrollCoordinates, setScrollCoordinates] = useState$6(null);
   const prevElements = useRef$1(elements); // To-do: Throttle the handleScroll callback
 
   const handleScroll = useCallback(event => {
@@ -8414,7 +8555,7 @@ function useRects(elements, measure) {
 
   const [firstElement] = elements;
   const windowRect = useWindowRect(firstElement ? getWindow$1(firstElement) : null);
-  const [rects, setRects] = useState$5(defaultValue$2);
+  const [rects, setRects] = useState$6(defaultValue$2);
 
   function measureRects() {
     setRects(() => {
@@ -8454,7 +8595,7 @@ function useDragOverlayMeasuring(_ref) {
   let {
     measure
   } = _ref;
-  const [rect, setRect] = useState$5(null);
+  const [rect, setRect] = useState$6(null);
   const handleResize = useCallback(entries => {
     for (const {
       target
@@ -8896,7 +9037,7 @@ const DndContext = /*#__PURE__*/memo(function DndContext(_ref) {
   const store = useReducer(reducer, undefined, getInitialState);
   const [state, dispatch] = store;
   const [dispatchMonitorEvent, registerMonitorListener] = useDndMonitorProvider();
-  const [status, setStatus] = useState$5(Status.Uninitialized);
+  const [status, setStatus] = useState$6(Status.Uninitialized);
   const isInitialized = status === Status.Initialized;
   const {
     draggable: {
@@ -8924,8 +9065,8 @@ const DndContext = /*#__PURE__*/memo(function DndContext(_ref) {
     } : null;
   }, [activeId, node]);
   const activeRef = useRef$1(null);
-  const [activeSensor, setActiveSensor] = useState$5(null);
-  const [activatorEvent, setActivatorEvent] = useState$5(null);
+  const [activeSensor, setActiveSensor] = useState$6(null);
+  const [activatorEvent, setActivatorEvent] = useState$6(null);
   const latestProps = useLatestValue(props, Object.values(props));
   const draggableDescribedById = useUniqueId("DndDescribedBy", id);
   const enabledDroppableContainers = useMemo$1(() => droppableContainers.getEnabled(), [droppableContainers]);
@@ -9017,7 +9158,7 @@ const DndContext = /*#__PURE__*/memo(function DndContext(_ref) {
     pointerCoordinates
   }) : null;
   const overId = getFirstCollision(collisions, 'id');
-  const [over, setOver] = useState$5(null); // When there is no drag overlay used, we need to account for the
+  const [over, setOver] = useState$6(null); // When there is no drag overlay used, we need to account for the
   // window scroll delta
 
   const appliedTranslate = usesDragOverlay ? modifiedTranslate : add(modifiedTranslate, activeNodeScrollDelta);
@@ -9603,7 +9744,7 @@ function useDroppable(_ref) {
 }
 
 const React$M = await importShared('react');
-const {useMemo,useRef,useEffect,useState: useState$4,useContext} = React$M;
+const {useMemo,useRef,useEffect,useState: useState$5,useContext} = React$M;
 
 /**
  * Move an array item to a different position. Returns a new array with the item moved to the new position.
@@ -9885,7 +10026,7 @@ function useDerivedTransform(_ref) {
     node,
     rect
   } = _ref;
-  const [derivedTransform, setDerivedtransform] = useState$4(null);
+  const [derivedTransform, setDerivedtransform] = useState$5(null);
   const previousIndex = useRef(index);
   useIsomorphicLayoutEffect$1(() => {
     if (!disabled && index !== previousIndex.current && node.current) {
@@ -10375,6 +10516,30 @@ const ChevronDown = createLucideIcon("ChevronDown", [
  */
 
 
+const ChevronLeft = createLucideIcon("ChevronLeft", [
+  ["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]
+]);
+
+/**
+ * @license lucide-react v0.363.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ChevronRight = createLucideIcon("ChevronRight", [
+  ["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]
+]);
+
+/**
+ * @license lucide-react v0.363.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const ChevronUp = createLucideIcon("ChevronUp", [["path", { d: "m18 15-6-6-6 6", key: "153udz" }]]);
 
 /**
@@ -10549,6 +10714,26 @@ const TrendingDown = createLucideIcon("TrendingDown", [
 const TrendingUp = createLucideIcon("TrendingUp", [
   ["polyline", { points: "22 7 13.5 15.5 8.5 10.5 2 17", key: "126l90" }],
   ["polyline", { points: "16 7 22 7 22 13", key: "kwv8wd" }]
+]);
+
+/**
+ * @license lucide-react v0.363.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const TriangleAlert = createLucideIcon("TriangleAlert", [
+  [
+    "path",
+    {
+      d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
+      key: "wmoenq"
+    }
+  ],
+  ["path", { d: "M12 9v4", key: "juzpu7" }],
+  ["path", { d: "M12 17h.01", key: "p32p05" }]
 ]);
 
 /**
@@ -16928,7 +17113,7 @@ function assignRef(ref, value) {
     return ref;
 }
 
-const {useState: useState$3} = await importShared('react');
+const {useState: useState$4} = await importShared('react');
 
 /**
  * creates a MutableRef with ref change callback
@@ -16945,7 +17130,7 @@ const {useState: useState$3} = await importShared('react');
  * @returns {MutableRefObject}
  */
 function useCallbackRef(initialValue, callback) {
-    var ref = useState$3(function () { return ({
+    var ref = useState$4(function () { return ({
         // value
         value: initialValue,
         // last callback
@@ -19840,16 +20025,16 @@ function useRcdo() {
 }
 
 const React$5 = await importShared('react');
-const {useState: useState$2} = React$5;
+const {useState: useState$3} = React$5;
 const CHESS_PIECES = ["KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"];
 function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }) {
   const { data: rcdo } = useRcdo();
-  const [title, setTitle] = useState$2(editItem?.title ?? "");
-  const [description, setDescription] = useState$2(editItem?.description ?? "");
-  const [outcomeId, setOutcomeId] = useState$2(editItem?.outcomeId ?? "");
-  const [chessPiece, setChessPiece] = useState$2(editItem?.chessPiece ?? "PAWN");
-  const [submitting, setSubmitting] = useState$2(false);
-  const [error, setError] = useState$2(null);
+  const [title, setTitle] = useState$3(editItem?.title ?? "");
+  const [description, setDescription] = useState$3(editItem?.description ?? "");
+  const [outcomeId, setOutcomeId] = useState$3(editItem?.outcomeId ?? "");
+  const [chessPiece, setChessPiece] = useState$3(editItem?.chessPiece ?? "PAWN");
+  const [submitting, setSubmitting] = useState$3(false);
+  const [error, setError] = useState$3(null);
   React$5.useEffect(() => {
     if (open) {
       setTitle(editItem?.title ?? "");
@@ -19976,6 +20161,19 @@ function useCurrentCommit() {
     queryFn: () => commits.current()
   });
 }
+function useCommit(id) {
+  return useQuery({
+    queryKey: ["commits", id],
+    queryFn: () => commits.getById(id),
+    enabled: !!id
+  });
+}
+function useCommitHistory(page = 0, size = 10) {
+  return useQuery({
+    queryKey: ["commits", "history", page, size],
+    queryFn: () => commits.history(page, size)
+  });
+}
 function useUpdateStatus() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -20017,7 +20215,28 @@ function useReorderItems() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ commitId, items }) => commits.reorderItems(commitId, items),
-    onSuccess: () => {
+    // Optimistic update — instant feel per US-1006
+    onMutate: async ({ items }) => {
+      await queryClient.cancelQueries({ queryKey: ["commits", "current"] });
+      const previous = queryClient.getQueryData(["commits", "current"]);
+      if (previous) {
+        const updatedItems = previous.items.map((item) => {
+          const reordered = items.find((r) => r.id === item.id);
+          return reordered ? { ...item, priorityOrder: reordered.priorityOrder } : item;
+        });
+        queryClient.setQueryData(["commits", "current"], {
+          ...previous,
+          items: updatedItems
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["commits", "current"], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["commits", "current"] });
     }
   });
@@ -20058,9 +20277,30 @@ function formatDateTime(iso) {
   });
 }
 
-const {useState: useState$1} = await importShared('react');
+const {useState: useState$2} = await importShared('react');
 const CHESS_PIECE_ORDER$1 = ["KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"];
+function WeightSummaryBar({ items }) {
+  const counts = CHESS_PIECE_ORDER$1.reduce(
+    (acc, piece) => {
+      const count = items.filter((i) => i.chessPiece === piece).length;
+      if (count > 0) acc[piece] = count;
+      return acc;
+    },
+    {}
+  );
+  const totalWeight = items.reduce((sum, item) => sum + item.chessWeight, 0);
+  const parts = CHESS_PIECE_ORDER$1.filter((p) => counts[p]).map((p) => `${counts[p]} ${CHESS_ICON[p]}`).join(" · ");
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: parts }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "·" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-medium", children: [
+      "Total weight: ",
+      totalWeight
+    ] })
+  ] });
+}
 function CommitPage() {
+  console.log("[CommitPage] render");
   const { data: commit, isLoading, error } = useCurrentCommit();
   const updateStatus = useUpdateStatus();
   const createItem = useCreateItem();
@@ -20069,9 +20309,9 @@ function CommitPage() {
   const reorderItems = useReorderItems();
   const reconcileItem = useReconcileItem();
   const completeReconciliation = useCompleteReconciliation();
-  const [addModalOpen, setAddModalOpen] = useState$1(false);
-  const [editingItem, setEditingItem] = useState$1(null);
-  const [reconcileData, setReconcileData] = useState$1({});
+  const [addModalOpen, setAddModalOpen] = useState$2(false);
+  const [editingItem, setEditingItem] = useState$2(null);
+  const [reconcileData, setReconcileData] = useState$2({});
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -20085,6 +20325,9 @@ function CommitPage() {
       return acc;
     },
     {}
+  );
+  const hasKingOrQueen = commit.items.some(
+    (i) => i.chessPiece === "KING" || i.chessPiece === "QUEEN"
   );
   const handleDragEnd = (event, piece) => {
     const { active, over } = event;
@@ -20150,6 +20393,7 @@ function CommitPage() {
         ] })
       ] })
     ] }),
+    commit.items.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(WeightSummaryBar, { items: commit.items }),
     commit.status === "DRAFT" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-center", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: commit.items.length === 0 ? "No items yet. Add your first commit item." : `${commit.items.length} item${commit.items.length !== 1 ? "s" : ""}` }),
@@ -20157,6 +20401,10 @@ function CommitPage() {
           /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-4 w-4 mr-1" }),
           " Add Item"
         ] })
+      ] }),
+      commit.items.length > 0 && !hasKingOrQueen && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-4 w-4 mt-0.5 shrink-0" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "No Kings or Queens this week — consider whether your highest-leverage work is represented." })
       ] }),
       CHESS_PIECE_ORDER$1.map((piece) => {
         const items = itemsByPiece[piece];
@@ -20240,12 +20488,23 @@ function CommitPage() {
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "secondary", className: "w-full", onClick: handleStartReconciliation, children: "Start Early Reconciliation" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Button,
+          {
+            variant: "secondary",
+            className: "w-full",
+            onClick: handleStartReconciliation,
+            disabled: updateStatus.isPending,
+            children: "Start Early Reconciliation"
+          }
+        )
       ] })
     ] }),
     commit.status === "RECONCILING" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "Reflect on each item. Mark completion status and provide actual outcomes." }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: commit.items.sort((a, b) => CHESS_PIECE_ORDER$1.indexOf(a.chessPiece) - CHESS_PIECE_ORDER$1.indexOf(b.chessPiece)).map((item) => {
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: commit.items.sort(
+        (a, b) => CHESS_PIECE_ORDER$1.indexOf(a.chessPiece) - CHESS_PIECE_ORDER$1.indexOf(b.chessPiece)
+      ).map((item) => {
         const state = getReconcileState(item.id);
         const alreadyReconciled = item.completionStatus !== null;
         return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border rounded-lg p-4 space-y-3", children: [
@@ -20345,15 +20604,33 @@ function CommitPage() {
     ] }),
     commit.status === "RECONCILED" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 gap-4 sm:grid-cols-4", children: [
-        { label: "Completed", count: commit.items.filter((i) => i.completionStatus === "COMPLETED").length, color: "text-green-600" },
-        { label: "Partial", count: commit.items.filter((i) => i.completionStatus === "PARTIAL").length, color: "text-yellow-600" },
-        { label: "Not Done", count: commit.items.filter((i) => i.completionStatus === "NOT_COMPLETED").length, color: "text-red-600" },
-        { label: "Carried Fwd", count: commit.items.filter((i) => i.carryForward).length, color: "text-blue-600" }
+        {
+          label: "Completed",
+          count: commit.items.filter((i) => i.completionStatus === "COMPLETED").length,
+          color: "text-green-600"
+        },
+        {
+          label: "Partial",
+          count: commit.items.filter((i) => i.completionStatus === "PARTIAL").length,
+          color: "text-yellow-600"
+        },
+        {
+          label: "Not Done",
+          count: commit.items.filter((i) => i.completionStatus === "NOT_COMPLETED").length,
+          color: "text-red-600"
+        },
+        {
+          label: "Carried Fwd",
+          count: commit.items.filter((i) => i.carryForward).length,
+          color: "text-blue-600"
+        }
       ].map(({ label, count, color }) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border rounded-lg p-3 text-center", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: `text-2xl font-bold ${color}`, children: count }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-muted-foreground mt-1", children: label })
       ] }, label)) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-2", children: commit.items.sort((a, b) => CHESS_PIECE_ORDER$1.indexOf(a.chessPiece) - CHESS_PIECE_ORDER$1.indexOf(b.chessPiece)).map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border rounded-lg p-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-2", children: commit.items.sort(
+        (a, b) => CHESS_PIECE_ORDER$1.indexOf(a.chessPiece) - CHESS_PIECE_ORDER$1.indexOf(b.chessPiece)
+      ).map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border rounded-lg p-4", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-2", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: CHESS_ICON[item.chessPiece] }),
@@ -20610,10 +20887,39 @@ const Separator = React.forwardRef(({ className, orientation = "horizontal", dec
 ));
 Separator.displayName = Root.displayName;
 
+function toTeamResponse(raw) {
+  const teamMembers = raw.map((m) => ({
+    userId: m.userId,
+    fullName: m.fullName,
+    email: m.email,
+    alignmentTrend: m.alignmentScore != null ? [m.alignmentScore] : [],
+    currentCommit: m.currentCommitId && m.currentCommitStatus ? {
+      id: m.currentCommitId,
+      status: m.currentCommitStatus,
+      itemCount: m.itemCount,
+      totalWeight: 0,
+      alignmentScore: m.alignmentScore,
+      lockedAt: null,
+      viewedAt: null,
+      hasCarriedForwardItems: false
+    } : null
+  }));
+  const scores = teamMembers.map((m) => m.currentCommit?.alignmentScore).filter((s) => s != null);
+  const teamAlignmentScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  return {
+    teamMembers,
+    teamAlignmentScore,
+    underSupportedRallyCries: []
+  };
+}
 function useTeamDashboard() {
   return useQuery({
     queryKey: ["manager", "team"],
-    queryFn: () => manager.team()
+    queryFn: async () => {
+      const raw = await manager.team();
+      return toTeamResponse(raw);
+    },
+    refetchInterval: 3e4
   });
 }
 function useManagerCommit(userId, commitId) {
@@ -20640,20 +20946,43 @@ function useAddNote() {
   });
 }
 
+function normalizeMember(m) {
+  if ("currentCommit" in m && m.currentCommit !== void 0) return m;
+  const raw = m;
+  return {
+    userId: raw.userId,
+    fullName: raw.fullName,
+    email: raw.email,
+    alignmentTrend: raw.alignmentScore != null ? [raw.alignmentScore] : [],
+    currentCommit: raw.currentCommitId && raw.currentCommitStatus ? {
+      id: raw.currentCommitId,
+      status: raw.currentCommitStatus,
+      itemCount: raw.itemCount,
+      totalWeight: 0,
+      alignmentScore: raw.alignmentScore,
+      lockedAt: null,
+      viewedAt: null,
+      hasCarriedForwardItems: false
+    } : null
+  };
+}
 function AlignmentTrend({ trend }) {
-  if (trend.length < 2) return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-muted-foreground", children: "—" });
-  const last = trend[trend.length - 1] ?? 0;
-  const prev = trend[trend.length - 2] ?? 0;
+  const t = trend ?? [];
+  if (t.length < 2) return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-muted-foreground", children: "—" });
+  const last = t[t.length - 1] ?? 0;
+  const prev = t[t.length - 2] ?? 0;
   const diff = last - prev;
-  if (diff > 0) return /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-green-600 flex items-center gap-0.5", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(TrendingUp, { className: "h-3 w-3" }),
-    "+",
-    diff
-  ] });
-  if (diff < 0) return /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-red-600 flex items-center gap-0.5", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(TrendingDown, { className: "h-3 w-3" }),
-    diff
-  ] });
+  if (diff > 0)
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-green-600 flex items-center gap-0.5", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(TrendingUp, { className: "h-3 w-3" }),
+      "+",
+      diff
+    ] });
+  if (diff < 0)
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-red-600 flex items-center gap-0.5", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(TrendingDown, { className: "h-3 w-3" }),
+      diff
+    ] });
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-muted-foreground flex items-center gap-0.5", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Minus, { className: "h-3 w-3" }),
     "0"
@@ -20661,6 +20990,8 @@ function AlignmentTrend({ trend }) {
 }
 function TeamMemberCard({ member }) {
   const navigate = useNavigate();
+  const alignmentScore = member.currentCommit?.alignmentScore ?? null;
+  const lowAlignment = alignmentScore !== null && alignmentScore < 70;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "hover:shadow-md transition-shadow", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { className: "pb-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -20682,13 +21013,21 @@ function TeamMemberCard({ member }) {
             "wt ",
             member.currentCommit.totalWeight
           ] }),
-          member.currentCommit.alignmentScore !== null && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          alignmentScore !== null && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "·" }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-              member.currentCommit.alignmentScore,
+              alignmentScore,
               "% aligned"
             ] })
           ] })
+        ] })
+      ] }),
+      lowAlignment && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3.5 w-3.5 shrink-0" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-medium", children: [
+          "🚨 Alignment ",
+          alignmentScore,
+          "% — below 70% threshold"
         ] })
       ] }),
       member.currentCommit.hasCarriedForwardItems && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "warning", className: "text-xs", children: "Has carried forward items" }),
@@ -20698,7 +21037,9 @@ function TeamMemberCard({ member }) {
           size: "sm",
           variant: "outline",
           className: "w-full",
-          onClick: () => navigate(`/commits/${member.currentCommit.id}?userId=${member.userId}`),
+          onClick: () => navigate(
+            `/commits/${member.currentCommit.id}?userId=${member.userId}`
+          ),
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "h-3.5 w-3.5 mr-1" }),
             member.currentCommit.viewedAt ? "Review Again" : "View Commit"
@@ -20713,6 +21054,15 @@ function ManagerDashboard() {
   if (isLoading) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-center text-muted-foreground", children: "Loading team..." });
   if (error) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-center text-destructive", children: "Failed to load team" });
   if (!team) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-center", children: "No team data" });
+  const teamMembers = Array.isArray(team) ? team.map(normalizeMember) : (team.teamMembers ?? []).map(normalizeMember);
+  const teamAlignmentScore = typeof team.teamAlignmentScore === "number" ? team.teamAlignmentScore : Array.isArray(team) ? (() => {
+    const scores = team.map((m) => m.alignmentScore).filter((s) => s != null);
+    return scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  })() : 0;
+  const underSupportedRallyCries = team.underSupportedRallyCries ?? [];
+  const membersWithLowAlignment = teamMembers.filter(
+    (m) => m.currentCommit?.alignmentScore !== null && (m.currentCommit?.alignmentScore ?? 100) < 70
+  ).length;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-4xl mx-auto p-6 space-y-6", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -20720,16 +21070,28 @@ function ManagerDashboard() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-muted-foreground text-sm mt-1", children: "Current week overview for your team" })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-right", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-3xl font-bold", children: [
-          team.teamAlignmentScore,
-          "%"
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-muted-foreground", children: "Team Alignment" })
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "p",
+          {
+            className: `text-3xl font-bold ${teamAlignmentScore < 70 ? "text-red-600" : "text-foreground"}`,
+            children: [
+              teamAlignmentScore,
+              "%"
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-muted-foreground", children: "Team Alignment" }),
+        membersWithLowAlignment > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-red-600 mt-0.5", children: [
+          membersWithLowAlignment,
+          " member",
+          membersWithLowAlignment !== 1 ? "s" : "",
+          " below threshold"
+        ] })
       ] })
     ] }),
-    team.underSupportedRallyCries.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "border-yellow-200 bg-yellow-50", children: [
+    underSupportedRallyCries.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "border-yellow-200 bg-yellow-50", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { className: "pb-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardTitle, { className: "text-sm text-yellow-800", children: "Under-Supported Rally Cries" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(CardContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-1", children: team.underSupportedRallyCries.map((rc) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "flex items-center justify-between text-sm", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(CardContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("ul", { className: "space-y-1", children: underSupportedRallyCries.map((rc) => /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "flex items-center justify-between text-sm", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-yellow-900 truncate mr-2", children: rc.title }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "warning", className: "shrink-0", children: [
           rc.supportPercentage,
@@ -20738,20 +21100,30 @@ function ManagerDashboard() {
       ] }, rc.id)) }) })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(Separator, {}),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-4 sm:grid-cols-2", children: team.teamMembers.map((member) => /* @__PURE__ */ jsxRuntimeExports.jsx(TeamMemberCard, { member }, member.userId)) })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-4 sm:grid-cols-2", children: teamMembers.map((member) => /* @__PURE__ */ jsxRuntimeExports.jsx(TeamMemberCard, { member }, member.userId)) })
   ] });
 }
 
-const {useState} = await importShared('react');
+const {useState: useState$1} = await importShared('react');
 const CHESS_PIECE_ORDER = ["KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"];
 function CommitDetailPage() {
   const { id: commitId } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const userId = searchParams.get("userId") ?? "";
-  const { data: commit, isLoading } = useManagerCommit(userId, commitId ?? "");
+  const isManagerView = Boolean(userId);
+  const { data: managerCommit, isLoading: managerLoading } = useManagerCommit(
+    userId,
+    commitId ?? ""
+  );
+  const { data: ownCommit, isLoading: ownLoading } = useCommit(
+    isManagerView ? "" : commitId ?? ""
+  );
   const { data: notes } = useManagerNotes(userId, commitId ?? "");
   const addNote = useAddNote();
-  const [noteText, setNoteText] = useState("");
+  const [noteText, setNoteText] = useState$1("");
+  const commit = isManagerView ? managerCommit : ownCommit;
+  const isLoading = isManagerView ? managerLoading : ownLoading;
   if (isLoading) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-center text-muted-foreground", children: "Loading..." });
   if (!commit) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-center", children: "Commit not found" });
   const itemsByPiece = CHESS_PIECE_ORDER.reduce(
@@ -20769,13 +21141,13 @@ function CommitDetailPage() {
     );
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-3xl mx-auto p-6 space-y-6", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-3", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { variant: "ghost", size: "sm", onClick: () => window.history.back(), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-3", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { variant: "ghost", size: "sm", onClick: () => navigate(-1), children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-4 w-4 mr-1" }),
       " Back"
     ] }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-2xl font-bold", children: "Commit Review" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-2xl font-bold", children: isManagerView ? "Commit Review" : "Commit Detail" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-muted-foreground text-sm mt-1", children: formatWeekRange(commit.weekStartDate, commit.weekEndDate) })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
@@ -20806,43 +21178,213 @@ function CommitDetailPage() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-2", children: items.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx(CommitItem, { item }, item.id)) })
       ] }, piece);
     }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Separator, {}),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardTitle, { className: "text-base", children: "Manager Notes" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(CardContent, { className: "space-y-4", children: [
-        notes && notes.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: notes.map((note) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border rounded-md p-3 space-y-1", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-medium", children: note.authorName }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-muted-foreground", children: formatDateTime(note.createdAt) })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: note.note })
-        ] }, note.id)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "No notes yet." }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            Textarea,
-            {
-              value: noteText,
-              onChange: (e) => setNoteText(e.target.value),
-              placeholder: "Add a note for the employee...",
-              rows: 3
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            Button,
-            {
-              size: "sm",
-              onClick: handleAddNote,
-              disabled: !noteText.trim() || addNote.isPending,
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(MessageSquarePlus, { className: "h-4 w-4 mr-2" }),
-                "Add Note"
-              ]
-            }
-          )
+    commit.status === "RECONCILED" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Separator, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 gap-3 sm:grid-cols-4", children: [
+        {
+          label: "Completed",
+          count: commit.items.filter((i) => i.completionStatus === "COMPLETED").length,
+          color: "text-green-600"
+        },
+        {
+          label: "Partial",
+          count: commit.items.filter((i) => i.completionStatus === "PARTIAL").length,
+          color: "text-yellow-600"
+        },
+        {
+          label: "Not Done",
+          count: commit.items.filter((i) => i.completionStatus === "NOT_COMPLETED").length,
+          color: "text-red-600"
+        },
+        {
+          label: "Carried Fwd",
+          count: commit.items.filter((i) => i.carryForward).length,
+          color: "text-blue-600"
+        }
+      ].map(({ label, count, color }) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border rounded-lg p-3 text-center", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: `text-2xl font-bold ${color}`, children: count }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-muted-foreground mt-1", children: label })
+      ] }, label)) })
+    ] }),
+    isManagerView && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Separator, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardTitle, { className: "text-base", children: "Manager Notes" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(CardContent, { className: "space-y-4", children: [
+          notes && notes.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: notes.map((note) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border rounded-md p-3 space-y-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-medium", children: note.authorName }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-muted-foreground", children: formatDateTime(note.createdAt) })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: note.note })
+          ] }, note.id)) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: "No notes yet." }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Textarea,
+              {
+                value: noteText,
+                onChange: (e) => setNoteText(e.target.value),
+                placeholder: "Add a note for the employee...",
+                rows: 3
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              Button,
+              {
+                size: "sm",
+                onClick: handleAddNote,
+                disabled: !noteText.trim() || addNote.isPending,
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(MessageSquarePlus, { className: "h-4 w-4 mr-2" }),
+                  "Add Note"
+                ]
+              }
+            )
+          ] })
         ] })
       ] })
     ] })
   ] });
 }
 
-export { BrowserRouter as B, CommitPage as C, ManagerDashboard as M, Navigate as N, QueryClient as Q, Routes as R, QueryClientProvider as a, Route as b, CommitDetailPage as c, jsxRuntimeExports as j, setAuthExpiredHandler as s, useAuthStore as u };
+const {useState} = await importShared('react');
+function CommitHistoryPage() {
+  const [page, setPage] = useState(0);
+  const navigate = useNavigate();
+  const { data, isLoading, error } = useCommitHistory(page);
+  if (isLoading) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-center text-muted-foreground", children: "Loading history..." });
+  }
+  if (error) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-8 text-center text-destructive", children: "Failed to load commit history" });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-3xl mx-auto p-6 space-y-6", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-2xl font-bold", children: "Commit History" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground mt-1", children: "Your past weekly commits" })
+      ] }),
+      data && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm text-muted-foreground", children: [
+        data.totalElements,
+        " weeks"
+      ] })
+    ] }),
+    !data || data.content.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center py-12", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-muted-foreground", children: "No past commits yet." }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground mt-1", children: "Completed weeks will appear here after reconciliation." })
+    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: data.content.map((commit) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Card,
+        {
+          className: "hover:shadow-sm transition-shadow cursor-pointer",
+          onClick: () => navigate(`/commits/${commit.id}`),
+          children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardContent, { className: "p-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2 min-w-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-medium text-sm", children: formatWeekRange(commit.weekStartDate, commit.weekEndDate) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 flex-wrap", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(StatusBadge, { status: commit.status }),
+                commit.totalWeight > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "outline", className: "text-xs", children: [
+                  "wt ",
+                  commit.totalWeight
+                ] }),
+                commit.alignmentScore !== null && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  Badge,
+                  {
+                    variant: commit.alignmentScore >= 70 ? "success" : "destructive",
+                    className: "text-xs",
+                    children: [
+                      commit.alignmentScore,
+                      "% aligned"
+                    ]
+                  }
+                )
+              ] })
+            ] }),
+            commit.status === "RECONCILED" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-right text-xs space-y-0.5 shrink-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-green-700 font-medium", children: [
+                commit.completedCount,
+                " done"
+              ] }),
+              commit.partialCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-yellow-700", children: [
+                commit.partialCount,
+                " partial"
+              ] }),
+              commit.notCompletedCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-red-700", children: [
+                commit.notCompletedCount,
+                " not done"
+              ] }),
+              commit.carriedForwardCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-blue-700", children: [
+                commit.carriedForwardCount,
+                " carried fwd"
+              ] })
+            ] })
+          ] }) })
+        },
+        commit.id
+      )) }),
+      data.totalPages > 1 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          Button,
+          {
+            variant: "outline",
+            size: "sm",
+            onClick: () => setPage((p) => p - 1),
+            disabled: page === 0,
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronLeft, { className: "h-4 w-4 mr-1" }),
+              "Prev"
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-muted-foreground", children: [
+          "Page ",
+          page + 1,
+          " of ",
+          data.totalPages
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          Button,
+          {
+            variant: "outline",
+            size: "sm",
+            onClick: () => setPage((p) => p + 1),
+            disabled: page >= data.totalPages - 1,
+            children: [
+              "Next",
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-4 w-4 ml-1" })
+            ]
+          }
+        )
+      ] })
+    ] })
+  ] });
+}
+
+function AppNav() {
+  const { user, logout } = useAuthStore();
+  if (!user) return null;
+  const isEmployee = user.roles.includes("EMPLOYEE") || user.roles.includes("DUAL_ROLE");
+  const isManager = user.roles.includes("MANAGER") || user.roles.includes("DUAL_ROLE");
+  const tabs = [
+    isEmployee && { to: "/commits", label: "My Week" },
+    isEmployee && { to: "/history", label: "History" },
+    isManager && { to: "/manager", label: "My Team" }
+  ].filter((t) => Boolean(t));
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: "border-b bg-background sticky top-0 z-10", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-4xl mx-auto px-6 flex items-center h-12", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1 flex-1", children: tabs.map(({ to, label }) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+      NavLink,
+      {
+        to,
+        className: ({ isActive }) => cn(
+          "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+          isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"
+        ),
+        children: label
+      },
+      to
+    )) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", size: "sm", onClick: () => void logout(), children: "Sign Out" })
+  ] }) });
+}
+
+export { AppNav as A, BrowserRouter as B, CommitPage as C, MemoryRouter as M, Navigate as N, QueryClient as Q, Routes as R, QueryClientProvider as a, Route as b, CommitDetailPage as c, CommitHistoryPage as d, ManagerDashboard as e, cn as f, buttonVariants as g, jsxRuntimeExports as j, setAuthExpiredHandler as s, useAuthStore as u };

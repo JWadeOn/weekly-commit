@@ -13,4 +13,6 @@ public interface CommitItemRepository extends JpaRepository<CommitItem, UUID> {
     List<CommitItem> findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(UUID weeklyCommitId);
 
     List<CommitItem> findByWeeklyCommitIdAndCarryForwardTrue(UUID weeklyCommitId);
+
+    boolean existsByWeeklyCommitIdAndCarriedFromId(UUID weeklyCommitId, UUID carriedFromId);
 }

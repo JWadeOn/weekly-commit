@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -13,17 +13,42 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
 import { useRcdo } from '@/hooks/useRcdo'
 import { CHESS_ICON } from '@/types'
 import type { ChessPiece, CreateCommitItemRequest, CommitItemResponse } from '@/types'
+import type { RcDoHierarchyResponse } from '@/types'
 
 const CHESS_PIECES: ChessPiece[] = ['KING', 'QUEEN', 'ROOK', 'BISHOP', 'KNIGHT', 'PAWN']
+
+const CHESS_DESCRIPTION: Record<ChessPiece, string> = {
+  KING: 'Critical — the week fails without this.',
+  QUEEN: 'Very high — major impact if missed.',
+  ROOK: 'High — important for the week.',
+  BISHOP: 'Medium — meaningful progress.',
+  KNIGHT: 'Lower — good to have.',
+  PAWN: 'Lowest — small but valuable.',
+}
+
+function flattenOutcomes(rcdo: RcDoHierarchyResponse | undefined): { id: string; title: string; breadcrumb: string }[] {
+  if (!rcdo) return []
+  const out: { id: string; title: string; breadcrumb: string }[] = []
+  for (const rc of rcdo.rallyCries) {
+    for (const do_ of rc.definingObjectives) {
+      for (const outcome of do_.outcomes) {
+        out.push({
+          id: outcome.id,
+          title: outcome.title,
+          breadcrumb: `${rc.title} › ${do_.title}`,
+        })
+      }
+    }
+  }
+  return out
+}
 
 interface AddItemModalProps {
   open: boolean
@@ -38,9 +63,20 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
   const [title, setTitle] = useState(editItem?.title ?? '')
   const [description, setDescription] = useState(editItem?.description ?? '')
   const [outcomeId, setOutcomeId] = useState(editItem?.outcomeId ?? '')
+  const [outcomeSearch, setOutcomeSearch] = useState('')
   const [chessPiece, setChessPiece] = useState<ChessPiece>(editItem?.chessPiece ?? 'PAWN')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const allOutcomes = useMemo(() => flattenOutcomes(rcdo), [rcdo])
+  const filteredOutcomes = useMemo(() => {
+    const q = outcomeSearch.trim().toLowerCase()
+    if (!q) return allOutcomes
+    return allOutcomes.filter(
+      (o) =>
+        o.title.toLowerCase().includes(q) || o.breadcrumb.toLowerCase().includes(q)
+    )
+  }, [allOutcomes, outcomeSearch])
 
   // Reset form when opening
   React.useEffect(() => {
@@ -48,6 +84,7 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
       setTitle(editItem?.title ?? '')
       setDescription(editItem?.description ?? '')
       setOutcomeId(editItem?.outcomeId ?? '')
+      setOutcomeSearch('')
       setChessPiece(editItem?.chessPiece ?? 'PAWN')
       setError(null)
     }
@@ -110,8 +147,17 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
               </SelectTrigger>
               <SelectContent>
                 {CHESS_PIECES.map((piece) => (
-                  <SelectItem key={piece} value={piece}>
-                    {CHESS_ICON[piece]} {piece}
+                  <SelectItem
+                    key={piece}
+                    value={piece}
+                    title={CHESS_DESCRIPTION[piece]}
+                  >
+                    <span className="flex flex-col items-start gap-0.5">
+                      <span>{CHESS_ICON[piece]} {piece}</span>
+                      <span className="text-xs text-muted-foreground font-normal">
+                        {CHESS_DESCRIPTION[piece]}
+                      </span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -120,41 +166,43 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
 
           <div className="space-y-1.5">
             <Label>Outcome (RCDO)</Label>
-            <Select value={outcomeId} onValueChange={setOutcomeId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select an outcome..." />
-              </SelectTrigger>
-              <SelectContent>
-                {rcdo?.rallyCries.map((rc) =>
-                  rc.definingObjectives.map((do_) =>
-                    do_.outcomes.map((outcome) => (
-                      <SelectItem key={outcome.id} value={outcome.id}>
-                        {outcome.title}
-                      </SelectItem>
-                    ))
-                  )
-                )}
-                {!rcdo && (
-                  <SelectGroup>
-                    <SelectLabel>Loading...</SelectLabel>
-                  </SelectGroup>
-                )}
-              </SelectContent>
-            </Select>
+            <Input
+              placeholder="Search outcomes..."
+              value={outcomeSearch}
+              onChange={(e) => setOutcomeSearch(e.target.value)}
+              className="mb-1"
+            />
+            <div className="border rounded-md max-h-48 overflow-y-auto">
+              {!rcdo && (
+                <p className="p-3 text-sm text-muted-foreground">Loading outcomes...</p>
+              )}
+              {rcdo && filteredOutcomes.length === 0 && (
+                <p className="p-3 text-sm text-muted-foreground">
+                  {outcomeSearch.trim() ? 'No outcomes match your search.' : 'No outcomes available.'}
+                </p>
+              )}
+              {rcdo && filteredOutcomes.length > 0 && (
+                <ul className="p-1">
+                  {filteredOutcomes.map((o) => (
+                    <li key={o.id}>
+                      <button
+                        type="button"
+                        onClick={() => setOutcomeId(o.id)}
+                        className={`w-full text-left px-3 py-2 rounded text-sm hover:bg-accent transition-colors ${
+                          outcomeId === o.id ? 'bg-accent font-medium' : ''
+                        }`}
+                      >
+                        <span className="block truncate">{o.title}</span>
+                        <span className="block text-xs text-muted-foreground truncate">{o.breadcrumb}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             {rcdo && outcomeId && (
               <p className="text-xs text-muted-foreground">
-                {(() => {
-                  for (const rc of rcdo.rallyCries) {
-                    for (const do_ of rc.definingObjectives) {
-                      for (const outcome of do_.outcomes) {
-                        if (outcome.id === outcomeId) {
-                          return `${rc.title} › ${do_.title}`
-                        }
-                      }
-                    }
-                  }
-                  return null
-                })()}
+                {allOutcomes.find((o) => o.id === outcomeId)?.breadcrumb ?? ''}
               </p>
             )}
           </div>

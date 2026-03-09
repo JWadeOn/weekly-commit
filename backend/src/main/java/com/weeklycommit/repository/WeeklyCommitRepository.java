@@ -18,5 +18,5 @@ public interface WeeklyCommitRepository extends JpaRepository<WeeklyCommit, UUID
 
     List<WeeklyCommit> findByOrgIdAndWeekStartDate(UUID orgId, LocalDate weekStartDate);
 
-    List<WeeklyCommit> findByUserIdInAndWeekStartDate(List<UUID> userIds, LocalDate weekStartDate);
+    List<WeeklyCommit> findByStatusAndWeekStartDate(String status, LocalDate weekStartDate);
 }

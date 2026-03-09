@@ -61,4 +61,11 @@ public class ManagerController {
         UUID managerId = SecurityContextHelper.getCurrentUserId();
         return ResponseEntity.ok(managerService.getNotes(managerId, userId, commitId));
     }
+
+    @GetMapping("/team/alignment")
+    public ResponseEntity<TeamAlignmentResponse> getTeamAlignment() {
+        UUID managerId = SecurityContextHelper.getCurrentUserId();
+        UUID orgId = SecurityContextHelper.getCurrentOrgId();
+        return ResponseEntity.ok(managerService.getTeamAlignment(managerId, orgId));
+    }
 }

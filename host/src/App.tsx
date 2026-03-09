@@ -30,12 +30,21 @@ export default function App(): JSX.Element {
       .finally(() => setChecking(false))
   }, [])
 
-  const handleLogout = (): void => {
-    fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' })
-      .finally(() => {
+  const handleLogout = async (): Promise<void> => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' })
+      if (res.ok) {
         setUser(null)
-        window.location.reload()
-      })
+        // Full navigation so host re-fetches /auth/me and shows login
+        window.location.href = window.location.origin + '/'
+      } else {
+        setUser(null)
+        window.location.href = 'http://localhost:8080/oauth2/authorization/oidc'
+      }
+    } catch {
+      setUser(null)
+      window.location.href = 'http://localhost:8080/oauth2/authorization/oidc'
+    }
   }
 
   const handleAuthExpired = (): void => {

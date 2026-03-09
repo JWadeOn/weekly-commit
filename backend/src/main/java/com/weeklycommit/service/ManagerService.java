@@ -14,8 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,6 +57,7 @@ public class ManagerService {
             String currentCommitStatus = commitOpt.map(WeeklyCommit::getStatus).orElse(null);
             Double alignmentScore = null;
             int itemCount = 0;
+            java.time.Instant lastUpdated = null;
 
             if (commitOpt.isPresent()) {
                 List<CommitItem> items = commitItemRepository
@@ -67,7 +71,12 @@ public class ManagerService {
                             .sum();
                     alignmentScore = (double) alignedWeight / totalWeight * 100.0;
                 }
+                if (commitOpt.get().getUpdatedAt() != null) {
+                    lastUpdated = commitOpt.get().getUpdatedAt().toInstant(ZoneOffset.UTC);
+                }
             }
+
+            List<Integer> alignmentTrend = computeAlignmentTrend(report.getId(), 4);
 
             return TeamMemberResponse.builder()
                     .userId(report.getId())
@@ -77,8 +86,23 @@ public class ManagerService {
                     .currentCommitStatus(currentCommitStatus)
                     .alignmentScore(alignmentScore)
                     .itemCount(itemCount)
+                    .alignmentTrend(alignmentTrend)
+                    .lastUpdated(lastUpdated)
                     .build();
         }).toList();
+    }
+
+    private List<Integer> computeAlignmentTrend(UUID userId, int weeks) {
+        List<WeeklyCommit> commits = weeklyCommitRepository.findByUserIdOrderByWeekStartDateDesc(userId);
+        List<Integer> trend = new ArrayList<>();
+        for (int i = 0; i < Math.min(weeks, commits.size()); i++) {
+            WeeklyCommit c = commits.get(i);
+            List<CommitItem> items = commitItemRepository
+                    .findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(c.getId());
+            Integer score = CommitService.computeAlignmentScore(items);
+            if (score != null) trend.add(score);
+        }
+        return trend;
     }
 
     public PagedResponse<CommitSummaryResponse> getDirectReportCommits(
@@ -121,7 +145,7 @@ public class ManagerService {
                     .weekEndDate(commit.getWeekStartDate().plusDays(4))
                     .status(commit.getStatus())
                     .totalWeight(totalWeight)
-                    .alignmentScore(null)
+                    .alignmentScore(CommitService.computeAlignmentScore(items))
                     .itemCount(items.size())
                     .completedCount(completed)
                     .partialCount(partial)
@@ -202,6 +226,75 @@ public class ManagerService {
         }).toList();
     }
 
+    @Transactional(readOnly = true)
+    public TeamAlignmentResponse getTeamAlignment(UUID managerId, UUID orgId) {
+        List<User> reports = userRepository.findByManagerId(managerId);
+        LocalDate monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
+        long totalWeight = 0;
+        long alignedWeight = 0;
+        Map<UUID, RallyCryBucket> byRallyCry = new java.util.HashMap<>();
+
+        for (User report : reports) {
+            Optional<WeeklyCommit> commitOpt =
+                    weeklyCommitRepository.findByUserIdAndWeekStartDate(report.getId(), monday);
+            if (commitOpt.isEmpty()) continue;
+
+            List<CommitItem> items = commitItemRepository
+                    .findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitOpt.get().getId());
+            for (CommitItem item : items) {
+                int w = item.getChessWeight();
+                totalWeight += w;
+                if (item.getOutcomeId() != null) {
+                    alignedWeight += w;
+                    UUID rallyCryId = commitService.getRallyCryIdForOutcome(item.getOutcomeId());
+                    if (rallyCryId != null) {
+                        byRallyCry.computeIfAbsent(rallyCryId, k -> new RallyCryBucket())
+                                .add(item.getChessWeight(), report.getId(), report.getFullName());
+                    }
+                }
+            }
+        }
+
+        int alignmentPercentage = totalWeight > 0
+                ? (int) Math.round((double) alignedWeight / totalWeight * 100.0)
+                : 0;
+
+        final long totalWeightFinal = totalWeight;
+        List<TeamAlignmentResponse.RallyCryBreakdownDto> breakdown = byRallyCry.entrySet().stream()
+                .map(e -> {
+                    RallyCryBucket b = e.getValue();
+                    int pct = totalWeightFinal > 0 ? (int) Math.round((double) b.weight / totalWeightFinal * 100.0) : 0;
+                    return TeamAlignmentResponse.RallyCryBreakdownDto.builder()
+                            .rallyCryId(e.getKey())
+                            .title(commitService.getRallyCryTitle(e.getKey()))
+                            .supportingItemCount(b.itemCount)
+                            .supportingWeight(b.weight)
+                            .weightPercentage(pct)
+                            .contributors(b.getContributorsList())
+                            .build();
+                })
+                .toList();
+
+        int thresholdPct = 10;
+        List<TeamAlignmentResponse.UnderSupportedRallyCryDto> underSupported = breakdown.stream()
+                .filter(rc -> rc.getWeightPercentage() > 0 && rc.getWeightPercentage() < thresholdPct)
+                .map(rc -> TeamAlignmentResponse.UnderSupportedRallyCryDto.builder()
+                        .rallyCryId(rc.getRallyCryId())
+                        .title(rc.getTitle())
+                        .supportPercentage(rc.getWeightPercentage())
+                        .build())
+                .toList();
+
+        return TeamAlignmentResponse.builder()
+                .totalWeight(totalWeight)
+                .alignedWeight(alignedWeight)
+                .alignmentPercentage(alignmentPercentage)
+                .rallyCryBreakdown(breakdown)
+                .underSupportedRallyCries(underSupported)
+                .build();
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private void verifyDirectReport(UUID managerId, UUID reportUserId) {
@@ -221,4 +314,30 @@ public class ManagerService {
                 .createdAt(note.getCreatedAt())
                 .build();
     }
+
+    private static class RallyCryBucket {
+        long weight;
+        int itemCount;
+        Map<UUID, ContributorCount> contributors = new java.util.HashMap<>();
+
+        void add(int itemWeight, UUID userId, String fullName) {
+            weight += itemWeight;
+            itemCount++;
+            contributors.compute(userId, (k, v) -> v == null
+                    ? new ContributorCount(userId, fullName, 1)
+                    : new ContributorCount(userId, fullName, v.itemCount + 1));
+        }
+
+        List<TeamAlignmentResponse.ContributorDto> getContributorsList() {
+            return contributors.values().stream()
+                    .map(c -> TeamAlignmentResponse.ContributorDto.builder()
+                            .userId(c.userId)
+                            .fullName(c.fullName)
+                            .itemCount(c.itemCount)
+                            .build())
+                    .toList();
+        }
+    }
+
+    private record ContributorCount(UUID userId, String fullName, int itemCount) {}
 }

@@ -62,6 +62,9 @@ export function CommitItem({ item, isDraggable = false, onEdit, onDelete }: Comm
               CF×{item.carryForwardCount}
             </Badge>
           )}
+          {item.carriedFromId != null && (
+            <Badge variant="outline" className="text-xs py-0">Carried forward</Badge>
+          )}
           {item.carryForward && (
             <Badge variant="secondary" className="text-xs py-0">carry forward</Badge>
           )}

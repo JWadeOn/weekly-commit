@@ -210,4 +210,48 @@ class CommitServiceTest {
                 .isInstanceOf(InvalidStateTransitionException.class)
                 .hasMessageContaining("DRAFT");
     }
+
+    // ── toWeekResponse / alignmentScore ────────────────────────────────────────
+
+    @Test
+    void toWeekResponse_returnsAlignmentScore100WhenAllItemsHaveOutcome() {
+        WeeklyCommit commit = WeeklyCommit.builder()
+                .id(commitId).userId(userId).orgId(orgId).weekStartDate(LocalDate.now())
+                .status("DRAFT").build();
+        when(weeklyCommitRepository.findById(commitId)).thenReturn(Optional.of(commit));
+
+        CommitItem item1 = CommitItem.builder()
+                .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(outcomeId)
+                .title("A").chessPiece("KING").chessWeight(100).priorityOrder(1)
+                .carryForward(false).carryForwardCount(0).build();
+        CommitItem item2 = CommitItem.builder()
+                .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(outcomeId)
+                .title("B").chessPiece("QUEEN").chessWeight(80).priorityOrder(2)
+                .carryForward(false).carryForwardCount(0).build();
+        when(commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId))
+                .thenReturn(List.of(item1, item2));
+        when(outcomeRepository.findById(outcomeId)).thenReturn(
+                Optional.of(Outcome.builder().id(outcomeId).title("O").definingObjectiveId(UUID.randomUUID()).build()));
+        when(definingObjectiveRepository.findById(any())).thenReturn(Optional.empty());
+
+        WeekResponse result = commitService.getCommitById(commitId, userId);
+
+        assertThat(result.getTotalWeight()).isEqualTo(180);
+        assertThat(result.getAlignmentScore()).isEqualTo(100);
+    }
+
+    @Test
+    void toWeekResponse_returnsAlignmentScoreNullWhenNoItems() {
+        WeeklyCommit commit = WeeklyCommit.builder()
+                .id(commitId).userId(userId).orgId(orgId).weekStartDate(LocalDate.now())
+                .status("DRAFT").build();
+        when(weeklyCommitRepository.findById(commitId)).thenReturn(Optional.of(commit));
+        when(commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId))
+                .thenReturn(List.of());
+
+        WeekResponse result = commitService.getCommitById(commitId, userId);
+
+        assertThat(result.getTotalWeight()).isEqualTo(0);
+        assertThat(result.getAlignmentScore()).isNull();
+    }
 }

@@ -13,7 +13,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { Plus, Lock, Unlock, CheckCircle2 } from 'lucide-react'
+import { Plus, Lock, Unlock, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -54,6 +54,30 @@ import { CHESS_ICON, CHESS_WEIGHT } from '@/types'
 
 const CHESS_PIECE_ORDER: ChessPiece[] = ['KING', 'QUEEN', 'ROOK', 'BISHOP', 'KNIGHT', 'PAWN']
 
+// Weekly weight summary bar: "1 ♔ · 2 ♕ · 3 ♖ · total wt 420"
+function WeightSummaryBar({ items }: { items: CommitItemResponse[] }): React.ReactElement {
+  const counts = CHESS_PIECE_ORDER.reduce<Partial<Record<ChessPiece, number>>>(
+    (acc, piece) => {
+      const count = items.filter((i) => i.chessPiece === piece).length
+      if (count > 0) acc[piece] = count
+      return acc
+    },
+    {}
+  )
+  const totalWeight = items.reduce((sum, item) => sum + item.chessWeight, 0)
+  const parts = CHESS_PIECE_ORDER.filter((p) => counts[p])
+    .map((p) => `${counts[p]} ${CHESS_ICON[p]}`)
+    .join(' · ')
+
+  return (
+    <div className="flex items-center gap-3 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+      <span>{parts}</span>
+      <span>·</span>
+      <span className="font-medium">Total weight: {totalWeight}</span>
+    </div>
+  )
+}
+
 export function CommitPage(): React.ReactElement {
   const { data: commit, isLoading, error } = useCurrentCommit()
   const updateStatus = useUpdateStatus()
@@ -66,7 +90,9 @@ export function CommitPage(): React.ReactElement {
 
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<CommitItemResponse | null>(null)
-  const [reconcileData, setReconcileData] = useState<Record<string, { actualOutcome: string; completionStatus: CompletionStatus | ''; carryForward: boolean }>>({})
+  const [reconcileData, setReconcileData] = useState<
+    Record<string, { actualOutcome: string; completionStatus: CompletionStatus | ''; carryForward: boolean }>
+  >({})
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -79,10 +105,16 @@ export function CommitPage(): React.ReactElement {
 
   const itemsByPiece = CHESS_PIECE_ORDER.reduce<Record<ChessPiece, CommitItemResponse[]>>(
     (acc, piece) => {
-      acc[piece] = commit.items.filter(i => i.chessPiece === piece).sort((a, b) => a.priorityOrder - b.priorityOrder)
+      acc[piece] = commit.items
+        .filter((i) => i.chessPiece === piece)
+        .sort((a, b) => a.priorityOrder - b.priorityOrder)
       return acc
     },
     {} as Record<ChessPiece, CommitItemResponse[]>
+  )
+
+  const hasKingOrQueen = commit.items.some(
+    (i) => i.chessPiece === 'KING' || i.chessPiece === 'QUEEN'
   )
 
   const handleDragEnd = (event: DragEndEvent, piece: ChessPiece): void => {
@@ -90,8 +122,8 @@ export function CommitPage(): React.ReactElement {
     if (!over || active.id === over.id) return
 
     const pieceItems = itemsByPiece[piece]
-    const oldIndex = pieceItems.findIndex(i => i.id === active.id)
-    const newIndex = pieceItems.findIndex(i => i.id === over.id)
+    const oldIndex = pieceItems.findIndex((i) => i.id === active.id)
+    const newIndex = pieceItems.findIndex((i) => i.id === over.id)
     if (oldIndex === -1 || newIndex === -1) return
 
     const reordered = [...pieceItems]
@@ -138,7 +170,7 @@ export function CommitPage(): React.ReactElement {
     reconcileData[itemId] ?? { actualOutcome: '', completionStatus: '' as const, carryForward: false }
 
   const updateReconcileField = (itemId: string, field: string, value: string | boolean): void => {
-    setReconcileData(prev => ({
+    setReconcileData((prev) => ({
       ...prev,
       [itemId]: {
         ...getReconcileState(itemId),
@@ -167,6 +199,9 @@ export function CommitPage(): React.ReactElement {
         </div>
       </div>
 
+      {/* Weekly weight summary — shown whenever there are items */}
+      {commit.items.length > 0 && <WeightSummaryBar items={commit.items} />}
+
       {/* DRAFT State */}
       {commit.status === 'DRAFT' && (
         <>
@@ -180,6 +215,17 @@ export function CommitPage(): React.ReactElement {
               <Plus className="h-4 w-4 mr-1" /> Add Item
             </Button>
           </div>
+
+          {/* No Kings or Queens soft warning */}
+          {commit.items.length > 0 && !hasKingOrQueen && (
+            <div className="flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>
+                No Kings or Queens this week — consider whether your highest-leverage work is
+                represented.
+              </span>
+            </div>
+          )}
 
           {CHESS_PIECE_ORDER.map((piece) => {
             const items = itemsByPiece[piece]
@@ -196,7 +242,7 @@ export function CommitPage(): React.ReactElement {
                   collisionDetection={closestCenter}
                   onDragEnd={(e) => handleDragEnd(e, piece)}
                 >
-                  <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
                       {items.map((item) => (
                         <CommitItem
@@ -230,8 +276,8 @@ export function CommitPage(): React.ReactElement {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Submit your weekly commit?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will lock your commit and notify your manager.
-                    You can retract it until your manager views it.
+                    This will lock your commit and notify your manager. You can retract it until
+                    your manager views it.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -292,7 +338,12 @@ export function CommitPage(): React.ReactElement {
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button variant="secondary" className="w-full" onClick={handleStartReconciliation}>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={handleStartReconciliation}
+              disabled={updateStatus.isPending}
+            >
               Start Early Reconciliation
             </Button>
           </div>
@@ -308,7 +359,11 @@ export function CommitPage(): React.ReactElement {
 
           <div className="space-y-4">
             {commit.items
-              .sort((a, b) => CHESS_PIECE_ORDER.indexOf(a.chessPiece) - CHESS_PIECE_ORDER.indexOf(b.chessPiece))
+              .sort(
+                (a, b) =>
+                  CHESS_PIECE_ORDER.indexOf(a.chessPiece) -
+                  CHESS_PIECE_ORDER.indexOf(b.chessPiece)
+              )
               .map((item) => {
                 const state = getReconcileState(item.id)
                 const alreadyReconciled = item.completionStatus !== null
@@ -329,10 +384,14 @@ export function CommitPage(): React.ReactElement {
                     {!alreadyReconciled && (
                       <div className="space-y-3">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">Completion Status</label>
+                          <label className="text-xs font-medium text-muted-foreground">
+                            Completion Status
+                          </label>
                           <Select
                             value={state.completionStatus}
-                            onValueChange={(v) => updateReconcileField(item.id, 'completionStatus', v)}
+                            onValueChange={(v) =>
+                              updateReconcileField(item.id, 'completionStatus', v)
+                            }
                           >
                             <SelectTrigger className="h-8 text-sm">
                               <SelectValue placeholder="Select status..." />
@@ -346,22 +405,29 @@ export function CommitPage(): React.ReactElement {
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">Actual Outcome</label>
+                          <label className="text-xs font-medium text-muted-foreground">
+                            Actual Outcome
+                          </label>
                           <Textarea
                             value={state.actualOutcome}
-                            onChange={(e) => updateReconcileField(item.id, 'actualOutcome', e.target.value)}
+                            onChange={(e) =>
+                              updateReconcileField(item.id, 'actualOutcome', e.target.value)
+                            }
                             placeholder="What actually happened?"
                             rows={2}
                             className="text-sm"
                           />
                         </div>
 
-                        {(state.completionStatus === 'PARTIAL' || state.completionStatus === 'NOT_COMPLETED') && (
+                        {(state.completionStatus === 'PARTIAL' ||
+                          state.completionStatus === 'NOT_COMPLETED') && (
                           <label className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={state.carryForward}
-                              onChange={(e) => updateReconcileField(item.id, 'carryForward', e.target.checked)}
+                              onChange={(e) =>
+                                updateReconcileField(item.id, 'carryForward', e.target.checked)
+                              }
                               className="rounded border-input"
                             />
                             <span className="text-sm">Carry forward to next week</span>
@@ -380,7 +446,9 @@ export function CommitPage(): React.ReactElement {
                     )}
 
                     {alreadyReconciled && item.actualOutcome && (
-                      <p className="text-sm text-muted-foreground italic">&ldquo;{item.actualOutcome}&rdquo;</p>
+                      <p className="text-sm text-muted-foreground italic">
+                        &ldquo;{item.actualOutcome}&rdquo;
+                      </p>
                     )}
                   </div>
                 )
@@ -391,7 +459,10 @@ export function CommitPage(): React.ReactElement {
             <AlertDialogTrigger asChild>
               <Button
                 className="w-full"
-                disabled={commit.items.some(i => !i.completionStatus) || completeReconciliation.isPending}
+                disabled={
+                  commit.items.some((i) => !i.completionStatus) ||
+                  completeReconciliation.isPending
+                }
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 Complete Reconciliation
@@ -401,12 +472,15 @@ export function CommitPage(): React.ReactElement {
               <AlertDialogHeader>
                 <AlertDialogTitle>Complete reconciliation?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will finalize this week&apos;s commit and seed any carry-forward items into next week.
+                  This will finalize this week&apos;s commit and seed any carry-forward items into
+                  next week.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleCompleteReconciliation}>Complete</AlertDialogAction>
+                <AlertDialogAction onClick={handleCompleteReconciliation}>
+                  Complete
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -418,10 +492,26 @@ export function CommitPage(): React.ReactElement {
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
-              { label: 'Completed', count: commit.items.filter(i => i.completionStatus === 'COMPLETED').length, color: 'text-green-600' },
-              { label: 'Partial', count: commit.items.filter(i => i.completionStatus === 'PARTIAL').length, color: 'text-yellow-600' },
-              { label: 'Not Done', count: commit.items.filter(i => i.completionStatus === 'NOT_COMPLETED').length, color: 'text-red-600' },
-              { label: 'Carried Fwd', count: commit.items.filter(i => i.carryForward).length, color: 'text-blue-600' },
+              {
+                label: 'Completed',
+                count: commit.items.filter((i) => i.completionStatus === 'COMPLETED').length,
+                color: 'text-green-600',
+              },
+              {
+                label: 'Partial',
+                count: commit.items.filter((i) => i.completionStatus === 'PARTIAL').length,
+                color: 'text-yellow-600',
+              },
+              {
+                label: 'Not Done',
+                count: commit.items.filter((i) => i.completionStatus === 'NOT_COMPLETED').length,
+                color: 'text-red-600',
+              },
+              {
+                label: 'Carried Fwd',
+                count: commit.items.filter((i) => i.carryForward).length,
+                color: 'text-blue-600',
+              },
             ].map(({ label, count, color }) => (
               <div key={label} className="border rounded-lg p-3 text-center">
                 <p className={`text-2xl font-bold ${color}`}>{count}</p>
@@ -432,7 +522,11 @@ export function CommitPage(): React.ReactElement {
 
           <div className="space-y-2">
             {commit.items
-              .sort((a, b) => CHESS_PIECE_ORDER.indexOf(a.chessPiece) - CHESS_PIECE_ORDER.indexOf(b.chessPiece))
+              .sort(
+                (a, b) =>
+                  CHESS_PIECE_ORDER.indexOf(a.chessPiece) -
+                  CHESS_PIECE_ORDER.indexOf(b.chessPiece)
+              )
               .map((item) => (
                 <div key={item.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between gap-2">
@@ -443,9 +537,11 @@ export function CommitPage(): React.ReactElement {
                     {item.completionStatus && (
                       <Badge
                         variant={
-                          item.completionStatus === 'COMPLETED' ? 'success'
-                          : item.completionStatus === 'PARTIAL' ? 'warning'
-                          : 'destructive'
+                          item.completionStatus === 'COMPLETED'
+                            ? 'success'
+                            : item.completionStatus === 'PARTIAL'
+                              ? 'warning'
+                              : 'destructive'
                         }
                         className="text-xs shrink-0"
                       >
@@ -454,7 +550,9 @@ export function CommitPage(): React.ReactElement {
                     )}
                   </div>
                   {item.actualOutcome && (
-                    <p className="text-sm text-muted-foreground mt-2 italic">&ldquo;{item.actualOutcome}&rdquo;</p>
+                    <p className="text-sm text-muted-foreground mt-2 italic">
+                      &ldquo;{item.actualOutcome}&rdquo;
+                    </p>
                   )}
                 </div>
               ))}
@@ -471,7 +569,12 @@ export function CommitPage(): React.ReactElement {
         }}
         onSubmit={(item) => createItem.mutateAsync({ commitId: commit.id, item })}
         editItem={editingItem}
-        onUpdate={editingItem ? (item) => updateItem.mutateAsync({ commitId: commit.id, itemId: editingItem.id, item }) : undefined}
+        onUpdate={
+          editingItem
+            ? (item) =>
+                updateItem.mutateAsync({ commitId: commit.id, itemId: editingItem.id, item })
+            : undefined
+        }
       />
     </div>
   )

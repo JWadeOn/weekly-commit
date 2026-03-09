@@ -209,6 +209,121 @@ public class CommitService {
                 .toList();
     }
 
+    public CommitItemResponse reconcileItem(UUID commitId, UUID itemId, UUID userId,
+                                            ReconcileItemRequest req) {
+        WeeklyCommit commit = weeklyCommitRepository.findById(commitId)
+                .orElseThrow(() -> new CommitNotFoundException("Commit not found: " + commitId));
+        if (!commit.getUserId().equals(userId)) {
+            throw new UnauthorizedException("Access denied");
+        }
+        if (!"RECONCILING".equals(commit.getStatus())) {
+            throw new InvalidStateTransitionException(
+                    "Cannot reconcile items — commit is not in RECONCILING status");
+        }
+        CommitItem item = commitItemRepository.findById(itemId)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemId));
+        if (!item.getWeeklyCommitId().equals(commitId)) {
+            throw new ItemNotFoundException("Item not found: " + itemId);
+        }
+
+        if (req.isCarryForward() && !"PARTIAL".equals(req.getCompletionStatus())
+                && !"NOT_COMPLETED".equals(req.getCompletionStatus())) {
+            throw new InvalidStateTransitionException(
+                    "Carry forward is only allowed for PARTIAL or NOT_COMPLETED items");
+        }
+
+        item.setActualOutcome(req.getActualOutcome());
+        item.setCompletionStatus(req.getCompletionStatus());
+        item.setCarryForward(req.isCarryForward());
+        item.setUpdatedAt(LocalDateTime.now());
+        return toItemResponse(commitItemRepository.save(item));
+    }
+
+    public ReconcileCommitResponse.ReconciliationSummaryDto validateReconciliationAndGetSummary(
+            UUID commitId, UUID userId) {
+        WeeklyCommit commit = weeklyCommitRepository.findById(commitId)
+                .orElseThrow(() -> new CommitNotFoundException("Commit not found: " + commitId));
+        if (!commit.getUserId().equals(userId)) {
+            throw new UnauthorizedException("Access denied");
+        }
+        if (!"RECONCILING".equals(commit.getStatus())) {
+            throw new InvalidStateTransitionException(
+                    "Cannot complete reconciliation — commit is not in RECONCILING status");
+        }
+        List<CommitItem> items =
+                commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId);
+        boolean anyMissingStatus = items.stream()
+                .anyMatch(i -> i.getCompletionStatus() == null || i.getCompletionStatus().isBlank());
+        if (anyMissingStatus) {
+            throw new InvalidStateTransitionException(
+                    "All items must have a completion status before reconciling");
+        }
+
+        long completed = items.stream().filter(i -> "COMPLETED".equals(i.getCompletionStatus())).count();
+        long partial = items.stream().filter(i -> "PARTIAL".equals(i.getCompletionStatus())).count();
+        long notCompleted = items.stream().filter(i -> "NOT_COMPLETED".equals(i.getCompletionStatus())).count();
+        long carriedForward = items.stream().filter(CommitItem::isCarryForward).count();
+
+        return ReconcileCommitResponse.ReconciliationSummaryDto.builder()
+                .completedCount(completed)
+                .partialCount(partial)
+                .notCompletedCount(notCompleted)
+                .carriedForwardCount(carriedForward)
+                .build();
+    }
+
+    public void seedCarryForwards(UUID commitId) {
+        WeeklyCommit commit = weeklyCommitRepository.findById(commitId)
+                .orElseThrow(() -> new CommitNotFoundException("Commit not found: " + commitId));
+        if (!"RECONCILED".equals(commit.getStatus())) {
+            return;
+        }
+        List<CommitItem> toCarry = commitItemRepository.findByWeeklyCommitIdAndCarryForwardTrue(commitId);
+        if (toCarry.isEmpty()) return;
+
+        LocalDate nextMonday = commit.getWeekStartDate().plusDays(7);
+        WeeklyCommit nextWeek = weeklyCommitRepository
+                .findByUserIdAndWeekStartDate(commit.getUserId(), nextMonday)
+                .orElseGet(() -> {
+                    WeeklyCommit newCommit = WeeklyCommit.builder()
+                            .userId(commit.getUserId())
+                            .orgId(commit.getOrgId())
+                            .weekStartDate(nextMonday)
+                            .status("DRAFT")
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    return weeklyCommitRepository.save(newCommit);
+                });
+
+        List<CommitItem> existing =
+                commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(nextWeek.getId());
+        int nextOrder = existing.stream().mapToInt(CommitItem::getPriorityOrder).max().orElse(0) + 1;
+
+        for (CommitItem source : toCarry) {
+            if (commitItemRepository.existsByWeeklyCommitIdAndCarriedFromId(nextWeek.getId(), source.getId())) {
+                continue;
+            }
+            CommitItem carried = CommitItem.builder()
+                    .weeklyCommitId(nextWeek.getId())
+                    .outcomeId(source.getOutcomeId())
+                    .title(source.getTitle())
+                    .description(source.getDescription())
+                    .chessPiece(source.getChessPiece())
+                    .chessWeight(source.getChessWeight())
+                    .priorityOrder(nextOrder++)
+                    .carryForward(false)
+                    .carryForwardCount(0)
+                    .carriedFromId(source.getId())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            commitItemRepository.save(carried);
+
+            source.setCarryForwardCount(source.getCarryForwardCount() + 1);
+            source.setUpdatedAt(LocalDateTime.now());
+            commitItemRepository.save(source);
+        }
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────
 
     public WeekResponse toWeekResponse(WeeklyCommit commit) {
@@ -216,6 +331,7 @@ public class CommitService {
                 commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commit.getId());
 
         int totalWeight = items.stream().mapToInt(CommitItem::getChessWeight).sum();
+        Integer alignmentScore = computeAlignmentScore(items);
 
         List<CommitItemResponse> itemResponses = items.stream()
                 .map(this::toItemResponse)
@@ -232,9 +348,36 @@ public class CommitService {
                 .reconciledAt(commit.getReconciledAt())
                 .viewedAt(commit.getViewedAt())
                 .totalWeight(totalWeight)
-                .alignmentScore(null)
+                .alignmentScore(alignmentScore)
                 .items(itemResponses)
                 .build();
+    }
+
+    /**
+     * Alignment = (sum of weights of RCDO-linked items / total weight) * 100.
+     * All items have outcomeId in this schema, so aligned weight = total weight when items exist.
+     */
+    public static Integer computeAlignmentScore(List<CommitItem> items) {
+        int totalWeight = items.stream().mapToInt(CommitItem::getChessWeight).sum();
+        if (totalWeight == 0) return null;
+        int alignedWeight = items.stream()
+                .filter(i -> i.getOutcomeId() != null)
+                .mapToInt(CommitItem::getChessWeight)
+                .sum();
+        return (int) Math.round((double) alignedWeight / totalWeight * 100.0);
+    }
+
+    public UUID getRallyCryIdForOutcome(UUID outcomeId) {
+        return outcomeRepository.findById(outcomeId)
+                .flatMap(o -> definingObjectiveRepository.findById(o.getDefiningObjectiveId())
+                        .map(DefiningObjective::getRallyCryId))
+                .orElse(null);
+    }
+
+    public String getRallyCryTitle(UUID rallyCryId) {
+        return rallyCryRepository.findById(rallyCryId)
+                .map(RallyCry::getTitle)
+                .orElse("");
     }
 
     public CommitItemResponse toItemResponse(CommitItem item) {

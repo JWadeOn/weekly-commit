@@ -55,7 +55,11 @@ export function useCreateItem() {
 
 export function useUpdateItem() {
   const queryClient = useQueryClient()
-  return useMutation<CommitItemResponse, Error, { commitId: string; itemId: string; item: UpdateCommitItemRequest }>({
+  return useMutation<
+    CommitItemResponse,
+    Error,
+    { commitId: string; itemId: string; item: UpdateCommitItemRequest }
+  >({
     mutationFn: ({ commitId, itemId, item }) => commits.updateItem(commitId, itemId, item),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
@@ -75,9 +79,35 @@ export function useDeleteItem() {
 
 export function useReorderItems() {
   const queryClient = useQueryClient()
-  return useMutation<CommitItemResponse[], Error, { commitId: string; items: ReorderItem[] }>({
+  return useMutation<
+    CommitItemResponse[],
+    Error,
+    { commitId: string; items: ReorderItem[] },
+    { previous: WeeklyCommitResponse | undefined }
+  >({
     mutationFn: ({ commitId, items }) => commits.reorderItems(commitId, items),
-    onSuccess: () => {
+    // Optimistic update — instant feel per US-1006
+    onMutate: async ({ items }) => {
+      await queryClient.cancelQueries({ queryKey: ['commits', 'current'] })
+      const previous = queryClient.getQueryData<WeeklyCommitResponse>(['commits', 'current'])
+      if (previous) {
+        const updatedItems = previous.items.map((item) => {
+          const reordered = items.find((r) => r.id === item.id)
+          return reordered ? { ...item, priorityOrder: reordered.priorityOrder } : item
+        })
+        queryClient.setQueryData<WeeklyCommitResponse>(['commits', 'current'], {
+          ...previous,
+          items: updatedItems,
+        })
+      }
+      return { previous }
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['commits', 'current'], context.previous)
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
     },
   })
@@ -85,7 +115,11 @@ export function useReorderItems() {
 
 export function useReconcileItem() {
   const queryClient = useQueryClient()
-  return useMutation<CommitItemResponse, Error, { commitId: string; itemId: string; data: ReconcileItemRequest }>({
+  return useMutation<
+    CommitItemResponse,
+    Error,
+    { commitId: string; itemId: string; data: ReconcileItemRequest }
+  >({
     mutationFn: ({ commitId, itemId, data }) => commits.reconcileItem(commitId, itemId, data),
     onSuccess: (_, { commitId }) => {
       queryClient.invalidateQueries({ queryKey: ['commits', commitId] })

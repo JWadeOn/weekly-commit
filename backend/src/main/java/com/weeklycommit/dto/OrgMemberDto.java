@@ -5,22 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeamMemberResponse {
+public class OrgMemberDto {
     private UUID userId;
     private String fullName;
     private String email;
-    private UUID currentCommitId;
-    private String currentCommitStatus;
-    private Double alignmentScore;
-    private int itemCount;
-    private List<Integer> alignmentTrend;
-    private Instant lastUpdated;
 }

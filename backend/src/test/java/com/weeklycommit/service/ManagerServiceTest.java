@@ -68,6 +68,7 @@ class ManagerServiceTest {
         when(userRepository.findByManagerId(managerId)).thenReturn(List.of(report));
         when(weeklyCommitRepository.findByUserIdAndWeekStartDate(eq(reportUserId), any(LocalDate.class)))
                 .thenReturn(Optional.empty());
+        when(weeklyCommitRepository.findByUserIdOrderByWeekStartDateDesc(reportUserId)).thenReturn(List.of());
 
         List<TeamMemberResponse> result = managerService.getTeam(managerId, orgId);
 
@@ -104,6 +105,7 @@ class ManagerServiceTest {
                 .thenReturn(Optional.of(commit));
         when(commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId))
                 .thenReturn(List.of());
+        when(weeklyCommitRepository.findByUserIdOrderByWeekStartDateDesc(reportUserId)).thenReturn(List.of(commit));
 
         List<TeamMemberResponse> result = managerService.getTeam(managerId, orgId);
 

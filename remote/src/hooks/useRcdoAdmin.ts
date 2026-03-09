@@ -1,0 +1,128 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { manager } from '@/api/client'
+import type {
+  RcDoAdminResponse,
+  OrgMemberDto,
+  CreateRallyCryRequest,
+  UpdateRallyCryRequest,
+  CreateDefiningObjectiveRequest,
+  UpdateDefiningObjectiveRequest,
+  CreateOutcomeRequest,
+  UpdateOutcomeRequest,
+} from '@/types'
+
+export function useRcdoAdmin() {
+  return useQuery<RcDoAdminResponse>({
+    queryKey: ['manager', 'rcdo'],
+    queryFn: () => manager.rcdo.getAdminHierarchy(),
+  })
+}
+
+export function useOrgMembers() {
+  return useQuery<OrgMemberDto[]>({
+    queryKey: ['manager', 'rcdo', 'org-members'],
+    queryFn: () => manager.rcdo.getOrgMembers(),
+  })
+}
+
+export function useCreateRallyCry() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateRallyCryRequest) => manager.rcdo.createRallyCry(body),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useUpdateRallyCry() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateRallyCryRequest }) =>
+      manager.rcdo.updateRallyCry(id, body),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useDeactivateRallyCry() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => manager.rcdo.deactivateRallyCry(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useCreateDefiningObjective() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateDefiningObjectiveRequest) => manager.rcdo.createDefiningObjective(body),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useUpdateDefiningObjective() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateDefiningObjectiveRequest }) =>
+      manager.rcdo.updateDefiningObjective(id, body),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useDeactivateDefiningObjective() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => manager.rcdo.deactivateDefiningObjective(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useCreateOutcome() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateOutcomeRequest) => manager.rcdo.createOutcome(body),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useUpdateOutcome() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateOutcomeRequest }) =>
+      manager.rcdo.updateOutcome(id, body),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useDeactivateOutcome() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => manager.rcdo.deactivateOutcome(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
+      q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}

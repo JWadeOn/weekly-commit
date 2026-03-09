@@ -136,6 +136,7 @@ export interface TeamMemberResponse {
   email: string
   currentCommit: CurrentCommitSummary | null
   alignmentTrend: number[]
+  lastUpdated?: string | null
 }
 
 export interface UnderSupportedRallyCry {
@@ -150,13 +151,129 @@ export interface TeamResponse {
   underSupportedRallyCries: UnderSupportedRallyCry[]
 }
 
+/** Raw shape returned by GET /api/manager/team (array of members with flat fields) */
+export interface TeamMemberApiResponse {
+  userId: string
+  fullName: string
+  email: string
+  currentCommitId: string | null
+  currentCommitStatus: string | null
+  alignmentScore: number | null
+  itemCount: number
+  alignmentTrend?: number[]
+  lastUpdated?: string | null
+}
+
 export interface ManagerNoteResponse {
   id: string
-  commitId: string
-  authorId: string
-  authorName: string
+  managerId: string
+  managerName: string
   note: string
   createdAt: string
+}
+
+export interface TeamAlignmentContributorDto {
+  userId: string
+  fullName: string
+  itemCount: number
+}
+
+export interface RallyCryBreakdownDto {
+  rallyCryId: string
+  title: string
+  supportingItemCount: number
+  supportingWeight: number
+  weightPercentage: number
+  contributors: TeamAlignmentContributorDto[]
+}
+
+export interface TeamAlignmentResponse {
+  totalWeight: number
+  alignedWeight: number
+  alignmentPercentage: number
+  rallyCryBreakdown: RallyCryBreakdownDto[]
+  underSupportedRallyCries?: UnderSupportedRallyCryDto[]
+}
+
+export interface UnderSupportedRallyCryDto {
+  rallyCryId: string
+  title: string
+  supportPercentage: number
+}
+
+// Manager RCDO admin (full tree with active + owner names)
+export interface AdminOutcomeDto {
+  id: string
+  definingObjectiveId: string
+  title: string
+  description: string | null
+  ownerId: string
+  ownerName: string
+  active: boolean
+}
+
+export interface AdminDefiningObjectiveDto {
+  id: string
+  rallyCryId: string
+  title: string
+  description: string | null
+  active: boolean
+  outcomes: AdminOutcomeDto[]
+}
+
+export interface AdminRallyCryDto {
+  id: string
+  title: string
+  description: string | null
+  active: boolean
+  definingObjectives: AdminDefiningObjectiveDto[]
+}
+
+export interface RcDoAdminResponse {
+  rallyCries: AdminRallyCryDto[]
+}
+
+export interface OrgMemberDto {
+  userId: string
+  fullName: string
+  email: string
+}
+
+export interface CreateRallyCryRequest {
+  title: string
+  description?: string
+}
+
+export interface UpdateRallyCryRequest {
+  title: string
+  description?: string
+  active?: boolean
+}
+
+export interface CreateDefiningObjectiveRequest {
+  rallyCryId: string
+  title: string
+  description?: string
+}
+
+export interface UpdateDefiningObjectiveRequest {
+  title: string
+  description?: string
+  active?: boolean
+}
+
+export interface CreateOutcomeRequest {
+  definingObjectiveId: string
+  ownerId: string
+  title: string
+  description?: string
+}
+
+export interface UpdateOutcomeRequest {
+  ownerId?: string
+  title: string
+  description?: string
+  active?: boolean
 }
 
 export interface ReconciliationSummary {

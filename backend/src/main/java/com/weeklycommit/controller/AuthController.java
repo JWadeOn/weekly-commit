@@ -2,7 +2,9 @@ package com.weeklycommit.controller;
 
 import com.weeklycommit.dto.ErrorResponse;
 import com.weeklycommit.dto.UserResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -24,19 +26,36 @@ public class AuthController {
 
     /**
      * POST /api/auth/logout
-     * Clears the JWT cookie. No auth required.
+     * Clears JWT and session cookies and invalidates the server session.
      */
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
-        ResponseCookie clearCookie = ResponseCookie.from("jwt", "")
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request, HttpServletResponse response) {
+        // Invalidate Spring session so server forgets the user
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        // Clear JWT cookie (no domain so it matches how it was set by this host)
+        ResponseCookie clearJwt = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
                 .maxAge(0)
                 .sameSite("Lax")
                 .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, clearJwt.toString());
 
-        response.addHeader(HttpHeaders.SET_COOKIE, clearCookie.toString());
+        // Clear JSESSIONID so the browser drops the session cookie
+        ResponseCookie clearSession = ResponseCookie.from("JSESSIONID", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, clearSession.toString());
+
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 

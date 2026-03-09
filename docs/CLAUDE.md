@@ -8,8 +8,10 @@
   
 ## Project Overview
 Internal micro-frontend replacing 15-Five. Enforces connection between
-weekly commits and organizational strategic goals via RCDO hierarchy
-and Chess layer prioritization.
+weekly commits and organizational strategic goals via **Lencioni's "The Advantage"**:
+RCDO hierarchy (Rally Cry → Defining Objectives → Outcomes) and Chess layer
+prioritization. The module answers Questions 5 & 6: *What is most important right now?*
+and *Who must do what?* See [`docs/THE_ADVANTAGE.md`](docs/THE_ADVANTAGE.md).
 
 Target users: Employees (ICs) and Managers inside a single organization.
 A user can hold both roles simultaneously across different teams.
@@ -19,6 +21,7 @@ A user can hold both roles simultaneously across different teams.
 ## Non-Negotiable Technical Decisions
 - Java 21 with Spring Boot 3 (virtual threads enabled)
 - TypeScript strict mode — no `any` types ever
+- **Test Driven Development (TDD):** All new features and bug fixes are done test-first (Red → Green → Refactor). See [`docs/TDD.md`](docs/TDD.md).
 - PostgreSQL + Flyway migrations
 - OAuth 2.0 Authorization Code Flow + Spring Security + internal JWT issuance
 - React 18 + Vite + Module Federation (@originjs/vite-plugin-federation)
@@ -140,6 +143,7 @@ export default function WeeklyCommitApp(props: WeeklyCommitAppProps): JSX.Elemen
 
 ## What NOT To Do
 - Never use localStorage for tokens — httpOnly cookie only
+- Never write production code for a new capability without a failing test first (TDD)
 - Never expose JPA entities in API responses — always use DTOs
 - Never write raw SQL strings — JPA parameterized queries only
 - Never add Redis, queues, or caching — not needed at this scale

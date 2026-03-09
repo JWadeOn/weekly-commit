@@ -5,7 +5,8 @@ import type {
   CommitSummaryResponse,
   PagedResponse,
   CommitItemResponse,
-  TeamResponse,
+  TeamMemberApiResponse,
+  TeamAlignmentResponse,
   ManagerNoteResponse,
   CreateCommitItemRequest,
   UpdateCommitItemRequest,
@@ -13,6 +14,14 @@ import type {
   ReconcileItemRequest,
   ReorderItem,
   ReconcileCommitResponse,
+  RcDoAdminResponse,
+  OrgMemberDto,
+  CreateRallyCryRequest,
+  UpdateRallyCryRequest,
+  CreateDefiningObjectiveRequest,
+  UpdateDefiningObjectiveRequest,
+  CreateOutcomeRequest,
+  UpdateOutcomeRequest,
 } from '@/types'
 
 const BASE_URL = 'http://localhost:8080/api'
@@ -113,17 +122,46 @@ export const commits = {
 }
 
 export const manager = {
-  team: (): Promise<TeamResponse> => request('/manager/team'),
+  team: (): Promise<TeamMemberApiResponse[]> =>
+    request('/manager/team'),
 
   getCommit: (userId: string, commitId: string): Promise<WeeklyCommitResponse> =>
     request(`/manager/team/${userId}/commits/${commitId}`),
 
-  addNote: (commitId: string, note: string): Promise<ManagerNoteResponse> =>
-    request(`/manager/commits/${commitId}/notes`, {
+  addNote: (userId: string, commitId: string, note: string): Promise<ManagerNoteResponse> =>
+    request(`/manager/team/${userId}/commits/${commitId}/notes`, {
       method: 'POST',
       body: JSON.stringify({ note }),
     }),
 
   getNotes: (userId: string, commitId: string): Promise<ManagerNoteResponse[]> =>
     request(`/manager/team/${userId}/commits/${commitId}/notes`),
+
+  teamAlignment: (): Promise<TeamAlignmentResponse> =>
+    request('/manager/team/alignment'),
+
+  rcdo: {
+    getAdminHierarchy: (): Promise<RcDoAdminResponse> =>
+      request('/manager/rcdo'),
+    getOrgMembers: (): Promise<OrgMemberDto[]> =>
+      request('/manager/rcdo/org-members'),
+    createRallyCry: (body: CreateRallyCryRequest): Promise<RcDoAdminResponse['rallyCries'][0]> =>
+      request('/manager/rcdo/rally-cries', { method: 'POST', body: JSON.stringify(body) }),
+    updateRallyCry: (id: string, body: UpdateRallyCryRequest): Promise<RcDoAdminResponse['rallyCries'][0]> =>
+      request(`/manager/rcdo/rally-cries/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    deactivateRallyCry: (id: string): Promise<void> =>
+      request(`/manager/rcdo/rally-cries/${id}`, { method: 'DELETE' }),
+    createDefiningObjective: (body: CreateDefiningObjectiveRequest): Promise<RcDoAdminResponse['rallyCries'][0]['definingObjectives'][0]> =>
+      request('/manager/rcdo/defining-objectives', { method: 'POST', body: JSON.stringify(body) }),
+    updateDefiningObjective: (id: string, body: UpdateDefiningObjectiveRequest): Promise<RcDoAdminResponse['rallyCries'][0]['definingObjectives'][0]> =>
+      request(`/manager/rcdo/defining-objectives/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    deactivateDefiningObjective: (id: string): Promise<void> =>
+      request(`/manager/rcdo/defining-objectives/${id}`, { method: 'DELETE' }),
+    createOutcome: (body: CreateOutcomeRequest): Promise<RcDoAdminResponse['rallyCries'][0]['definingObjectives'][0]['outcomes'][0]> =>
+      request('/manager/rcdo/outcomes', { method: 'POST', body: JSON.stringify(body) }),
+    updateOutcome: (id: string, body: UpdateOutcomeRequest): Promise<RcDoAdminResponse['rallyCries'][0]['definingObjectives'][0]['outcomes'][0]> =>
+      request(`/manager/rcdo/outcomes/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    deactivateOutcome: (id: string): Promise<void> =>
+      request(`/manager/rcdo/outcomes/${id}`, { method: 'DELETE' }),
+  },
 }

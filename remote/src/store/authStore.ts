@@ -34,7 +34,8 @@ export const useAuthStore = create<AuthState>((set) => {
         await auth.logout()
       } finally {
         set({ user: null, isAuthenticated: false })
-        window.location.href = '/'
+        // Full navigation so host shell re-fetches auth and shows login
+        window.location.href = window.location.origin + '/'
       }
     },
 

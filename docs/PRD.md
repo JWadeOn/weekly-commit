@@ -4,6 +4,7 @@
 **Version:** 1.1
 **Status:** Final for Development
 **Assumptions:** Marked with 🔵 throughout
+**Strategic framing:** See [`docs/THE_ADVANTAGE.md`](THE_ADVANTAGE.md) for how this module implements Lencioni’s "The Advantage" (Questions 5 & 6: *What is most important right now?* and *Who must do what?*).
 
 ---
 
@@ -12,7 +13,7 @@
 Replace 15-Five with a structured weekly planning system that enforces a
 direct connection between individual weekly work and organizational strategic
 goals. Every commit item must trace upward to a Rally Cry. Misalignment
-becomes visible before it becomes a problem.
+becomes visible before it becomes a problem. The design follows **Patrick Lencioni’s "The Advantage"**: the LOCKED state prevents revisionist history; the Reconciliation View surfaces planned vs. actual for accountability; Carry Forward forces the conversation "Is this still a priority for our Defining Objective, or busy work?"
 
 ---
 
@@ -38,6 +39,8 @@ both IC and Manager views. No manual role switching required.
 ---
 
 ## 3. RCDO Hierarchy
+
+The hierarchy follows Lencioni’s "Playbook": a single **Rally Cry** (Thematic Goal) with **Defining Objectives** (DOs) and **Outcomes** beneath it. Standard Operating Objectives (SOOs / KTLO) are not yet modeled; see [`THE_ADVANTAGE.md`](THE_ADVANTAGE.md) §6.
 
 ```
 Rally Cry (org-wide, 1-3 per org)
@@ -103,6 +106,8 @@ Alignment Score = Sum of weights of RCDO-linked items / Total weight of all item
 
 ## 5. Weekly Lifecycle State Machine
 
+The state machine enforces accountability (Lencioni): **LOCKED** prevents editing goals after submission so they can’t be changed to match what was actually done. Reconciliation is only allowed after LOCKED.
+
 ```
 DRAFT → LOCKED → RECONCILING → RECONCILED
 ```
@@ -143,6 +148,7 @@ DRAFT → LOCKED → RECONCILING → RECONCILED
 - Seeded item displays visual "Carried Forward" badge in new week
 - Seeding is idempotent — running twice never creates duplicates
 - carry_forward_count increments each time an item is carried forward
+- **Rationale (The Advantage):** Carry forward forces the conversation — "Is this still a priority for our Defining Objective, or was it just busy work?"
 
 ### Legal Transitions
 | From         | To           | Trigger                        | Condition                          |
@@ -242,6 +248,7 @@ Two-column comparison:
 - Viewing sets viewed_at timestamp — disables IC retract
 - Post-reconciliation: planned vs. actual comparison
 - Manager can add notes
+- **Rationale (The Advantage):** Manager review identifies misalignment — e.g. if the Rally Cry is "Mobile First" but commits are "Desktop Refactor," the dashboard highlights that gap.
 
 **Team Alignment View**
 - Weight-adjusted alignment breakdown mapped to Rally Cries

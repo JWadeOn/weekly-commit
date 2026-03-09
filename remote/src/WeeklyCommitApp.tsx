@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { setAuthExpiredHandler } from '@/api/client'
 import { CommitPage } from '@/pages/CommitPage'
 import { ManagerDashboard } from '@/pages/ManagerDashboard'
 import { CommitDetailPage } from '@/pages/CommitDetailPage'
+import { CommitHistoryPage } from '@/pages/CommitHistoryPage'
+import { AppNav } from '@/components/AppNav'
 import './index.css'
 
 export interface WeeklyCommitAppProps {
@@ -26,39 +28,64 @@ const queryClient = new QueryClient({
 
 function RoleRedirect(): React.ReactElement {
   const { user } = useAuthStore()
+  console.log('[WeeklyCommitApp] RoleRedirect — user:', user?.roles)
   if (!user) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
   const isManager = user.roles.includes('MANAGER') || user.roles.includes('DUAL_ROLE')
-  return <Navigate to={isManager ? '/manager' : '/commits'} replace />
+  const target = isManager ? '/manager' : '/commits'
+  console.log('[WeeklyCommitApp] RoleRedirect — navigating to:', target)
+  return <Navigate to={target} replace />
 }
 
 function AppContent({ onAuthExpired }: { onAuthExpired: () => void }): React.ReactElement {
-  const { fetchUser, isLoading } = useAuthStore()
+  const { fetchUser, isLoading, user } = useAuthStore()
 
   useEffect(() => {
+    console.log('[WeeklyCommitApp] AppContent mounted — calling fetchUser')
     setAuthExpiredHandler(onAuthExpired)
     fetchUser()
   }, [fetchUser, onAuthExpired])
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>
+  console.log('[WeeklyCommitApp] AppContent render — isLoading:', isLoading, 'user:', user?.email ?? null)
+
+  // Block until we know auth state — avoids a flash of wrong route on first render
+  if (isLoading || (!user && !isLoading)) {
+    // If we've never fetched yet (user null, not loading), show spinner while
+    // the useEffect fires and fetchUser runs.
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Loading...
+      </div>
+    )
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<RoleRedirect />} />
-      <Route path="/commits" element={<CommitPage />} />
-      <Route path="/commits/:id" element={<CommitDetailPage />} />
-      <Route path="/manager" element={<ManagerDashboard />} />
-    </Routes>
+    <div className="flex flex-col">
+      <AppNav />
+      <main>
+        <Routes>
+          <Route path="/" element={<RoleRedirect />} />
+          <Route path="/commits" element={<CommitPage />} />
+          <Route path="/commits/:id" element={<CommitDetailPage />} />
+          <Route path="/history" element={<CommitHistoryPage />} />
+          <Route path="/manager" element={<ManagerDashboard />} />
+        </Routes>
+      </main>
+    </div>
   )
 }
 
 export default function WeeklyCommitApp({ onAuthExpired }: WeeklyCommitAppProps): JSX.Element {
+  console.log('[WeeklyCommitApp] root render')
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      {/*
+        MemoryRouter keeps all routing in memory — never touches window.location.
+        This is required for MFEs embedded inside a host app so that internal
+        navigation doesn't change the host's browser URL or trigger host re-renders.
+      */}
+      <MemoryRouter initialEntries={['/']} initialIndex={0}>
         <AppContent onAuthExpired={onAuthExpired} />
-      </BrowserRouter>
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }

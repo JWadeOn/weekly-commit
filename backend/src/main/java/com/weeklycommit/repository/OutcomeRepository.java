@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface OutcomeRepository extends JpaRepository<Outcome, UUID> {
 
     List<Outcome> findByDefiningObjectiveIdAndActiveTrue(UUID objectiveId);
+    List<Outcome> findByDefiningObjectiveIdOrderByCreatedAtAsc(UUID definingObjectiveId);
 }

@@ -85,7 +85,7 @@ public class CommitController {
                             .weekEndDate(commit.getWeekStartDate().plusDays(4))
                             .status(commit.getStatus())
                             .totalWeight(totalWeight)
-                            .alignmentScore(null)
+                            .alignmentScore(CommitService.computeAlignmentScore(items))
                             .itemCount(items.size())
                             .completedCount(completed)
                             .partialCount(partial)
@@ -150,5 +150,30 @@ public class CommitController {
             @Valid @RequestBody ReorderItemsRequest req) {
         UUID userId = SecurityContextHelper.getCurrentUserId();
         return ResponseEntity.ok(commitService.reorderItems(id, userId, req));
+    }
+
+    @PutMapping("/{id}/items/{itemId}/reconcile")
+    public ResponseEntity<CommitItemResponse> reconcileItem(
+            @PathVariable UUID id,
+            @PathVariable UUID itemId,
+            @Valid @RequestBody ReconcileItemRequest req) {
+        UUID userId = SecurityContextHelper.getCurrentUserId();
+        return ResponseEntity.ok(commitService.reconcileItem(id, itemId, userId, req));
+    }
+
+    @PostMapping("/{id}/reconcile")
+    public ResponseEntity<ReconcileCommitResponse> completeReconciliation(@PathVariable UUID id) {
+        UUID userId = SecurityContextHelper.getCurrentUserId();
+        UUID orgId = SecurityContextHelper.getCurrentOrgId();
+        ReconcileCommitResponse.ReconciliationSummaryDto summary =
+                commitService.validateReconciliationAndGetSummary(id, userId);
+        stateMachineService.transitionStatus(id, userId, orgId, "RECONCILED", null);
+        commitService.seedCarryForwards(id);
+        ReconcileCommitResponse response = ReconcileCommitResponse.builder()
+                .id(id)
+                .status("RECONCILED")
+                .summary(summary)
+                .build();
+        return ResponseEntity.ok(response);
     }
 }

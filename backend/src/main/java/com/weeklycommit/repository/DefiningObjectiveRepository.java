@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface DefiningObjectiveRepository extends JpaRepository<DefiningObjective, UUID> {
 
     List<DefiningObjective> findByRallyCryIdAndActiveTrue(UUID rallyCryId);
+    List<DefiningObjective> findByRallyCryIdOrderByCreatedAtAsc(UUID rallyCryId);
 }

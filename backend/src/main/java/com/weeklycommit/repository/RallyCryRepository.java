@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface RallyCryRepository extends JpaRepository<RallyCry, UUID> {
 
     List<RallyCry> findByOrgIdAndActiveTrue(UUID orgId);
+    List<RallyCry> findByOrgIdOrderByCreatedAtAsc(UUID orgId);
 }
