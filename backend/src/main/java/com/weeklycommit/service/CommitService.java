@@ -380,6 +380,18 @@ public class CommitService {
                 .orElse(null);
     }
 
+    public UUID getDefiningObjectiveIdForOutcome(UUID outcomeId) {
+        return outcomeRepository.findById(outcomeId)
+                .map(Outcome::getDefiningObjectiveId)
+                .orElse(null);
+    }
+
+    public String getDefiningObjectiveTitle(UUID doId) {
+        return definingObjectiveRepository.findById(doId)
+                .map(DefiningObjective::getTitle)
+                .orElse("");
+    }
+
     public String getRallyCryTitle(UUID rallyCryId) {
         return rallyCryRepository.findById(rallyCryId)
                 .map(RallyCry::getTitle)

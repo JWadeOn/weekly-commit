@@ -22,6 +22,7 @@ public class TeamAlignmentResponse {
     private int strategicPercentage;
     private List<RallyCryBreakdownDto> rallyCryBreakdown;
     private List<UnderSupportedRallyCryDto> underSupportedRallyCries;
+    private List<DefiningObjectiveBreakdownDto> definingObjectiveBreakdown;
 
     @Data
     @Builder
@@ -54,5 +55,18 @@ public class TeamAlignmentResponse {
         private UUID userId;
         private String fullName;
         private int itemCount;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DefiningObjectiveBreakdownDto {
+        private UUID definingObjectiveId;
+        private UUID rallyCryId;
+        private String title;
+        private int supportingItemCount;
+        private long supportingWeight;
+        private int weightPercentage;
     }
 }

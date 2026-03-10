@@ -8,6 +8,7 @@ import type {
   WeeklyCommitResponse,
   ManagerNoteResponse,
   CommitStatus,
+  RcDoAdminResponse,
 } from '@/types'
 
 /** Backend returns an array; normalize to TeamResponse for the UI */
@@ -62,6 +63,13 @@ export function useTeamAlignment() {
     queryKey: ['manager', 'team', 'alignment'],
     queryFn: () => manager.teamAlignment(),
     refetchInterval: 30_000,
+  })
+}
+
+export function useRcdoHierarchy() {
+  return useQuery<RcDoAdminResponse>({
+    queryKey: ['manager', 'rcdo'],
+    queryFn: () => manager.rcdo.getAdminHierarchy(),
   })
 }
 

@@ -194,6 +194,15 @@ export interface RallyCryBreakdownDto {
   contributors: TeamAlignmentContributorDto[]
 }
 
+export interface DefiningObjectiveBreakdownDto {
+  definingObjectiveId: string
+  rallyCryId: string
+  title: string
+  supportingItemCount: number
+  supportingWeight: number
+  weightPercentage: number
+}
+
 export interface TeamAlignmentResponse {
   totalWeight: number
   alignedWeight: number
@@ -203,6 +212,7 @@ export interface TeamAlignmentResponse {
   strategicPercentage: number
   rallyCryBreakdown: RallyCryBreakdownDto[]
   underSupportedRallyCries?: UnderSupportedRallyCryDto[]
+  definingObjectiveBreakdown?: DefiningObjectiveBreakdownDto[]
 }
 
 export interface UnderSupportedRallyCryDto {

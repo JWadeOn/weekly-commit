@@ -246,6 +246,7 @@ public class ManagerService {
         long tacticalWeight = 0;
         java.util.Set<String> strategicPieces = java.util.Set.of("KING", "QUEEN", "ROOK");
         Map<UUID, RallyCryBucket> byRallyCry = new java.util.HashMap<>();
+        Map<UUID, DefiningObjectiveBucket> byDO = new java.util.HashMap<>();
 
         for (User report : reports) {
             Optional<WeeklyCommit> commitOpt =
@@ -268,6 +269,11 @@ public class ManagerService {
                     if (rallyCryId != null) {
                         byRallyCry.computeIfAbsent(rallyCryId, k -> new RallyCryBucket())
                                 .add(item.getChessWeight(), report.getId(), report.getFullName());
+                    }
+                    UUID doId = commitService.getDefiningObjectiveIdForOutcome(item.getOutcomeId());
+                    if (doId != null) {
+                        byDO.computeIfAbsent(doId, k -> new DefiningObjectiveBucket())
+                                .add(item.getChessWeight(), rallyCryId);
                     }
                 }
             }
@@ -307,6 +313,23 @@ public class ManagerService {
                 ? (int) Math.round((double) strategicWeight / totalWeightFinal * 100.0)
                 : 0;
 
+        List<TeamAlignmentResponse.DefiningObjectiveBreakdownDto> doBreakdown = byDO.entrySet().stream()
+                .map(e -> {
+                    DefiningObjectiveBucket b = e.getValue();
+                    int pct = totalWeightFinal > 0
+                            ? (int) Math.round((double) b.weight / totalWeightFinal * 100.0)
+                            : 0;
+                    return TeamAlignmentResponse.DefiningObjectiveBreakdownDto.builder()
+                            .definingObjectiveId(e.getKey())
+                            .rallyCryId(b.rallyCryId)
+                            .title(commitService.getDefiningObjectiveTitle(e.getKey()))
+                            .supportingItemCount(b.itemCount)
+                            .supportingWeight(b.weight)
+                            .weightPercentage(pct)
+                            .build();
+                })
+                .toList();
+
         return TeamAlignmentResponse.builder()
                 .totalWeight(totalWeight)
                 .alignedWeight(alignedWeight)
@@ -316,6 +339,7 @@ public class ManagerService {
                 .strategicPercentage(strategicPercentage)
                 .rallyCryBreakdown(breakdown)
                 .underSupportedRallyCries(underSupported)
+                .definingObjectiveBreakdown(doBreakdown)
                 .build();
     }
 
@@ -364,4 +388,16 @@ public class ManagerService {
     }
 
     private record ContributorCount(UUID userId, String fullName, int itemCount) {}
+
+    private static class DefiningObjectiveBucket {
+        UUID rallyCryId;
+        long weight;
+        int itemCount;
+
+        void add(int itemWeight, UUID rcId) {
+            weight += itemWeight;
+            itemCount++;
+            if (rallyCryId == null) rallyCryId = rcId;
+        }
+    }
 }

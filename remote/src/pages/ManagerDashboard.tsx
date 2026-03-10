@@ -13,8 +13,231 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useTeamDashboard, useTeamAlignment } from '@/hooks/useManager'
-import type { TeamMemberResponse } from '@/types'
+import { useTeamDashboard, useTeamAlignment, useRcdoHierarchy } from '@/hooks/useManager'
+import type { TeamMemberResponse, DefiningObjectiveBreakdownDto } from '@/types'
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+function svgLines(text: string, maxLen: number): string[] {
+  if (text.length <= maxLen) return [text]
+  const cut = text.lastIndexOf(' ', maxLen)
+  if (cut < 0) return [text.slice(0, maxLen - 1) + '…']
+  const rest = text.slice(cut + 1)
+  return [text.slice(0, cut), rest.length > maxLen ? rest.slice(0, maxLen - 1) + '…' : rest]
+}
+
+function gaugeColor(pct: number): string {
+  if (pct >= 25) return '#22c55e'
+  if (pct >= 10) return '#3b82f6'
+  return '#f97316'
+}
+
+// ── NorthStarViz ──────────────────────────────────────────────────────────────
+
+function NorthStarViz({
+  rallyCryTitle,
+  definingObjectives,
+  teamAlignmentPct,
+}: {
+  rallyCryTitle: string
+  definingObjectives: DefiningObjectiveBreakdownDto[]
+  teamAlignmentPct: number
+}): React.ReactElement {
+  const W = 700
+  const STAR_CX = W / 2
+  const STAR_CY = 66
+  const STAR_OUTER = 28
+  const STAR_INNER = 11
+  const DO_R = 42
+  const DO_STROKE = 8
+  const BAR_Y = 192
+  const DO_CY = 288
+
+  const N = definingObjectives.length
+  const colW = N > 0 ? W / (N + 1) : W / 2
+  const doXAt = (i: number) => Math.round(colW * (i + 1))
+  const SVG_H = N > 0 ? 378 : 210
+
+  // Star polygon
+  const starPts = Array.from({ length: 10 }, (_, i) => {
+    const angle = (i * Math.PI) / 5 - Math.PI / 2
+    const r = i % 2 === 0 ? STAR_OUTER : STAR_INNER
+    return `${(STAR_CX + r * Math.cos(angle)).toFixed(1)},${(STAR_CY + r * Math.sin(angle)).toFixed(1)}`
+  }).join(' ')
+
+  const rcLines = svgLines(rallyCryTitle, 44)
+  const lastTitleY = STAR_CY + STAR_OUTER + 18 + (rcLines.length - 1) * 18
+  const alignTextY = lastTitleY + 20
+  const connectorTopY = alignTextY + 14
+
+  const gradId = `starGlow-${rallyCryTitle.slice(0, 8).replace(/\s/g, '')}`
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${SVG_H}`}
+      className="w-full"
+      aria-label={`North Star: ${rallyCryTitle}`}
+    >
+      <defs>
+        <radialGradient id={gradId} cx="50%" cy="0%" r="65%">
+          <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <rect width={W} height={SVG_H} fill={`url(#${gradId})`} rx="8" />
+
+      {/* "NORTH STAR" label */}
+      <text
+        x={STAR_CX}
+        y={STAR_CY - STAR_OUTER - 9}
+        textAnchor="middle"
+        fontSize="8"
+        fontWeight="700"
+        fill="#92400e"
+        letterSpacing="3"
+      >
+        NORTH STAR
+      </text>
+
+      {/* Star polygon */}
+      <polygon
+        points={starPts}
+        fill="#fbbf24"
+        stroke="#f59e0b"
+        strokeWidth="1.5"
+        filter="url(#glow)"
+      />
+
+      {/* Rally cry title */}
+      {rcLines.map((line, idx) => (
+        <text
+          key={idx}
+          x={STAR_CX}
+          y={STAR_CY + STAR_OUTER + 18 + idx * 18}
+          textAnchor="middle"
+          fontSize="14"
+          fontWeight="700"
+          fill="#111827"
+        >
+          {line}
+        </text>
+      ))}
+
+      {/* Team alignment % */}
+      <text x={STAR_CX} y={alignTextY} textAnchor="middle" fontSize="11" fill="#6b7280">
+        {teamAlignmentPct}% team aligned this week
+      </text>
+
+      {/* Tree connectors */}
+      {N > 0 && (
+        <>
+          <line
+            x1={STAR_CX}
+            y1={connectorTopY}
+            x2={STAR_CX}
+            y2={BAR_Y}
+            stroke="#d1d5db"
+            strokeWidth="1.5"
+            strokeDasharray="5 3"
+          />
+          {N > 1 && (
+            <line
+              x1={doXAt(0)}
+              y1={BAR_Y}
+              x2={doXAt(N - 1)}
+              y2={BAR_Y}
+              stroke="#d1d5db"
+              strokeWidth="1.5"
+            />
+          )}
+          {definingObjectives.map((_, i) => (
+            <line
+              key={i}
+              x1={doXAt(i)}
+              y1={BAR_Y}
+              x2={doXAt(i)}
+              y2={DO_CY - DO_R - 3}
+              stroke="#d1d5db"
+              strokeWidth="1.5"
+            />
+          ))}
+        </>
+      )}
+
+      {/* DO circle gauges */}
+      {definingObjectives.map((obj, i) => {
+        const cx = doXAt(i)
+        const circumference = 2 * Math.PI * DO_R
+        const pct = Math.min(obj.weightPercentage, 100)
+        const dashOffset = circumference * (1 - pct / 100)
+        const color = pct === 0 ? '#d1d5db' : gaugeColor(pct)
+        const doTitleLines = svgLines(obj.title, 18)
+
+        return (
+          <g key={obj.definingObjectiveId}>
+            <circle cx={cx} cy={DO_CY} r={DO_R} fill="white" />
+            <circle
+              cx={cx}
+              cy={DO_CY}
+              r={DO_R}
+              fill="none"
+              stroke="#e5e7eb"
+              strokeWidth={DO_STROKE}
+            />
+            <circle
+              cx={cx}
+              cy={DO_CY}
+              r={DO_R}
+              fill="none"
+              stroke={color}
+              strokeWidth={DO_STROKE}
+              strokeDasharray={`${circumference}`}
+              strokeDashoffset={`${dashOffset}`}
+              strokeLinecap="round"
+              transform={`rotate(-90 ${cx} ${DO_CY})`}
+            />
+            <text
+              x={cx}
+              y={DO_CY - 5}
+              textAnchor="middle"
+              fontSize="17"
+              fontWeight="700"
+              fill={color}
+            >
+              {pct}%
+            </text>
+            <text x={cx} y={DO_CY + 13} textAnchor="middle" fontSize="9.5" fill="#9ca3af">
+              {obj.supportingItemCount} item{obj.supportingItemCount !== 1 ? 's' : ''}
+            </text>
+            {doTitleLines.map((line, idx) => (
+              <text
+                key={idx}
+                x={cx}
+                y={DO_CY + DO_R + 17 + idx * 14}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="600"
+                fill="#374151"
+              >
+                {line}
+              </text>
+            ))}
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+// ── AlignmentTrend ────────────────────────────────────────────────────────────
 
 function AlignmentTrend({ trend }: { trend?: number[] }): React.ReactElement {
   const t = trend ?? []
@@ -41,6 +264,8 @@ function AlignmentTrend({ trend }: { trend?: number[] }): React.ReactElement {
     </span>
   )
 }
+
+// ── TeamMemberCard ────────────────────────────────────────────────────────────
 
 function TeamMemberCard({ member }: { member: TeamMemberResponse }): React.ReactElement {
   const navigate = useNavigate()
@@ -76,12 +301,11 @@ function TeamMemberCard({ member }: { member: TeamMemberResponse }): React.React
               </div>
             </div>
 
-            {/* Alignment warning — shown when score falls below 70% threshold */}
             {lowAlignment && (
               <div className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 <span className="font-medium">
-                  🚨 Alignment {alignmentScore}% — below 70% threshold
+                  Alignment {alignmentScore}% — below 70% threshold
                 </span>
               </div>
             )}
@@ -109,9 +333,7 @@ function TeamMemberCard({ member }: { member: TeamMemberResponse }): React.React
                 variant="outline"
                 className="w-full"
                 onClick={() =>
-                  navigate(
-                    `/commits/${member.currentCommit!.id}?userId=${member.userId}`
-                  )
+                  navigate(`/commits/${member.currentCommit!.id}?userId=${member.userId}`)
                 }
               >
                 <Eye className="h-3.5 w-3.5 mr-1" />
@@ -127,15 +349,47 @@ function TeamMemberCard({ member }: { member: TeamMemberResponse }): React.React
   )
 }
 
+// ── ManagerDashboard ──────────────────────────────────────────────────────────
+
 export function ManagerDashboard(): React.ReactElement {
   const navigate = useNavigate()
   const { data: team, isLoading, error } = useTeamDashboard()
   const { data: alignment } = useTeamAlignment()
+  const { data: rcdo } = useRcdoHierarchy()
 
   type SortKey = 'name' | 'status' | 'itemCount' | 'alignment' | 'lastUpdated'
   const [sortBy, setSortBy] = useState<SortKey>('name')
 
   const teamMembers: TeamMemberResponse[] = team?.teamMembers ?? []
+
+  // Build the north-star data: one entry per active rally cry, with ALL active DOs
+  // under it — merging RCDO hierarchy (complete) with alignment weights (partial).
+  const northStarData = useMemo(() => {
+    if (!rcdo) return []
+    const doIndex = new Map(
+      (alignment?.definingObjectiveBreakdown ?? []).map((d) => [d.definingObjectiveId, d]),
+    )
+    return rcdo.rallyCries
+      .filter((rc) => rc.active)
+      .map((rc) => ({
+        rallyCryId: rc.id,
+        rallyCryTitle: rc.title,
+        definingObjectives: rc.definingObjectives
+          .filter((d) => d.active)
+          .map((d): DefiningObjectiveBreakdownDto => {
+            const live = doIndex.get(d.id)
+            return {
+              definingObjectiveId: d.id,
+              rallyCryId: rc.id,
+              title: d.title,
+              supportingItemCount: live?.supportingItemCount ?? 0,
+              supportingWeight: live?.supportingWeight ?? 0,
+              weightPercentage: live?.weightPercentage ?? 0,
+            }
+          }),
+      }))
+  }, [rcdo, alignment])
+
   const sortedMembers = useMemo(() => {
     const list = [...teamMembers]
     switch (sortBy) {
@@ -143,27 +397,28 @@ export function ManagerDashboard(): React.ReactElement {
         return list.sort((a, b) => a.fullName.localeCompare(b.fullName))
       case 'status':
         return list.sort((a, b) => {
-          const sa = a.currentCommit?.status ?? ''
-          const sb = b.currentCommit?.status ?? ''
-          const order: Record<string, number> = { DRAFT: 0, LOCKED: 1, RECONCILING: 2, RECONCILED: 3 }
-          return (order[sa] ?? -1) - (order[sb] ?? -1)
+          const order: Record<string, number> = {
+            DRAFT: 0,
+            LOCKED: 1,
+            RECONCILING: 2,
+            RECONCILED: 3,
+          }
+          return (
+            (order[a.currentCommit?.status ?? ''] ?? -1) -
+            (order[b.currentCommit?.status ?? ''] ?? -1)
+          )
         })
       case 'itemCount':
         return list.sort(
-          (a, b) => (b.currentCommit?.itemCount ?? 0) - (a.currentCommit?.itemCount ?? 0)
+          (a, b) => (b.currentCommit?.itemCount ?? 0) - (a.currentCommit?.itemCount ?? 0),
         )
       case 'alignment':
-        return list.sort((a, b) => {
-          const aa = a.currentCommit?.alignmentScore ?? -1
-          const bb = b.currentCommit?.alignmentScore ?? -1
-          return aa - bb
-        })
+        return list.sort(
+          (a, b) =>
+            (a.currentCommit?.alignmentScore ?? -1) - (b.currentCommit?.alignmentScore ?? -1),
+        )
       case 'lastUpdated':
-        return list.sort((a, b) => {
-          const ta = a.lastUpdated ?? ''
-          const tb = b.lastUpdated ?? ''
-          return tb.localeCompare(ta)
-        })
+        return list.sort((a, b) => (b.lastUpdated ?? '').localeCompare(a.lastUpdated ?? ''))
       default:
         return list
     }
@@ -182,14 +437,16 @@ export function ManagerDashboard(): React.ReactElement {
           supportPercentage: r.supportPercentage,
         }))
       : (team.underSupportedRallyCries ?? [])
-  const rallyCryBreakdown = alignment?.rallyCryBreakdown ?? []
 
   const membersWithLowAlignment = teamMembers.filter(
-    (m) => m.currentCommit?.alignmentScore !== null && (m.currentCommit?.alignmentScore ?? 100) < 70
+    (m) =>
+      m.currentCommit?.alignmentScore !== null &&
+      (m.currentCommit?.alignmentScore ?? 100) < 70,
   ).length
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Team Dashboard</h1>
@@ -197,11 +454,18 @@ export function ManagerDashboard(): React.ReactElement {
             Current week overview for your team
           </p>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate('/manager/strategy')}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => navigate('/manager/strategy')}
+        >
           <Target className="h-4 w-4 mr-2" />
           Open Strategy
         </Button>
       </div>
+
+      {/* Team alignment score */}
       <div className="flex items-center justify-between">
         <div />
         <div className="text-right">
@@ -220,6 +484,7 @@ export function ManagerDashboard(): React.ReactElement {
         </div>
       </div>
 
+      {/* Under-supported alert */}
       {underSupportedRallyCries.length > 0 && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardHeader className="pb-2">
@@ -240,41 +505,27 @@ export function ManagerDashboard(): React.ReactElement {
         </Card>
       )}
 
-      {rallyCryBreakdown.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Alignment by Rally Cry</CardTitle>
+      {/* North Star visualization — one card per active Rally Cry */}
+      {northStarData.map((rc) => (
+        <Card key={rc.rallyCryId} className="overflow-hidden">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-base">Strategic Alignment</CardTitle>
             <CardDescription className="text-xs">
               Current week — {alignment?.alignmentPercentage ?? 0}% aligned (
               {alignment?.alignedWeight ?? 0} / {alignment?.totalWeight ?? 0} weight)
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {rallyCryBreakdown.map((rc) => (
-                <li key={rc.rallyCryId} className="rounded-md border p-3">
-                  <div className="flex items-center justify-between text-sm font-medium">
-                    <span className="truncate">{rc.title}</span>
-                    <Badge variant="secondary" className="shrink-0 ml-2">
-                      {rc.weightPercentage}%
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {rc.supportingItemCount} items · {rc.supportingWeight} weight
-                  </p>
-                  {rc.contributors.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {rc.contributors.map((c) => `${c.fullName} (${c.itemCount})`).join(', ')}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
+          <CardContent className="p-0 pt-2">
+            <NorthStarViz
+              rallyCryTitle={rc.rallyCryTitle}
+              definingObjectives={rc.definingObjectives}
+              teamAlignmentPct={alignment?.alignmentPercentage ?? 0}
+            />
           </CardContent>
         </Card>
-      )}
+      ))}
 
-      {/* Distribution of Effort — Strategic vs Tactical/Whirlwind */}
+      {/* Distribution of Effort */}
       {alignment && alignment.totalWeight > 0 && (
         <Card>
           <CardHeader className="pb-2">
@@ -319,12 +570,10 @@ export function ManagerDashboard(): React.ReactElement {
 
       <Separator />
 
+      {/* Team member cards */}
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">Sort by</p>
-        <Select
-          value={sortBy}
-          onValueChange={(v) => setSortBy(v as SortKey)}
-        >
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
           <SelectTrigger className="w-44">
             <SelectValue />
           </SelectTrigger>
