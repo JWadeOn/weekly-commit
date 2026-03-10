@@ -23,4 +23,7 @@ public class TeamMemberResponse {
     private int itemCount;
     private List<Integer> alignmentTrend;
     private Instant lastUpdated;
+    private boolean hasCarriedForwardItems;
+    private boolean hasObjectiveDecay;
+    private int maxCarryForwardCount;
 }

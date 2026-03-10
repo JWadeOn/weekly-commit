@@ -28,7 +28,9 @@ function toTeamResponse(raw: TeamMemberApiResponse[]): TeamResponse {
             alignmentScore: m.alignmentScore,
             lockedAt: null,
             viewedAt: null,
-            hasCarriedForwardItems: false,
+            hasCarriedForwardItems: m.hasCarriedForwardItems ?? false,
+            hasObjectiveDecay: m.hasObjectiveDecay ?? false,
+            maxCarryForwardCount: m.maxCarryForwardCount ?? 0,
           }
         : null,
   }))

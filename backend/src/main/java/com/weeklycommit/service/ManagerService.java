@@ -58,6 +58,9 @@ public class ManagerService {
             Double alignmentScore = null;
             int itemCount = 0;
             java.time.Instant lastUpdated = null;
+            boolean hasCarriedForwardItems = false;
+            boolean hasObjectiveDecay = false;
+            int maxCarryForwardCount = 0;
 
             if (commitOpt.isPresent()) {
                 List<CommitItem> items = commitItemRepository
@@ -74,6 +77,9 @@ public class ManagerService {
                 if (commitOpt.get().getUpdatedAt() != null) {
                     lastUpdated = commitOpt.get().getUpdatedAt().toInstant(ZoneOffset.UTC);
                 }
+                hasCarriedForwardItems = items.stream().anyMatch(CommitItem::isCarryForward);
+                hasObjectiveDecay = items.stream().anyMatch(i -> i.getCarryForwardCount() >= 2);
+                maxCarryForwardCount = items.stream().mapToInt(CommitItem::getCarryForwardCount).max().orElse(0);
             }
 
             List<Integer> alignmentTrend = computeAlignmentTrend(report.getId(), 4);
@@ -88,6 +94,9 @@ public class ManagerService {
                     .itemCount(itemCount)
                     .alignmentTrend(alignmentTrend)
                     .lastUpdated(lastUpdated)
+                    .hasCarriedForwardItems(hasCarriedForwardItems)
+                    .hasObjectiveDecay(hasObjectiveDecay)
+                    .maxCarryForwardCount(maxCarryForwardCount)
                     .build();
         }).toList();
     }
@@ -233,6 +242,9 @@ public class ManagerService {
 
         long totalWeight = 0;
         long alignedWeight = 0;
+        long strategicWeight = 0;
+        long tacticalWeight = 0;
+        java.util.Set<String> strategicPieces = java.util.Set.of("KING", "QUEEN", "ROOK");
         Map<UUID, RallyCryBucket> byRallyCry = new java.util.HashMap<>();
 
         for (User report : reports) {
@@ -245,6 +257,11 @@ public class ManagerService {
             for (CommitItem item : items) {
                 int w = item.getChessWeight();
                 totalWeight += w;
+                if (strategicPieces.contains(item.getChessPiece())) {
+                    strategicWeight += w;
+                } else {
+                    tacticalWeight += w;
+                }
                 if (item.getOutcomeId() != null) {
                     alignedWeight += w;
                     UUID rallyCryId = commitService.getRallyCryIdForOutcome(item.getOutcomeId());
@@ -286,10 +303,17 @@ public class ManagerService {
                         .build())
                 .toList();
 
+        int strategicPercentage = totalWeight > 0
+                ? (int) Math.round((double) strategicWeight / totalWeightFinal * 100.0)
+                : 0;
+
         return TeamAlignmentResponse.builder()
                 .totalWeight(totalWeight)
                 .alignedWeight(alignedWeight)
                 .alignmentPercentage(alignmentPercentage)
+                .strategicWeight(strategicWeight)
+                .tacticalWeight(tacticalWeight)
+                .strategicPercentage(strategicPercentage)
                 .rallyCryBreakdown(breakdown)
                 .underSupportedRallyCries(underSupported)
                 .build();

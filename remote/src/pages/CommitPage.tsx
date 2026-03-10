@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
+import { ActiveRallyCryContext } from '@/context/ActiveRallyCryContext'
 import {
   DndContext,
   closestCenter,
@@ -81,7 +82,13 @@ function WeightSummaryBar({ items }: { items: CommitItemResponse[] }): React.Rea
 }
 
 // Read-only Rally Cry & Defining Objectives for employee context
-function StrategySummary({ rallyCries }: { rallyCries: RallyCryDto[] }): React.ReactElement | null {
+function StrategySummary({
+  rallyCries,
+  activeRallyCryId,
+}: {
+  rallyCries: RallyCryDto[]
+  activeRallyCryId?: string
+}): React.ReactElement | null {
   if (!rallyCries?.length) return null
   return (
     <Card className="bg-muted/30 border-muted-foreground/20">
@@ -90,34 +97,46 @@ function StrategySummary({ rallyCries }: { rallyCries: RallyCryDto[] }): React.R
         <CardDescription>Your organization&apos;s focus — align your commit items to these</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {rallyCries.map((rc) => (
-          <div key={rc.id} className="space-y-2">
-            <div>
-              <h3 className="font-semibold text-foreground">{rc.title}</h3>
+        {rallyCries.map((rc) => {
+          const isActive = activeRallyCryId ? rc.id === activeRallyCryId : false
+          return (
+            <div
+              key={rc.id}
+              className={`space-y-2 rounded-md p-2 -mx-2 transition-colors ${isActive ? 'bg-primary/5 ring-1 ring-primary/20' : ''}`}
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-foreground">{rc.title}</h3>
+                {isActive && (
+                  <Badge variant="outline" className="text-xs text-primary border-primary/40">
+                    Active
+                  </Badge>
+                )}
+              </div>
               {rc.description && (
                 <p className="text-sm text-muted-foreground mt-0.5">{rc.description}</p>
               )}
+              {rc.definingObjectives?.length > 0 && (
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
+                  {rc.definingObjectives.map((do_) => (
+                    <li key={do_.id}>
+                      <span className="text-foreground/90">{do_.title}</span>
+                      {do_.description && (
+                        <span className="text-muted-foreground"> — {do_.description}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            {rc.definingObjectives?.length > 0 && (
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
-                {rc.definingObjectives.map((do_) => (
-                  <li key={do_.id}>
-                    <span className="text-foreground/90">{do_.title}</span>
-                    {do_.description && (
-                      <span className="text-muted-foreground"> — {do_.description}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </CardContent>
     </Card>
   )
 }
 
 export function CommitPage(): React.ReactElement {
+  const activeRallyCryId = useContext(ActiveRallyCryContext)
   const { data: commit, isLoading, error } = useCurrentCommit()
   const { data: rcdoData } = useRcdo()
   const updateStatus = useUpdateStatus()
@@ -221,8 +240,8 @@ export function CommitPage(): React.ReactElement {
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
-      {/* Rally Cry & DOs — context for employees */}
-      <StrategySummary rallyCries={rcdoData?.rallyCries ?? []} />
+      {/* Rally Cry & DOs — context for employees; host may pass activeRallyCryId to highlight */}
+      <StrategySummary rallyCries={rcdoData?.rallyCries ?? []} activeRallyCryId={activeRallyCryId} />
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -393,11 +412,11 @@ export function CommitPage(): React.ReactElement {
         </>
       )}
 
-      {/* RECONCILING State */}
+      {/* RECONCILING State — side-by-side "Monday Promise" vs "Friday Reality" */}
       {commit.status === 'RECONCILING' && (
         <>
           <p className="text-sm text-muted-foreground">
-            Reflect on each item. Mark completion status and provide actual outcomes.
+            Reflect on each item. For partial or missed items, a reason for miss is required.
           </p>
 
           <div className="space-y-4">
@@ -410,89 +429,140 @@ export function CommitPage(): React.ReactElement {
               .map((item) => {
                 const state = getReconcileState(item.id)
                 const alreadyReconciled = item.completionStatus !== null
+                const requiresReason =
+                  state.completionStatus === 'PARTIAL' ||
+                  state.completionStatus === 'NOT_COMPLETED'
+                const saveDisabled =
+                  !state.completionStatus ||
+                  (requiresReason && !state.actualOutcome.trim()) ||
+                  reconcileItem.isPending
 
                 return (
-                  <div key={item.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">{CHESS_ICON[item.chessPiece]}</span>
-                      <span className="font-medium text-sm">{item.title}</span>
-                      {alreadyReconciled && (
-                        <Badge variant="success" className="ml-auto text-xs">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          {item.completionStatus}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {!alreadyReconciled && (
-                      <div className="space-y-3">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">
-                            Completion Status
-                          </label>
-                          <Select
-                            value={state.completionStatus}
-                            onValueChange={(v) =>
-                              updateReconcileField(item.id, 'completionStatus', v)
-                            }
-                          >
-                            <SelectTrigger className="h-8 text-sm">
-                              <SelectValue placeholder="Select status..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="COMPLETED">Completed</SelectItem>
-                              <SelectItem value="PARTIAL">Partial</SelectItem>
-                              <SelectItem value="NOT_COMPLETED">Not Completed</SelectItem>
-                            </SelectContent>
-                          </Select>
+                  <div key={item.id} className="border rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-2 divide-x min-h-0">
+                      {/* LEFT: Monday Promise */}
+                      <div className="p-4 bg-muted/30 space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Monday Promise
+                        </p>
+                        <div className="flex items-start gap-2">
+                          <span className="text-base shrink-0">{CHESS_ICON[item.chessPiece]}</span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm break-words">{item.title}</p>
+                            {item.outcomeBreadcrumb && (
+                              <p className="text-xs text-muted-foreground mt-1 break-words">
+                                {item.outcomeBreadcrumb.rallyCry} ›{' '}
+                                {item.outcomeBreadcrumb.definingObjective} ›{' '}
+                                {item.outcomeBreadcrumb.outcome}
+                              </p>
+                            )}
+                          </div>
                         </div>
-
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">
-                            Actual Outcome
-                          </label>
-                          <Textarea
-                            value={state.actualOutcome}
-                            onChange={(e) =>
-                              updateReconcileField(item.id, 'actualOutcome', e.target.value)
-                            }
-                            placeholder="What actually happened?"
-                            rows={2}
-                            className="text-sm"
-                          />
-                        </div>
-
-                        {(state.completionStatus === 'PARTIAL' ||
-                          state.completionStatus === 'NOT_COMPLETED') && (
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={state.carryForward}
-                              onChange={(e) =>
-                                updateReconcileField(item.id, 'carryForward', e.target.checked)
-                              }
-                              className="rounded border-input"
-                            />
-                            <span className="text-sm">Carry forward to next week</span>
-                          </label>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground italic">{item.description}</p>
                         )}
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleReconcileItem(item.id)}
-                          disabled={!state.completionStatus || reconcileItem.isPending}
-                        >
-                          Save
-                        </Button>
                       </div>
-                    )}
 
-                    {alreadyReconciled && item.actualOutcome && (
-                      <p className="text-sm text-muted-foreground italic">
-                        &ldquo;{item.actualOutcome}&rdquo;
-                      </p>
-                    )}
+                      {/* RIGHT: Friday Reality */}
+                      <div className="p-4 space-y-3">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Friday Reality
+                        </p>
+                        {alreadyReconciled ? (
+                          <div className="space-y-2">
+                            <Badge variant="success" className="text-xs">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              {item.completionStatus}
+                            </Badge>
+                            {item.actualOutcome && (
+                              <p className="text-sm text-muted-foreground italic">
+                                &ldquo;{item.actualOutcome}&rdquo;
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-medium text-muted-foreground">
+                                Completion Status
+                              </label>
+                              <Select
+                                value={state.completionStatus}
+                                onValueChange={(v) =>
+                                  updateReconcileField(item.id, 'completionStatus', v)
+                                }
+                              >
+                                <SelectTrigger className="h-8 text-sm">
+                                  <SelectValue placeholder="Select status..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                                  <SelectItem value="PARTIAL">Partial</SelectItem>
+                                  <SelectItem value="NOT_COMPLETED">Not Completed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-medium text-muted-foreground">
+                                {requiresReason ? (
+                                  <span className="text-red-600">
+                                    Reason for Miss <span className="font-bold">*</span>
+                                  </span>
+                                ) : (
+                                  'Actual Outcome'
+                                )}
+                              </label>
+                              <Textarea
+                                value={state.actualOutcome}
+                                onChange={(e) =>
+                                  updateReconcileField(item.id, 'actualOutcome', e.target.value)
+                                }
+                                placeholder={
+                                  requiresReason
+                                    ? 'Why was this not completed?'
+                                    : 'What actually happened?'
+                                }
+                                rows={2}
+                                className={`text-sm ${requiresReason && !state.actualOutcome.trim() ? 'border-red-300 focus-visible:ring-red-400' : ''}`}
+                              />
+                              {requiresReason && !state.actualOutcome.trim() && (
+                                <p className="text-xs text-red-600">
+                                  Required for partial or missed items
+                                </p>
+                              )}
+                            </div>
+
+                            {requiresReason && (
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={state.carryForward}
+                                  onChange={(e) =>
+                                    updateReconcileField(
+                                      item.id,
+                                      'carryForward',
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="rounded border-input"
+                                />
+                                <span className="text-sm">Carry forward to next week</span>
+                              </label>
+                            )}
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReconcileItem(item.id)}
+                              disabled={saveDisabled}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )
               })}
@@ -530,7 +600,7 @@ export function CommitPage(): React.ReactElement {
         </>
       )}
 
-      {/* RECONCILED State */}
+      {/* RECONCILED State — side-by-side "The Promise" vs "The Reality" */}
       {commit.status === 'RECONCILED' && (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -571,32 +641,59 @@ export function CommitPage(): React.ReactElement {
                   CHESS_PIECE_ORDER.indexOf(b.chessPiece)
               )
               .map((item) => (
-                <div key={item.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span>{CHESS_ICON[item.chessPiece]}</span>
-                      <span className="font-medium text-sm">{item.title}</span>
+                <div key={item.id} className="border rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-2 divide-x">
+                    {/* LEFT: The Promise */}
+                    <div className="p-3 bg-muted/30 space-y-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        The Promise
+                      </p>
+                      <div className="flex items-start gap-2">
+                        <span className="shrink-0">{CHESS_ICON[item.chessPiece]}</span>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm break-words">{item.title}</p>
+                          {item.outcomeBreadcrumb && (
+                            <p className="text-xs text-muted-foreground mt-0.5 break-words">
+                              {item.outcomeBreadcrumb.rallyCry} › {item.outcomeBreadcrumb.outcome}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    {item.completionStatus && (
-                      <Badge
-                        variant={
-                          item.completionStatus === 'COMPLETED'
-                            ? 'success'
-                            : item.completionStatus === 'PARTIAL'
-                              ? 'warning'
-                              : 'destructive'
-                        }
-                        className="text-xs shrink-0"
-                      >
-                        {item.completionStatus.replace('_', ' ')}
-                      </Badge>
-                    )}
+
+                    {/* RIGHT: The Reality */}
+                    <div className="p-3 space-y-1.5">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        The Reality
+                      </p>
+                      <div className="space-y-1">
+                        {item.completionStatus && (
+                          <Badge
+                            variant={
+                              item.completionStatus === 'COMPLETED'
+                                ? 'success'
+                                : item.completionStatus === 'PARTIAL'
+                                  ? 'warning'
+                                  : 'destructive'
+                            }
+                            className="text-xs"
+                          >
+                            {item.completionStatus.replace('_', ' ')}
+                          </Badge>
+                        )}
+                        {item.actualOutcome && (
+                          <p className="text-xs text-muted-foreground italic break-words">
+                            &ldquo;{item.actualOutcome}&rdquo;
+                          </p>
+                        )}
+                        {item.carryForward && (
+                          <Badge variant="outline" className="text-xs">
+                            Carried forward
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {item.actualOutcome && (
-                    <p className="text-sm text-muted-foreground mt-2 italic">
-                      &ldquo;{item.actualOutcome}&rdquo;
-                    </p>
-                  )}
                 </div>
               ))}
           </div>

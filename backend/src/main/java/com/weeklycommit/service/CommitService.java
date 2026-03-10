@@ -232,6 +232,12 @@ public class CommitService {
                     "Carry forward is only allowed for PARTIAL or NOT_COMPLETED items");
         }
 
+        if (("PARTIAL".equals(req.getCompletionStatus()) || "NOT_COMPLETED".equals(req.getCompletionStatus()))
+                && (req.getActualOutcome() == null || req.getActualOutcome().isBlank())) {
+            throw new InvalidStateTransitionException(
+                    "A reason for miss is required for PARTIAL or NOT_COMPLETED items");
+        }
+
         item.setActualOutcome(req.getActualOutcome());
         item.setCompletionStatus(req.getCompletionStatus());
         item.setCarryForward(req.isCarryForward());

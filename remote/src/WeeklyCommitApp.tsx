@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { ActiveRallyCryContext } from '@/context/ActiveRallyCryContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
@@ -16,6 +17,7 @@ export interface WeeklyCommitAppProps {
   orgId: string
   authToken: string        // our internal JWT — not the OAuth provider token
   onAuthExpired: () => void
+  activeRallyCryId?: string  // Optional — host passes current Rally Cry to scope RCDO context
 }
 
 const queryClient = new QueryClient({
@@ -76,7 +78,7 @@ function AppContent({ onAuthExpired }: { onAuthExpired: () => void }): React.Rea
   )
 }
 
-export default function WeeklyCommitApp({ onAuthExpired }: WeeklyCommitAppProps): JSX.Element {
+export default function WeeklyCommitApp({ onAuthExpired, activeRallyCryId }: WeeklyCommitAppProps): JSX.Element {
   console.log('[WeeklyCommitApp] root render')
   return (
     <QueryClientProvider client={queryClient}>
@@ -86,7 +88,9 @@ export default function WeeklyCommitApp({ onAuthExpired }: WeeklyCommitAppProps)
         navigation doesn't change the host's browser URL or trigger host re-renders.
       */}
       <MemoryRouter initialEntries={['/']} initialIndex={0}>
-        <AppContent onAuthExpired={onAuthExpired} />
+        <ActiveRallyCryContext.Provider value={activeRallyCryId}>
+          <AppContent onAuthExpired={onAuthExpired} />
+        </ActiveRallyCryContext.Provider>
       </MemoryRouter>
     </QueryClientProvider>
   )

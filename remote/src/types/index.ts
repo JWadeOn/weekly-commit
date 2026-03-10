@@ -126,6 +126,8 @@ export interface CurrentCommitSummary {
   lockedAt: string | null
   viewedAt: string | null
   hasCarriedForwardItems: boolean
+  hasObjectiveDecay: boolean
+  maxCarryForwardCount: number
 }
 
 export interface AlignmentTrendEntry {
@@ -164,6 +166,9 @@ export interface TeamMemberApiResponse {
   itemCount: number
   alignmentTrend?: number[]
   lastUpdated?: string | null
+  hasCarriedForwardItems?: boolean
+  hasObjectiveDecay?: boolean
+  maxCarryForwardCount?: number
 }
 
 export interface ManagerNoteResponse {
@@ -193,6 +198,9 @@ export interface TeamAlignmentResponse {
   totalWeight: number
   alignedWeight: number
   alignmentPercentage: number
+  strategicWeight: number
+  tacticalWeight: number
+  strategicPercentage: number
   rallyCryBreakdown: RallyCryBreakdownDto[]
   underSupportedRallyCries?: UnderSupportedRallyCryDto[]
 }

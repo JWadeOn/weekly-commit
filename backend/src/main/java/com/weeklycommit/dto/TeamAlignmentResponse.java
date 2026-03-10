@@ -17,6 +17,9 @@ public class TeamAlignmentResponse {
     private long totalWeight;
     private long alignedWeight;
     private int alignmentPercentage;
+    private long strategicWeight;
+    private long tacticalWeight;
+    private int strategicPercentage;
     private List<RallyCryBreakdownDto> rallyCryBreakdown;
     private List<UnderSupportedRallyCryDto> underSupportedRallyCries;
 

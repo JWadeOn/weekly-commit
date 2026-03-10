@@ -86,7 +86,16 @@ function TeamMemberCard({ member }: { member: TeamMemberResponse }): React.React
               </div>
             )}
 
-            {member.currentCommit.hasCarriedForwardItems && (
+            {member.currentCommit.hasObjectiveDecay && (
+              <div className="flex items-center gap-1.5 rounded-md border border-orange-200 bg-orange-50 px-2.5 py-1.5 text-xs text-orange-700">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium">
+                  Objective Decay — carried forward {member.currentCommit.maxCarryForwardCount}×
+                </span>
+              </div>
+            )}
+
+            {!member.currentCommit.hasObjectiveDecay && member.currentCommit.hasCarriedForwardItems && (
               <Badge variant="warning" className="text-xs">
                 Has carried forward items
               </Badge>
@@ -261,6 +270,49 @@ export function ManagerDashboard(): React.ReactElement {
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Distribution of Effort — Strategic vs Tactical/Whirlwind */}
+      {alignment && alignment.totalWeight > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Distribution of Effort</CardTitle>
+            <CardDescription className="text-xs">
+              Strategic ♔/♕/♖ vs Tactical/Whirlwind ♗/♘/♙ — current week team total
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {alignment.strategicPercentage < 20 && (
+              <div className="flex items-center gap-1.5 rounded-md border border-orange-200 bg-orange-50 px-2.5 py-2 text-xs text-orange-700">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium">
+                  Strategic Drift — only {alignment.strategicPercentage}% of effort is strategic
+                  (King/Queen/Rook). Team may be drowning in Whirlwind.
+                </span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Strategic ♔/♕/♖</span>
+                <span className="font-medium">{alignment.strategicPercentage}%</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                <div
+                  className={`h-2.5 rounded-full transition-all ${alignment.strategicPercentage < 20 ? 'bg-orange-500' : 'bg-green-500'}`}
+                  style={{ width: `${alignment.strategicPercentage}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Tactical/Whirlwind ♗/♘/♙</span>
+                <span className="font-medium">{100 - alignment.strategicPercentage}%</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Strategic weight: {alignment.strategicWeight} · Tactical weight:{' '}
+              {alignment.tacticalWeight} · Total: {alignment.totalWeight}
+            </p>
           </CardContent>
         </Card>
       )}
