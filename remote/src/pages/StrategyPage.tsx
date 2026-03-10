@@ -406,21 +406,29 @@ export function StrategyPage(): React.ReactElement {
 
   const rallyCries = data.rallyCries ?? []
   const members = orgMembers ?? []
+  const hasActiveRallyCry = rallyCries.some((rc) => rc.active)
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Strategy (RCDO)</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Manage Rally Cries, Defining Objectives, and Outcomes. Assign team members to outcomes.
+          Define your organization's singular Rally Cry, its Defining Objectives, and the Outcomes
+          that prove progress.
         </p>
       </div>
 
-      <div className="flex justify-end">
-        <Button onClick={() => setRallyCryModal({ open: true, edit: null })}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Rally Cry
-        </Button>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs text-muted-foreground max-w-lg">
+          Per Lencioni's <em>The Advantage</em>, every organization has exactly one Rally Cry —
+          the single most important goal right now. All Defining Objectives must serve it.
+        </p>
+        {!hasActiveRallyCry && (
+          <Button onClick={() => setRallyCryModal({ open: true, edit: null })} className="shrink-0">
+            <Plus className="h-4 w-4 mr-2" />
+            Set Rally Cry
+          </Button>
+        )}
       </div>
 
       <RallyCryModal
@@ -462,7 +470,7 @@ export function StrategyPage(): React.ReactElement {
         {rallyCries.length === 0 && (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              No Rally Cries yet. Add one to define your organization’s thematic goal.
+              No Rally Cry set. Use the button above to define your organization’s singular thematic goal.
             </CardContent>
           </Card>
         )}

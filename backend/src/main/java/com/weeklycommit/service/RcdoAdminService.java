@@ -1,6 +1,7 @@
 package com.weeklycommit.service;
 
 import com.weeklycommit.dto.*;
+import com.weeklycommit.exception.InvalidStateTransitionException;
 import com.weeklycommit.exception.UnauthorizedException;
 import com.weeklycommit.model.DefiningObjective;
 import com.weeklycommit.model.Outcome;
@@ -94,6 +95,13 @@ public class RcdoAdminService {
     @Transactional
     public RcDoAdminResponse.AdminRallyCryDto createRallyCry(UUID managerId, UUID orgId, CreateRallyCryRequest req) {
         verifyManagerOrg(managerId, orgId);
+
+        List<RallyCry> existing = rallyCryRepository.findByOrgIdAndActiveTrue(orgId);
+        if (!existing.isEmpty()) {
+            throw new InvalidStateTransitionException(
+                    "An organization can have only one active Rally Cry (Lencioni, The Advantage). " +
+                    "Deactivate the current Rally Cry before creating a new one.");
+        }
 
         RallyCry rc = RallyCry.builder()
                 .orgId(orgId)
