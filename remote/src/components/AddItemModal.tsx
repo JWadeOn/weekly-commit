@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Check } from 'lucide-react'
 import { useRcdo } from '@/hooks/useRcdo'
 import { CHESS_ICON } from '@/types'
 import type { ChessPiece, CreateCommitItemRequest, CommitItemResponse } from '@/types'
@@ -112,7 +113,7 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{editItem ? 'Edit Item' : 'Add Commit Item'}</DialogTitle>
         </DialogHeader>
@@ -135,7 +136,8 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Additional context..."
-              rows={2}
+              rows={4}
+              className="resize-none"
             />
           </div>
 
@@ -166,13 +168,16 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
 
           <div className="space-y-1.5">
             <Label>Outcome (RCDO)</Label>
+            <p className="text-xs text-muted-foreground">
+              Click an outcome below to link this commit item to it.
+            </p>
             <Input
               placeholder="Search outcomes..."
               value={outcomeSearch}
               onChange={(e) => setOutcomeSearch(e.target.value)}
               className="mb-1"
             />
-            <div className="border rounded-md max-h-48 overflow-y-auto">
+            <div className="border rounded-md max-h-52 overflow-y-auto pr-2">
               {!rcdo && (
                 <p className="p-3 text-sm text-muted-foreground">Loading outcomes...</p>
               )}
@@ -182,27 +187,42 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
                 </p>
               )}
               {rcdo && filteredOutcomes.length > 0 && (
-                <ul className="p-1">
-                  {filteredOutcomes.map((o) => (
-                    <li key={o.id}>
-                      <button
-                        type="button"
-                        onClick={() => setOutcomeId(o.id)}
-                        className={`w-full text-left px-3 py-2 rounded text-sm hover:bg-accent transition-colors ${
-                          outcomeId === o.id ? 'bg-accent font-medium' : ''
-                        }`}
-                      >
-                        <span className="block truncate">{o.title}</span>
-                        <span className="block text-xs text-muted-foreground truncate">{o.breadcrumb}</span>
-                      </button>
-                    </li>
-                  ))}
+                <ul className="p-1 pr-2">
+                  {filteredOutcomes.map((o) => {
+                    const selected = outcomeId === o.id
+                    return (
+                      <li key={o.id}>
+                        <button
+                          type="button"
+                          onClick={() => setOutcomeId(o.id)}
+                          className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-start gap-2 ${
+                            selected
+                              ? 'bg-primary/10 border border-primary/30 ring-1 ring-primary/20'
+                              : 'hover:bg-accent border border-transparent'
+                          }`}
+                        >
+                          <span
+                            className={`mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full border ${
+                              selected ? 'bg-primary text-primary-foreground border-primary' : 'border-muted-foreground/40'
+                            }`}
+                            aria-hidden
+                          >
+                            {selected ? <Check className="h-2.5 w-2.5" /> : null}
+                          </span>
+                          <span className="flex-1 min-w-0 overflow-hidden">
+                            <span className="block font-medium break-words">{o.title}</span>
+                            <span className="block text-xs text-muted-foreground break-words mt-0.5">{o.breadcrumb}</span>
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </div>
             {rcdo && outcomeId && (
               <p className="text-xs text-muted-foreground">
-                {allOutcomes.find((o) => o.id === outcomeId)?.breadcrumb ?? ''}
+                Selected: {allOutcomes.find((o) => o.id === outcomeId)?.title ?? ''}
               </p>
             )}
           </div>
