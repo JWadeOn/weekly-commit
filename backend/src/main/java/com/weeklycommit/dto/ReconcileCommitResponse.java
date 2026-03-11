@@ -26,5 +26,6 @@ public class ReconcileCommitResponse {
         private long partialCount;
         private long notCompletedCount;
         private long carriedForwardCount;
+        private long bumpedCount;
     }
 }

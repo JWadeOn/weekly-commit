@@ -16,8 +16,8 @@ public class ReconcileItemRequest {
     private String actualOutcome;
 
     @NotNull(message = "completionStatus is required")
-    @Pattern(regexp = "COMPLETED|PARTIAL|NOT_COMPLETED",
-             message = "completionStatus must be COMPLETED, PARTIAL, or NOT_COMPLETED")
+    @Pattern(regexp = "COMPLETED|PARTIAL|NOT_COMPLETED|BUMPED",
+             message = "completionStatus must be COMPLETED, PARTIAL, NOT_COMPLETED, or BUMPED")
     private String completionStatus;
 
     private boolean carryForward;

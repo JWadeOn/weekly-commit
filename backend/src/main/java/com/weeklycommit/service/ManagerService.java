@@ -343,6 +343,43 @@ public class ManagerService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<PivotRadarItemDto> getPivotRadar(UUID managerId, UUID orgId, int weeks) {
+        List<User> reports = userRepository.findByManagerId(managerId);
+        LocalDate currentMonday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        List<PivotRadarItemDto> result = new ArrayList<>();
+        for (User report : reports) {
+            for (int i = 0; i < weeks; i++) {
+                LocalDate weekStart = currentMonday.minusWeeks(i);
+                Optional<WeeklyCommit> commitOpt =
+                        weeklyCommitRepository.findByUserIdAndWeekStartDate(report.getId(), weekStart);
+                if (commitOpt.isEmpty()) continue;
+                WeeklyCommit commit = commitOpt.get();
+                List<CommitItem> items = commitItemRepository
+                        .findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commit.getId());
+                for (CommitItem item : items) {
+                    if (!item.isUnplanned()) continue;
+                    CommitItemResponse itemResp = commitService.toItemResponse(item);
+                    result.add(PivotRadarItemDto.builder()
+                            .userId(report.getId())
+                            .fullName(report.getFullName())
+                            .commitId(commit.getId())
+                            .itemId(item.getId())
+                            .weekStartDate(commit.getWeekStartDate())
+                            .title(item.getTitle())
+                            .description(item.getDescription())
+                            .actualOutcome(item.getActualOutcome())
+                            .outcomeBreadcrumb(itemResp.getOutcomeBreadcrumb())
+                            .chessPiece(item.getChessPiece())
+                            .bumpedItemId(item.getBumpedItemId())
+                            .bumpedItemTitle(itemResp.getBumpedItemTitle())
+                            .build());
+                }
+            }
+        }
+        return result;
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private void verifyDirectReport(UUID managerId, UUID reportUserId) {

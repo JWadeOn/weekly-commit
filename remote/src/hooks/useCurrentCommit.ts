@@ -4,6 +4,7 @@ import type {
   WeeklyCommitResponse,
   CommitItemResponse,
   CreateCommitItemRequest,
+  CreateUnplannedItemRequest,
   UpdateCommitItemRequest,
   UpdateStatusRequest,
   ReconcileItemRequest,
@@ -47,6 +48,20 @@ export function useCreateItem() {
   const queryClient = useQueryClient()
   return useMutation<CommitItemResponse, Error, { commitId: string; item: CreateCommitItemRequest }>({
     mutationFn: ({ commitId, item }) => commits.createItem(commitId, item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
+    },
+  })
+}
+
+export function useCreateUnplannedItem() {
+  const queryClient = useQueryClient()
+  return useMutation<
+    CommitItemResponse,
+    Error,
+    { commitId: string; item: CreateUnplannedItemRequest }
+  >({
+    mutationFn: ({ commitId, item }) => commits.createUnplannedItem(commitId, item),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
     },

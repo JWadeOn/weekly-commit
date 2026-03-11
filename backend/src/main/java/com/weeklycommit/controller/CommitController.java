@@ -126,6 +126,14 @@ public class CommitController {
         return ResponseEntity.status(201).body(commitService.createItem(id, userId, req));
     }
 
+    @PostMapping("/{id}/items/unplanned")
+    public ResponseEntity<CommitItemResponse> createUnplannedItem(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateUnplannedItemRequest req) {
+        UUID userId = SecurityContextHelper.getCurrentUserId();
+        return ResponseEntity.status(201).body(commitService.createUnplannedItem(id, userId, req));
+    }
+
     @PutMapping("/{id}/items/{itemId}")
     public ResponseEntity<CommitItemResponse> updateItem(
             @PathVariable UUID id,

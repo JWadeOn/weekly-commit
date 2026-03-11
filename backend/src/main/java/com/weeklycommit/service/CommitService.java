@@ -110,6 +110,56 @@ public class CommitService {
                 .priorityOrder(nextOrder)
                 .carryForward(false)
                 .carryForwardCount(0)
+                .unplanned(false)
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        CommitItem saved = commitItemRepository.save(item);
+        return toItemResponse(saved);
+    }
+
+    public CommitItemResponse createUnplannedItem(UUID commitId, UUID userId, CreateUnplannedItemRequest req) {
+        WeeklyCommit commit = weeklyCommitRepository.findById(commitId)
+                .orElseThrow(() -> new CommitNotFoundException("Commit not found: " + commitId));
+        if (!commit.getUserId().equals(userId)) {
+            throw new UnauthorizedException("Access denied to commit: " + commitId);
+        }
+        if (!"LOCKED".equals(commit.getStatus()) && !"RECONCILING".equals(commit.getStatus())) {
+            throw new InvalidStateTransitionException(
+                    "Unplanned items can only be added when the week is LOCKED or RECONCILING");
+        }
+        outcomeRepository.findById(req.getOutcomeId())
+                .orElseThrow(() -> new ItemNotFoundException("Outcome not found: " + req.getOutcomeId()));
+
+        CommitItem bumpedItem = commitItemRepository.findById(req.getBumpedItemId())
+                .orElseThrow(() -> new ItemNotFoundException("Bumped item not found: " + req.getBumpedItemId()));
+        if (!bumpedItem.getWeeklyCommitId().equals(commitId)) {
+            throw new InvalidStateTransitionException("Bumped item must belong to the same commit");
+        }
+        if (commitItemRepository.existsByWeeklyCommitIdAndBumpedItemId(commitId, req.getBumpedItemId())) {
+            throw new InvalidStateTransitionException("That item has already been bumped by another unplanned item");
+        }
+
+        int chessWeight = CHESS_WEIGHTS.get(req.getChessPiece());
+        List<CommitItem> existing =
+                commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId);
+        int nextOrder = existing.stream()
+                .mapToInt(CommitItem::getPriorityOrder)
+                .max()
+                .orElse(0) + 1;
+
+        CommitItem item = CommitItem.builder()
+                .weeklyCommitId(commitId)
+                .outcomeId(req.getOutcomeId())
+                .title(req.getTitle())
+                .description(req.getDescription())
+                .chessPiece(req.getChessPiece())
+                .chessWeight(chessWeight)
+                .priorityOrder(nextOrder)
+                .carryForward(false)
+                .carryForwardCount(0)
+                .unplanned(true)
+                .bumpedItemId(req.getBumpedItemId())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
@@ -129,6 +179,9 @@ public class CommitService {
         }
         CommitItem item = commitItemRepository.findById(itemId)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemId));
+        if (item.isUnplanned()) {
+            throw new InvalidStateTransitionException("Cannot edit unplanned items");
+        }
 
         if (req.getTitle() != null) item.setTitle(req.getTitle());
         if (req.getDescription() != null) item.setDescription(req.getDescription());
@@ -157,6 +210,9 @@ public class CommitService {
         }
         CommitItem item = commitItemRepository.findById(itemId)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemId));
+        if (item.isUnplanned()) {
+            throw new InvalidStateTransitionException("Cannot delete unplanned items");
+        }
         commitItemRepository.delete(item);
     }
 
@@ -232,6 +288,19 @@ public class CommitService {
                     "Carry forward is only allowed for PARTIAL or NOT_COMPLETED items");
         }
 
+        if ("BUMPED".equals(req.getCompletionStatus())) {
+            boolean isTargetOfUnplanned = commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId)
+                    .stream()
+                    .anyMatch(other -> item.getId().equals(other.getBumpedItemId()));
+            if (!isTargetOfUnplanned) {
+                throw new InvalidStateTransitionException(
+                        "BUMPED status is only for items that were bumped by an unplanned addition");
+            }
+            if (req.isCarryForward()) {
+                throw new InvalidStateTransitionException("Carry forward is not allowed for BUMPED items");
+            }
+        }
+
         if (("PARTIAL".equals(req.getCompletionStatus()) || "NOT_COMPLETED".equals(req.getCompletionStatus()))
                 && (req.getActualOutcome() == null || req.getActualOutcome().isBlank())) {
             throw new InvalidStateTransitionException(
@@ -268,12 +337,14 @@ public class CommitService {
         long completed = items.stream().filter(i -> "COMPLETED".equals(i.getCompletionStatus())).count();
         long partial = items.stream().filter(i -> "PARTIAL".equals(i.getCompletionStatus())).count();
         long notCompleted = items.stream().filter(i -> "NOT_COMPLETED".equals(i.getCompletionStatus())).count();
+        long bumped = items.stream().filter(i -> "BUMPED".equals(i.getCompletionStatus())).count();
         long carriedForward = items.stream().filter(CommitItem::isCarryForward).count();
 
         return ReconcileCommitResponse.ReconciliationSummaryDto.builder()
                 .completedCount(completed)
                 .partialCount(partial)
                 .notCompletedCount(notCompleted)
+                .bumpedCount(bumped)
                 .carriedForwardCount(carriedForward)
                 .build();
     }
@@ -320,6 +391,7 @@ public class CommitService {
                     .carryForward(false)
                     .carryForwardCount(0)
                     .carriedFromId(source.getId())
+                    .unplanned(false)
                     .updatedAt(LocalDateTime.now())
                     .build();
             commitItemRepository.save(carried);
@@ -400,6 +472,12 @@ public class CommitService {
 
     public CommitItemResponse toItemResponse(CommitItem item) {
         OutcomeBreadcrumbDto breadcrumb = buildBreadcrumb(item.getOutcomeId());
+        String bumpedItemTitle = null;
+        if (item.getBumpedItemId() != null) {
+            bumpedItemTitle = commitItemRepository.findById(item.getBumpedItemId())
+                    .map(CommitItem::getTitle)
+                    .orElse(null);
+        }
         return CommitItemResponse.builder()
                 .id(item.getId())
                 .weeklyCommitId(item.getWeeklyCommitId())
@@ -415,6 +493,9 @@ public class CommitService {
                 .carryForward(item.isCarryForward())
                 .carryForwardCount(item.getCarryForwardCount())
                 .carriedFromId(item.getCarriedFromId())
+                .unplanned(item.isUnplanned())
+                .bumpedItemId(item.getBumpedItemId())
+                .bumpedItemTitle(bumpedItemTitle)
                 .createdAt(item.getCreatedAt())
                 .updatedAt(item.getUpdatedAt())
                 .build();

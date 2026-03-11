@@ -8,6 +8,7 @@ declare module 'weeklyCommitModule/WeeklyCommitApp' {
     orgId: string
     authToken: string
     onAuthExpired: () => void
+    activeRallyCryId?: string
   }
 
   const WeeklyCommitApp: ComponentType<WeeklyCommitAppProps>

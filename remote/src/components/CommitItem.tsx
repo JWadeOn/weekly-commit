@@ -62,6 +62,12 @@ export function CommitItem({ item, isDraggable = false, onEdit, onDelete }: Comm
               CF×{item.carryForwardCount}
             </Badge>
           )}
+          {item.unplanned && (
+            <Badge variant="secondary" className="text-xs py-0">Unplanned</Badge>
+          )}
+          {item.bumpedItemTitle && (
+            <span className="text-xs text-muted-foreground">Bumped: {item.bumpedItemTitle}</span>
+          )}
           {item.carriedFromId != null && (
             <Badge variant="outline" className="text-xs py-0">Carried forward</Badge>
           )}
@@ -87,7 +93,7 @@ export function CommitItem({ item, isDraggable = false, onEdit, onDelete }: Comm
         )}
       </div>
 
-      {(onEdit || onDelete) && (
+      {(onEdit || onDelete) && !item.unplanned && (
         <div className="flex items-center gap-1 shrink-0">
           {onEdit && (
             <Button

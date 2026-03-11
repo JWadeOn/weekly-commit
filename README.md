@@ -103,11 +103,15 @@ Items auto-rank by weight descending. Manual drag-and-drop reordering within the
 - Java 21 (for running the backend outside Docker)
 - Node.js 18+ and npm (for running frontends outside Docker)
 
+**Running the app:** Use **Quick Start (Docker)** below for the simplest path (one command), or **Running Without Docker** to run backend and frontends locally with your own PostgreSQL and OAuth setup.
+
 ---
 
 ## Quick Start (Docker)
 
-### 1. Clone and configure environment
+All commands in this section are run from the **Weekly Commit Module root** (the `ci_pm/` directory).
+
+### 1. Configure environment
 
 ```bash
 cp .env.example .env
@@ -150,7 +154,7 @@ Flyway migrations run automatically on backend startup and seed the database wit
 
 ### 3. Open the app
 
-Navigate to [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) in your browser. Log in with a [test user](#test-users) (e.g. `manager@acme.com` / `password`).
 
 ---
 
@@ -167,21 +171,68 @@ Alex sees both **My Week** (IC view) and **My Team** (manager view) in the navig
 
 ---
 
+## User flows to try
+
+After logging in at [http://localhost:3000](http://localhost:3000), use these flows to explore the app. Nav: **My Week** → current commit; **History** → past weeks; **My Team** → manager dashboard; **Strategy** → RCDO admin (manager only).
+
+### As employee (Sarah — `employee@acme.com` / `password`)
+
+1. **Plan and submit a week**  
+   Go to **My Week**. Add commit items (title, description, **chess piece**, **RCDO outcome**). Drag to reorder within the same piece. Use **Submit Week** → confirm. Status becomes **LOCKED**; items can no longer be edited.
+
+2. **Retract before manager views**  
+   With a LOCKED week, click **Retract**. Status returns to **DRAFT**; you can edit and submit again. After a manager views your commit (see manager flow below), Retract is disabled.
+
+3. **Reconcile**  
+   With a LOCKED week, use **Start reconciliation** (or wait for the Friday 5pm trigger). For each item set **completion status** (COMPLETED / PARTIAL / NOT_COMPLETED), optional **actual outcome**, and **Carry forward** for incomplete items. Click **Complete reconciliation**. Review the summary (counts and carried-forward items).
+
+4. **History**  
+   Go to **History** to see past weeks. Click a week to open its detail (read-only after reconciliation).
+
+5. **Add unplanned item (mid-week pivot)**  
+   When the week is **LOCKED** or **RECONCILING**, use **Add unplanned item**. Enter title, description, outcome, chess piece, and choose **which existing item is bumped**. The new item is locked immediately; the bumped item gets a BUMPED status in reconciliation. Managers see it in **Pivot Radar** on My Team.
+
+### As manager (Alex — `manager@acme.com` / `password`)
+
+6. **Team dashboard**  
+   Go to **My Team**. See direct reports with status badges, item count, weight, alignment. Click a member to open their current commit (this sets **viewed_at** and disables their Retract).
+
+7. **Strategy (RCDO)**  
+   Go to **Strategy**. Create or edit **Rally Cries**, **Defining Objectives**, and **Outcomes**; assign **outcome owners** from org members. The tree drives the outcome list when ICs add commit items.
+
+8. **Pivot Radar**  
+   On **My Team**, check the **Pivot Radar** section for unplanned items added by direct reports in the last 2 weeks (mid-week pivots / bumped items).
+
+9. **Manager notes**  
+   From a team member’s commit view, add a **manager note**. Notes are visible on that commit for future reference.
+
+### Dual role (Alex)
+
+10. **Switch contexts**  
+   Use **My Week** / **History** for your own commits and **My Team** / **Strategy** for your manager role. Same login; nav shows both sets of links.
+
+---
+
 ## Running Without Docker (Local Dev)
 
-### Backend
+Run these from the **Weekly Commit Module root** (`ci_pm/`). You need PostgreSQL and the mock OAuth2 server running (e.g. start only those with Docker, or use `docker compose up` for the full stack and run backend/remote/host locally against it).
 
-Requires a running PostgreSQL instance and the mock OAuth2 server (or a real provider).
+**Start order:** database + OAuth → backend → remote → host. Then open [http://localhost:3000](http://localhost:3000).
+
+### 1. Backend
+
+Requires PostgreSQL and the mock OAuth2 server (or a real OAuth provider). Load environment variables from `.env` (e.g. `set -a && source .env && set +a` or use your shell’s equivalent).
 
 ```bash
 cd backend
-# export env vars or copy .env.example to .env and source it
 ./mvnw spring-boot:run
 ```
 
-The backend reads all config from environment variables. See `.env.example` for the full list.
+Backend runs on **8080**. See `.env.example` in the module root for all supported variables.
 
-### Remote MFE
+### 2. Remote MFE
+
+In a new terminal:
 
 ```bash
 cd remote
@@ -189,9 +240,11 @@ npm install
 npm run dev
 ```
 
-Runs on [http://localhost:3001](http://localhost:3001). In standalone mode the remote renders its own login page and handles auth directly — no host required.
+Runs on [http://localhost:3001](http://localhost:3001). In standalone mode the remote can be used without the host (it renders its own login page).
 
-### Host
+### 3. Host (optional — for full Module Federation)
+
+In another terminal:
 
 ```bash
 cd host
@@ -199,7 +252,41 @@ npm install
 npm run dev
 ```
 
-Runs on [http://localhost:3000](http://localhost:3000). The host fetches the remote entry at `http://localhost:3001/assets/remoteEntry.js`.
+Runs on [http://localhost:3000](http://localhost:3000) and loads the remote from `http://localhost:3001/assets/remoteEntry.js`. Open this URL to use the app with the host shell.
+
+---
+
+## Running tests
+
+All commands are from the **Weekly Commit Module root** (`ci_pm/`).
+
+### Frontend (remote)
+
+From the module root:
+
+```bash
+cd remote
+npm install
+npm run test -- --run
+```
+
+Uses Vitest; `--run` runs once and exits (no watch). Tests live in `remote/src/**/*.test.ts(x)`.
+
+### Backend
+
+From the module root:
+
+```bash
+cd backend
+./mvnw test
+```
+
+Requires **Java 21**. The project uses Lombok for models and DTOs. If `mvn test` fails at compile with "cannot find symbol" (e.g. `getId()`, `getTitle()`, `builder()`), Lombok annotation processing is not running in that environment. In that case:
+
+- Run tests from your **IDE** (IntelliJ, Eclipse, etc.) with annotation processing enabled for the `backend` module, or  
+- Run `mvn test` from **CI** or another environment where Java 21 and Lombok are known to work.
+
+No database or OAuth server is required for the current unit tests (they use mocks).
 
 ---
 
@@ -250,6 +337,7 @@ export interface WeeklyCommitAppProps {
   orgId: string
   authToken: string   // internal JWT — not the OAuth provider token
   onAuthExpired: () => void
+  activeRallyCryId?: string  // optional — host passes current Rally Cry to scope/highlight in RCDO tree
 }
 export default function WeeklyCommitApp(props: WeeklyCommitAppProps): JSX.Element
 ```
@@ -346,8 +434,13 @@ Flyway migrations live in `backend/src/main/resources/db/migration/`:
 | [`docs/TDD.md`](docs/TDD.md) | Test Driven Development guide (Red–Green–Refactor) |
 | [`docs/CLAUDE.md`](docs/CLAUDE.md) | Architecture rules and agent instructions |
 | [`docs/PRD.md`](docs/PRD.md) | Product requirements document |
+| [`docs/SPEC_COMPLIANCE_REVIEW.md`](docs/SPEC_COMPLIANCE_REVIEW.md) | Spec compliance review vs. Organizational Health / The Advantage spec |
 | [`docs/API.md`](docs/API.md) | Full REST API reference |
 | [`docs/SCHEMA.sql`](docs/SCHEMA.sql) | Annotated database schema |
 | [`docs/USER_STORIES.md`](docs/USER_STORIES.md) | Full user story list |
 | [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Implementation assumptions and decisions |
 | [`docs/MVP.md`](docs/MVP.md) | MVP definition and success checklist |
+
+
+
+# The Advantage: The issue most orgs have is not an intelligence problem, it's a health problem. The health problem is people not knowing what actually matters.

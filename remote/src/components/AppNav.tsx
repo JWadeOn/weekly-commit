@@ -14,6 +14,7 @@ export function AppNav(): React.ReactElement | null {
   const tabs = [
     isEmployee && { to: '/commits', label: 'My Week' },
     isEmployee && { to: '/history', label: 'History' },
+    isEmployee && { to: '/resources', label: 'Resources' },
     isManager && { to: '/manager', label: 'My Team' },
     isManager && { to: '/manager/strategy', label: 'Strategy' },
   ].filter((t): t is { to: string; label: string } => Boolean(t))

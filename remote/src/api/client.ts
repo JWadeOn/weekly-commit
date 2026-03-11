@@ -9,6 +9,7 @@ import type {
   TeamAlignmentResponse,
   ManagerNoteResponse,
   CreateCommitItemRequest,
+  CreateUnplannedItemRequest,
   UpdateCommitItemRequest,
   UpdateStatusRequest,
   ReconcileItemRequest,
@@ -96,6 +97,15 @@ export const commits = {
       body: JSON.stringify(item),
     }),
 
+  createUnplannedItem: (
+    commitId: string,
+    item: CreateUnplannedItemRequest
+  ): Promise<CommitItemResponse> =>
+    request(`/commits/${commitId}/items/unplanned`, {
+      method: 'POST',
+      body: JSON.stringify(item),
+    }),
+
   updateItem: (commitId: string, itemId: string, item: UpdateCommitItemRequest): Promise<CommitItemResponse> =>
     request(`/commits/${commitId}/items/${itemId}`, {
       method: 'PUT',
@@ -139,6 +149,9 @@ export const manager = {
 
   teamAlignment: (): Promise<TeamAlignmentResponse> =>
     request('/manager/team/alignment'),
+
+  pivotRadar: (weeks = 2): Promise<import('@/types').PivotRadarItemDto[]> =>
+    request(`/manager/pivot-radar?weeks=${weeks}`),
 
   rcdo: {
     getAdminHierarchy: (): Promise<RcDoAdminResponse> =>

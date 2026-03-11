@@ -13,8 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useTeamDashboard, useTeamAlignment, useRcdoHierarchy } from '@/hooks/useManager'
+import { useTeamDashboard, useTeamAlignment, useRcdoHierarchy, usePivotRadar } from '@/hooks/useManager'
 import type { TeamMemberResponse, DefiningObjectiveBreakdownDto } from '@/types'
+import { CHESS_ICON } from '@/types'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -356,6 +357,7 @@ export function ManagerDashboard(): React.ReactElement {
   const { data: team, isLoading, error } = useTeamDashboard()
   const { data: alignment } = useTeamAlignment()
   const { data: rcdo } = useRcdoHierarchy()
+  const { data: pivotRadar } = usePivotRadar(2)
 
   type SortKey = 'name' | 'status' | 'itemCount' | 'alignment' | 'lastUpdated'
   const [sortBy, setSortBy] = useState<SortKey>('name')
@@ -564,6 +566,56 @@ export function ManagerDashboard(): React.ReactElement {
               Strategic weight: {alignment.strategicWeight} · Tactical weight:{' '}
               {alignment.tacticalWeight} · Total: {alignment.totalWeight}
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pivot Radar — unplanned items (Strategic Pivot) */}
+      {pivotRadar && pivotRadar.length > 0 && (
+        <Card className="border-orange-200 bg-orange-50/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-orange-900">Pivot Radar</CardTitle>
+            <CardDescription className="text-xs text-orange-800">
+              Strategic pivot — unplanned items added mid-week across your team (last 2 weeks)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {pivotRadar.map((p) => (
+                <li
+                  key={p.itemId}
+                  className="rounded-lg border border-orange-200 bg-white p-3 text-sm"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground">{p.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {p.fullName} · Week of {p.weekStartDate}
+                      </p>
+                      {(p.description || p.actualOutcome) && (
+                        <p className="text-xs text-muted-foreground mt-1 italic">
+                          {p.actualOutcome ?? p.description}
+                        </p>
+                      )}
+                      {p.outcomeBreadcrumb && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
+                          {p.outcomeBreadcrumb.rallyCry} › {p.outcomeBreadcrumb.definingObjective} ›{' '}
+                          {p.outcomeBreadcrumb.outcome}
+                        </p>
+                      )}
+                      {p.bumpedItemTitle && (
+                        <p className="text-xs text-orange-700 mt-1">
+                          Bumped: {p.bumpedItemTitle}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {CHESS_ICON[p.chessPiece]} {p.chessPiece}
+                    </Badge>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       )}

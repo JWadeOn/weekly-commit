@@ -2,6 +2,7 @@ package com.weeklycommit.service;
 
 import com.weeklycommit.dto.CommitItemResponse;
 import com.weeklycommit.dto.CreateCommitItemRequest;
+import com.weeklycommit.dto.CreateUnplannedItemRequest;
 import com.weeklycommit.dto.WeekResponse;
 import com.weeklycommit.exception.InvalidStateTransitionException;
 import com.weeklycommit.exception.ItemNotFoundException;
@@ -143,6 +144,7 @@ class CommitServiceTest {
                 .priorityOrder(1)
                 .carryForward(false)
                 .carryForwardCount(0)
+                .unplanned(false)
                 .build();
         when(commitItemRepository.save(any(CommitItem.class))).thenReturn(saved);
         when(outcomeRepository.findById(outcomeId)).thenReturn(Optional.of(outcome));
@@ -182,7 +184,7 @@ class CommitServiceTest {
             CommitItem saved = CommitItem.builder()
                     .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(outcomeId)
                     .title("T").chessPiece(piece).chessWeight(expectedWeight)
-                    .priorityOrder(1).carryForward(false).carryForwardCount(0).build();
+                    .priorityOrder(1).carryForward(false).carryForwardCount(0).unplanned(false).build();
             when(commitItemRepository.save(any(CommitItem.class))).thenReturn(saved);
 
             CreateCommitItemRequest req = CreateCommitItemRequest.builder()
@@ -211,6 +213,72 @@ class CommitServiceTest {
                 .hasMessageContaining("DRAFT");
     }
 
+    @Test
+    void deleteItem_failsWhenItemIsUnplanned() {
+        UUID itemId = UUID.randomUUID();
+        WeeklyCommit commit = WeeklyCommit.builder()
+                .id(commitId).userId(userId).status("DRAFT").build();
+        CommitItem item = CommitItem.builder()
+                .id(itemId).weeklyCommitId(commitId).outcomeId(outcomeId)
+                .title("U").chessPiece("QUEEN").chessWeight(80).priorityOrder(1)
+                .carryForward(false).carryForwardCount(0).unplanned(true).build();
+        when(weeklyCommitRepository.findById(commitId)).thenReturn(Optional.of(commit));
+        when(commitItemRepository.findById(itemId)).thenReturn(Optional.of(item));
+
+        assertThatThrownBy(() -> commitService.deleteItem(commitId, itemId, userId))
+                .isInstanceOf(InvalidStateTransitionException.class)
+                .hasMessageContaining("unplanned");
+    }
+
+    // ── createUnplannedItem ───────────────────────────────────────────────────
+
+    @Test
+    void createUnplannedItem_failsWhenCommitNotLockedOrReconciling() {
+        WeeklyCommit commit = WeeklyCommit.builder()
+                .id(commitId).userId(userId).status("DRAFT").build();
+        when(weeklyCommitRepository.findById(commitId)).thenReturn(Optional.of(commit));
+        UUID bumpedItemId = UUID.randomUUID();
+        CreateUnplannedItemRequest req = CreateUnplannedItemRequest.builder()
+                .title("Pivot").outcomeId(outcomeId).chessPiece("QUEEN").bumpedItemId(bumpedItemId).build();
+
+        assertThatThrownBy(() -> commitService.createUnplannedItem(commitId, userId, req))
+                .isInstanceOf(InvalidStateTransitionException.class)
+                .hasMessageContaining("LOCKED");
+    }
+
+    @Test
+    void createUnplannedItem_savesWithUnplannedTrueAndBumpedItemId() {
+        UUID bumpedItemId = UUID.randomUUID();
+        WeeklyCommit commit = WeeklyCommit.builder()
+                .id(commitId).userId(userId).status("LOCKED").build();
+        CommitItem bumpedItem = CommitItem.builder()
+                .id(bumpedItemId).weeklyCommitId(commitId).outcomeId(outcomeId)
+                .title("Bumped").chessPiece("PAWN").chessWeight(10).priorityOrder(1)
+                .carryForward(false).carryForwardCount(0).unplanned(false).build();
+        when(weeklyCommitRepository.findById(commitId)).thenReturn(Optional.of(commit));
+        when(outcomeRepository.findById(outcomeId)).thenReturn(
+                Optional.of(Outcome.builder().id(outcomeId).title("O").definingObjectiveId(UUID.randomUUID()).build()));
+        when(commitItemRepository.findById(bumpedItemId)).thenReturn(Optional.of(bumpedItem));
+        when(commitItemRepository.existsByWeeklyCommitIdAndBumpedItemId(commitId, bumpedItemId)).thenReturn(false);
+        when(commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId))
+                .thenReturn(List.of(bumpedItem));
+        CommitItem saved = CommitItem.builder()
+                .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(outcomeId)
+                .title("Pivot").chessPiece("QUEEN").chessWeight(80).priorityOrder(2)
+                .carryForward(false).carryForwardCount(0).unplanned(true).bumpedItemId(bumpedItemId).build();
+        when(commitItemRepository.save(any(CommitItem.class))).thenReturn(saved);
+        when(definingObjectiveRepository.findById(any())).thenReturn(Optional.empty());
+
+        CreateUnplannedItemRequest req = CreateUnplannedItemRequest.builder()
+                .title("Pivot").outcomeId(outcomeId).chessPiece("QUEEN").bumpedItemId(bumpedItemId).build();
+        commitService.createUnplannedItem(commitId, userId, req);
+
+        ArgumentCaptor<CommitItem> captor = ArgumentCaptor.forClass(CommitItem.class);
+        verify(commitItemRepository).save(captor.capture());
+        assertThat(captor.getValue().isUnplanned()).isTrue();
+        assertThat(captor.getValue().getBumpedItemId()).isEqualTo(bumpedItemId);
+    }
+
     // ── toWeekResponse / alignmentScore ────────────────────────────────────────
 
     @Test
@@ -223,11 +291,11 @@ class CommitServiceTest {
         CommitItem item1 = CommitItem.builder()
                 .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(outcomeId)
                 .title("A").chessPiece("KING").chessWeight(100).priorityOrder(1)
-                .carryForward(false).carryForwardCount(0).build();
+                .carryForward(false).carryForwardCount(0).unplanned(false).build();
         CommitItem item2 = CommitItem.builder()
                 .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(outcomeId)
                 .title("B").chessPiece("QUEEN").chessWeight(80).priorityOrder(2)
-                .carryForward(false).carryForwardCount(0).build();
+                .carryForward(false).carryForwardCount(0).unplanned(false).build();
         when(commitItemRepository.findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId))
                 .thenReturn(List.of(item1, item2));
         when(outcomeRepository.findById(outcomeId)).thenReturn(

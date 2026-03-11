@@ -38,12 +38,14 @@ import {
 } from '@/components/ui/alert-dialog'
 import { CommitItem } from '@/components/CommitItem'
 import { AddItemModal } from '@/components/AddItemModal'
+import { UnplannedItemModal } from '@/components/UnplannedItemModal'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   useCurrentCommit,
   useUpdateStatus,
   useCreateItem,
+  useCreateUnplannedItem,
   useUpdateItem,
   useDeleteItem,
   useReorderItems,
@@ -105,6 +107,9 @@ function StrategySummary({
               className={`space-y-2 rounded-md p-2 -mx-2 transition-colors ${isActive ? 'bg-primary/5 ring-1 ring-primary/20' : ''}`}
             >
               <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Rally Cry (RC):
+                </span>
                 <h3 className="font-semibold text-foreground">{rc.title}</h3>
                 {isActive && (
                   <Badge variant="outline" className="text-xs text-primary border-primary/40">
@@ -116,16 +121,21 @@ function StrategySummary({
                 <p className="text-sm text-muted-foreground mt-0.5">{rc.description}</p>
               )}
               {rc.definingObjectives?.length > 0 && (
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
-                  {rc.definingObjectives.map((do_) => (
-                    <li key={do_.id}>
-                      <span className="text-foreground/90">{do_.title}</span>
-                      {do_.description && (
-                        <span className="text-muted-foreground"> — {do_.description}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                    Objectives (Defining Objectives):
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
+                    {rc.definingObjectives.map((do_) => (
+                      <li key={do_.id}>
+                        <span className="text-foreground/90">{do_.title}</span>
+                        {do_.description && (
+                          <span className="text-muted-foreground"> — {do_.description}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           )
@@ -141,6 +151,7 @@ export function CommitPage(): React.ReactElement {
   const { data: rcdoData } = useRcdo()
   const updateStatus = useUpdateStatus()
   const createItem = useCreateItem()
+  const createUnplannedItem = useCreateUnplannedItem()
   const updateItem = useUpdateItem()
   const deleteItem = useDeleteItem()
   const reorderItems = useReorderItems()
@@ -148,6 +159,7 @@ export function CommitPage(): React.ReactElement {
   const completeReconciliation = useCompleteReconciliation()
 
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [unplannedModalOpen, setUnplannedModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<CommitItemResponse | null>(null)
   const [reconcileData, setReconcileData] = useState<
     Record<string, { actualOutcome: string; completionStatus: CompletionStatus | ''; carryForward: boolean }>
@@ -355,6 +367,16 @@ export function CommitPage(): React.ReactElement {
       {/* LOCKED State */}
       {commit.status === 'LOCKED' && (
         <>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setUnplannedModalOpen(true)}
+              disabled={commit.items.filter((i) => !i.unplanned).length === 0}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Add unplanned item
+            </Button>
+          </div>
           {CHESS_PIECE_ORDER.map((piece) => {
             const items = itemsByPiece[piece]
             if (items.length === 0) return null
@@ -415,6 +437,16 @@ export function CommitPage(): React.ReactElement {
       {/* RECONCILING State — side-by-side "Monday Promise" vs "Friday Reality" */}
       {commit.status === 'RECONCILING' && (
         <>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setUnplannedModalOpen(true)}
+              disabled={commit.items.filter((i) => !i.unplanned).length === 0}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Add unplanned item
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             Reflect on each item. For partial or missed items, a reason for miss is required.
           </p>
@@ -429,6 +461,7 @@ export function CommitPage(): React.ReactElement {
               .map((item) => {
                 const state = getReconcileState(item.id)
                 const alreadyReconciled = item.completionStatus !== null
+                const isBumpedItem = commit.items.some((o) => o.bumpedItemId === item.id)
                 const requiresReason =
                   state.completionStatus === 'PARTIAL' ||
                   state.completionStatus === 'NOT_COMPLETED'
@@ -499,6 +532,9 @@ export function CommitPage(): React.ReactElement {
                                   <SelectItem value="COMPLETED">Completed</SelectItem>
                                   <SelectItem value="PARTIAL">Partial</SelectItem>
                                   <SelectItem value="NOT_COMPLETED">Not Completed</SelectItem>
+                                  {isBumpedItem && (
+                                    <SelectItem value="BUMPED">Bumped</SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -603,7 +639,7 @@ export function CommitPage(): React.ReactElement {
       {/* RECONCILED State — side-by-side "The Promise" vs "The Reality" */}
       {commit.status === 'RECONCILED' && (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             {[
               {
                 label: 'Completed',
@@ -619,6 +655,11 @@ export function CommitPage(): React.ReactElement {
                 label: 'Not Done',
                 count: commit.items.filter((i) => i.completionStatus === 'NOT_COMPLETED').length,
                 color: 'text-red-600',
+              },
+              {
+                label: 'Bumped',
+                count: commit.items.filter((i) => i.completionStatus === 'BUMPED').length,
+                color: 'text-orange-600',
               },
               {
                 label: 'Carried Fwd',
@@ -674,7 +715,9 @@ export function CommitPage(): React.ReactElement {
                                 ? 'success'
                                 : item.completionStatus === 'PARTIAL'
                                   ? 'warning'
-                                  : 'destructive'
+                                  : item.completionStatus === 'BUMPED'
+                                    ? 'secondary'
+                                    : 'destructive'
                             }
                             className="text-xs"
                           >
@@ -715,6 +758,12 @@ export function CommitPage(): React.ReactElement {
                 updateItem.mutateAsync({ commitId: commit.id, itemId: editingItem.id, item })
             : undefined
         }
+      />
+      <UnplannedItemModal
+        open={unplannedModalOpen}
+        onClose={() => setUnplannedModalOpen(false)}
+        onSubmit={(item) => createUnplannedItem.mutateAsync({ commitId: commit.id, item })}
+        bumpableItems={commit.items.filter((i) => !i.unplanned)}
       />
     </div>
   )

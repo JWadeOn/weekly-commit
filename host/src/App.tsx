@@ -121,6 +121,7 @@ export default function App(): JSX.Element {
             orgId={user.orgId}
             authToken="cookie"
             onAuthExpired={handleAuthExpired}
+            activeRallyCryId={undefined}
           />
         </Suspense>
       </main>

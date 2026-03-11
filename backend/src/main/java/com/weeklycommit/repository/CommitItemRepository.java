@@ -15,4 +15,6 @@ public interface CommitItemRepository extends JpaRepository<CommitItem, UUID> {
     List<CommitItem> findByWeeklyCommitIdAndCarryForwardTrue(UUID weeklyCommitId);
 
     boolean existsByWeeklyCommitIdAndCarriedFromId(UUID weeklyCommitId, UUID carriedFromId);
+
+    boolean existsByWeeklyCommitIdAndBumpedItemId(UUID weeklyCommitId, UUID bumpedItemId);
 }

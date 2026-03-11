@@ -68,4 +68,12 @@ public class ManagerController {
         UUID orgId = SecurityContextHelper.getCurrentOrgId();
         return ResponseEntity.ok(managerService.getTeamAlignment(managerId, orgId));
     }
+
+    @GetMapping("/pivot-radar")
+    public ResponseEntity<List<PivotRadarItemDto>> getPivotRadar(
+            @RequestParam(defaultValue = "2") int weeks) {
+        UUID managerId = SecurityContextHelper.getCurrentUserId();
+        UUID orgId = SecurityContextHelper.getCurrentOrgId();
+        return ResponseEntity.ok(managerService.getPivotRadar(managerId, orgId, weeks));
+    }
 }

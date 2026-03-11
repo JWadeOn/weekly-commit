@@ -13,7 +13,7 @@ export type ChessPiece = 'KING' | 'QUEEN' | 'ROOK' | 'BISHOP' | 'KNIGHT' | 'PAWN
 
 export type CommitStatus = 'DRAFT' | 'LOCKED' | 'RECONCILING' | 'RECONCILED'
 
-export type CompletionStatus = 'COMPLETED' | 'PARTIAL' | 'NOT_COMPLETED'
+export type CompletionStatus = 'COMPLETED' | 'PARTIAL' | 'NOT_COMPLETED' | 'BUMPED'
 
 export const CHESS_WEIGHT: Record<ChessPiece, number> = {
   KING: 100,
@@ -54,6 +54,9 @@ export interface CommitItemResponse {
   carryForward: boolean
   carryForwardCount: number
   carriedFromId: string | null
+  unplanned: boolean
+  bumpedItemId: string | null
+  bumpedItemTitle: string | null
   createdAt: string
   updatedAt: string
 }
@@ -85,6 +88,7 @@ export interface CommitSummaryResponse {
   partialCount: number
   notCompletedCount: number
   carriedForwardCount: number
+  bumpedCount?: number
 }
 
 export interface PagedResponse<T> {
@@ -153,6 +157,21 @@ export interface TeamResponse {
   teamMembers: TeamMemberResponse[]
   teamAlignmentScore: number
   underSupportedRallyCries: UnderSupportedRallyCry[]
+}
+
+export interface PivotRadarItemDto {
+  userId: string
+  fullName: string
+  commitId: string
+  itemId: string
+  weekStartDate: string
+  title: string
+  description: string | null
+  actualOutcome: string | null
+  outcomeBreadcrumb: OutcomeBreadcrumbDto | null
+  chessPiece: ChessPiece
+  bumpedItemId: string | null
+  bumpedItemTitle: string | null
 }
 
 /** Raw shape returned by GET /api/manager/team (array of members with flat fields) */
@@ -301,6 +320,7 @@ export interface ReconciliationSummary {
   partialCount: number
   notCompletedCount: number
   carriedForwardCount: number
+  bumpedCount?: number
 }
 
 export interface ReconcileCommitResponse {
@@ -319,6 +339,14 @@ export interface CreateCommitItemRequest {
   description?: string
   outcomeId: string
   chessPiece: ChessPiece
+}
+
+export interface CreateUnplannedItemRequest {
+  title: string
+  description?: string
+  outcomeId: string
+  chessPiece: ChessPiece
+  bumpedItemId: string
 }
 
 export interface UpdateCommitItemRequest {

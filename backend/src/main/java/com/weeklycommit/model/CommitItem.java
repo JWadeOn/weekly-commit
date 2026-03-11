@@ -57,6 +57,12 @@ public class CommitItem {
     @Column(name = "carried_from_id")
     private UUID carriedFromId;
 
+    @Column(name = "unplanned", nullable = false)
+    private boolean unplanned;
+
+    @Column(name = "bumped_item_id")
+    private UUID bumpedItemId;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 

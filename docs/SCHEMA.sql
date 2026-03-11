@@ -95,13 +95,18 @@ CREATE TABLE commit_items (
   priority_order      INTEGER NOT NULL,
   actual_outcome      TEXT,
   completion_status   VARCHAR
-    CHECK (completion_status IN ('COMPLETED', 'PARTIAL', 'NOT_COMPLETED')),
+    CHECK (completion_status IN ('COMPLETED', 'PARTIAL', 'NOT_COMPLETED', 'BUMPED')),
   carry_forward       BOOLEAN DEFAULT false,
   carry_forward_count INTEGER DEFAULT 0,
   carried_from_id     UUID REFERENCES commit_items(id),
+  unplanned           BOOLEAN NOT NULL DEFAULT false,
+  bumped_item_id      UUID REFERENCES commit_items(id),
   created_at          TIMESTAMP DEFAULT NOW(),
   updated_at          TIMESTAMP DEFAULT NOW()
 );
+-- unplanned: true for mid-week pivot items (added when commit is LOCKED/RECONCILING).
+-- bumped_item_id: on unplanned item, references the item that was "bumped" to make room.
+-- completion_status: V5 adds 'BUMPED' for items that were bumped by an unplanned addition.
 
 -- Immutable audit log — no UPDATE or DELETE ever permitted
 CREATE TABLE state_transitions (

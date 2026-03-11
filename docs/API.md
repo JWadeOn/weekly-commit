@@ -190,6 +190,32 @@ Create a new commit item.
 
 ---
 
+### POST /api/commits/:id/items/unplanned
+Add an unplanned (mid-week) item when the commit is LOCKED or RECONCILING. Requires selecting which existing item is "bumped" to make room. The new item is read-only after creation.
+
+**Request:**
+```json
+{
+  "title": "Unplanned pivot item",
+  "description": "Optional justification",
+  "outcomeId": "uuid",
+  "chessPiece": "QUEEN",
+  "bumpedItemId": "uuid"
+}
+```
+
+**Response 201:** Created commit item (with `unplanned: true`, `bumpedItemId` set).
+
+**Errors:**
+- 400 COMMIT_NOT_LOCKED_OR_RECONCILING — unplanned only when week is LOCKED or RECONCILING
+- 400 BUMPED_ITEM_NOT_IN_COMMIT — bumpedItemId must belong to the same commit
+- 400 ITEM_ALREADY_BUMPED — that item has already been bumped by another unplanned item
+- 404 COMMIT_NOT_FOUND
+- 404 OUTCOME_NOT_FOUND
+- 404 ITEM_NOT_FOUND (bumped item)
+
+---
+
 ### PUT /api/commits/:id/items/:itemId
 Update an existing commit item. Only permitted in DRAFT state.
 
@@ -199,17 +225,19 @@ Update an existing commit item. Only permitted in DRAFT state.
 
 **Errors:**
 - 400 COMMIT_NOT_IN_DRAFT
+- 400 CANNOT_EDIT_UNPLANNED — unplanned items cannot be edited
 - 404 ITEM_NOT_FOUND
 
 ---
 
 ### DELETE /api/commits/:id/items/:itemId
-Delete a commit item. Only permitted in DRAFT state.
+Delete a commit item. Only permitted in DRAFT state. Unplanned items cannot be deleted.
 
 **Response 204:** No content.
 
 **Errors:**
 - 400 COMMIT_NOT_IN_DRAFT
+- 400 CANNOT_DELETE_UNPLANNED — unplanned items cannot be deleted
 - 404 ITEM_NOT_FOUND
 
 ---
@@ -248,6 +276,7 @@ Update reconciliation data for a single commit item.
   "carryForward": false
 }
 ```
+`completionStatus` may be `COMPLETED`, `PARTIAL`, `NOT_COMPLETED`, or `BUMPED` (BUMPED only for items that were bumped by an unplanned addition).
 
 **Response 200:** Updated commit item.
 
@@ -272,6 +301,7 @@ Triggers carry-forward seeding into next week's DRAFT.
     "completedCount": 4,
     "partialCount": 1,
     "notCompletedCount": 1,
+    "bumpedCount": 0,
     "carriedForwardCount": 1
   }
 }
@@ -383,6 +413,33 @@ Returns team-level alignment breakdown mapped to Rally Cries.
     }
   ]
 }
+```
+
+---
+
+### GET /api/manager/pivot-radar
+Returns unplanned (mid-week pivot) items for all direct reports. Used for the "Pivot Radar" / Strategic Pivot section on the manager dashboard.
+
+**Query params:** `weeks` (default 2) — number of weeks to include (current + past).
+
+**Response 200:**
+```json
+[
+  {
+    "userId": "uuid",
+    "fullName": "Sarah Employee",
+    "commitId": "uuid",
+    "itemId": "uuid",
+    "weekStartDate": "2024-01-01",
+    "title": "Unplanned item title",
+    "description": "Why added mid-week",
+    "actualOutcome": "What actually happened (after reconciliation)",
+    "outcomeBreadcrumb": { "rallyCry": "...", "definingObjective": "...", "outcome": "..." },
+    "chessPiece": "QUEEN",
+    "bumpedItemId": "uuid",
+    "bumpedItemTitle": "Title of the item that was bumped"
+  }
+]
 ```
 
 ---

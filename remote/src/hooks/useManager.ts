@@ -9,6 +9,7 @@ import type {
   ManagerNoteResponse,
   CommitStatus,
   RcDoAdminResponse,
+  PivotRadarItemDto,
 } from '@/types'
 
 /** Backend returns an array; normalize to TeamResponse for the UI */
@@ -62,6 +63,14 @@ export function useTeamAlignment() {
   return useQuery<TeamAlignmentResponse>({
     queryKey: ['manager', 'team', 'alignment'],
     queryFn: () => manager.teamAlignment(),
+    refetchInterval: 30_000,
+  })
+}
+
+export function usePivotRadar(weeks = 2) {
+  return useQuery<PivotRadarItemDto[]>({
+    queryKey: ['manager', 'pivot-radar', weeks],
+    queryFn: () => manager.pivotRadar(weeks),
     refetchInterval: 30_000,
   })
 }

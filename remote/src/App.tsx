@@ -7,6 +7,7 @@ import { ManagerDashboard } from '@/pages/ManagerDashboard'
 import { StrategyPage } from '@/pages/StrategyPage'
 import { CommitDetailPage } from '@/pages/CommitDetailPage'
 import { CommitHistoryPage } from '@/pages/CommitHistoryPage'
+import { ResourcesPage } from '@/pages/ResourcesPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { AppNav } from '@/components/AppNav'
 
@@ -56,6 +57,7 @@ function AppRoutes(): React.ReactElement {
           <Route path="/commits" element={<CommitPage />} />
           <Route path="/commits/:id" element={<CommitDetailPage />} />
           <Route path="/history" element={<CommitHistoryPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
           <Route path="/manager" element={<ManagerDashboard />} />
           <Route path="/manager/strategy" element={<StrategyPage />} />
         </Routes>

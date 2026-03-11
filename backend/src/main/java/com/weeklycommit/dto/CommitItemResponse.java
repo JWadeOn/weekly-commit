@@ -27,6 +27,9 @@ public class CommitItemResponse {
     private boolean carryForward;
     private int carryForwardCount;
     private UUID carriedFromId;
+    private boolean unplanned;
+    private UUID bumpedItemId;
+    private String bumpedItemTitle;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
