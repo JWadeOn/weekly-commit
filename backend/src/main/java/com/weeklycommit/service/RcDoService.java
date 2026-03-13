@@ -43,17 +43,24 @@ public class RcDoService {
                                         outcomeRepository.findByDefiningObjectiveIdAndActiveTrue(obj.getId());
 
                                 List<OutcomeDto> outcomeDtos = outcomes.stream()
-                                        .map(o -> OutcomeDto.builder()
-                                                .id(o.getId())
-                                                .title(o.getTitle())
-                                                .description(o.getDescription())
-                                                .ownerId(o.getOwnerId())
-                                                .startValue(o.getStartValue())
-                                                .targetValue(o.getTargetValue())
-                                                .currentValue(o.getCurrentValue())
-                                                .unit(o.getUnit())
-                                                .lastUpdated(o.getLastUpdated())
-                                                .build())
+                                        .map(o -> {
+                                            boolean inv = o.getTargetValue() != null && o.getStartValue() != null
+                                                    && o.getTargetValue() < o.getStartValue();
+                                            return OutcomeDto.builder()
+                                                    .id(o.getId())
+                                                    .title(o.getTitle())
+                                                    .description(o.getDescription())
+                                                    .ownerId(o.getOwnerId())
+                                                    .startValue(o.getStartValue())
+                                                    .targetValue(o.getTargetValue())
+                                                    .currentValue(o.getCurrentValue())
+                                                    .unit(o.getUnit())
+                                                    .unitLabel(o.getUnitLabel())
+                                                    .unitType(o.getUnitType() != null ? o.getUnitType().name() : null)
+                                                    .inverted(inv)
+                                                    .lastUpdated(o.getLastUpdated())
+                                                    .build();
+                                        })
                                         .toList();
 
                                 return DefiningObjectiveDto.builder()

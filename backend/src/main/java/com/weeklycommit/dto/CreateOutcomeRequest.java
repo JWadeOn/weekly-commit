@@ -1,5 +1,6 @@
 package com.weeklycommit.dto;
 
+import com.weeklycommit.model.UnitType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -27,4 +28,8 @@ public class CreateOutcomeRequest {
     private Double targetValue;
     @NotBlank(message = "Unit is required (e.g. ms, USD, Percentage, Tickets)")
     private String unit;
+    /** Human-readable unit label shown in the gauge (e.g. "Questions", "Bugs"). */
+    private String unitLabel;
+    /** Display category that drives gauge formatting. */
+    private UnitType unitType;
 }

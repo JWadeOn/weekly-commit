@@ -35,7 +35,8 @@ public interface CommitItemRepository extends JpaRepository<CommitItem, UUID> {
     @Query("""
             SELECT ci.outcomeId, SUM(ci.chessWeight)
             FROM CommitItem ci
-            WHERE ci.weeklyCommitId IN (
+            WHERE ci.outcomeId IS NOT NULL
+              AND ci.weeklyCommitId IN (
                 SELECT wc.id
                 FROM WeeklyCommit wc
                 WHERE wc.orgId        = :orgId

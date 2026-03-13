@@ -72,10 +72,19 @@ public class StateMachineService {
             validateLockedToDraft(commit);
         }
 
-        // Apply timestamp
+        // Apply timestamp + immutable snapshots
         LocalDateTime now = LocalDateTime.now();
         switch (targetStatus) {
-            case "LOCKED" -> commit.setLockedAt(now);
+            case "LOCKED" -> {
+                commit.setLockedAt(now);
+                // Snapshot total weight — immutable from this point forward
+                int snapshot = commitItemRepository
+                        .findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitId)
+                        .stream()
+                        .mapToInt(CommitItem::getChessWeight)
+                        .sum();
+                commit.setTotalLockedWeight(snapshot);
+            }
             case "RECONCILING" -> commit.setReconcilingAt(now);
             case "RECONCILED" -> commit.setReconciledAt(now);
             default -> { /* DRAFT retract — no extra timestamp */ }

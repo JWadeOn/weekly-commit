@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   BarChart3,
   Activity,
+  History,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,9 @@ import { useTeamDashboard, useTeamAlignment, useRcdoHierarchy, usePivotRadar } f
 import { useTeamOutcomeWeights } from '@/hooks/useCurrentCommit'
 import { useUpdateOutcomeCurrentValue } from '@/hooks/useRcdoAdmin'
 import { SuccessGauge } from '@/components/SuccessGauge'
-import type { TeamMemberResponse, DefiningObjectiveBreakdownDto } from '@/types'
+import { ProofModal } from '@/components/ProofModal'
+import { OutcomeHistoryDrawer } from '@/components/OutcomeHistoryDrawer'
+import type { TeamMemberResponse, DefiningObjectiveBreakdownDto, VerificationType } from '@/types'
 import { CHESS_ICON } from '@/types'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -183,6 +186,21 @@ export function ManagerDashboard(): React.ReactElement {
   type SortKey = 'name' | 'status' | 'itemCount' | 'alignment' | 'lastUpdated'
   const [sortBy, setSortBy] = useState<SortKey>('name')
   const [pulseEdits, setPulseEdits] = useState<Record<string, string>>({})
+  const [proofModal, setProofModal] = useState<{
+    open: boolean
+    outcomeId: string
+    outcomeTitle: string
+    oldValue: number | null
+    newValue: number
+    unit: string
+  }>({ open: false, outcomeId: '', outcomeTitle: '', oldValue: null, newValue: 0, unit: '' })
+  const [historyDrawer, setHistoryDrawer] = useState<{
+    open: boolean
+    outcomeId: string | null
+    outcomeTitle: string
+    unit: string
+  }>({ open: false, outcomeId: null, outcomeTitle: '', unit: '' })
+  const [successToast, setSuccessToast] = useState<string | null>(null)
 
   const teamMembers: TeamMemberResponse[] = team?.teamMembers ?? []
 
@@ -317,6 +335,48 @@ export function ManagerDashboard(): React.ReactElement {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
+      {/* ── Success Toast ── */}
+      {successToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-600 text-white text-sm font-bold px-4 py-3 rounded-xl shadow-2xl animate-in slide-in-from-bottom-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          {successToast}
+        </div>
+      )}
+
+      {/* ── Proof of Progress Modal ── */}
+      <ProofModal
+        open={proofModal.open}
+        onClose={() => setProofModal((s) => ({ ...s, open: false }))}
+        outcomeTitle={proofModal.outcomeTitle}
+        oldValue={proofModal.oldValue}
+        newValue={proofModal.newValue}
+        unit={proofModal.unit}
+        isPending={updateCurrentValue.isPending}
+        onConfirm={async (actionTaken: string, verificationType: VerificationType) => {
+          await updateCurrentValue.mutateAsync({
+            id: proofModal.outcomeId,
+            body: { currentValue: proofModal.newValue, actionTaken, verificationType },
+          })
+          setPulseEdits((prev) => {
+            const next = { ...prev }
+            delete next[proofModal.outcomeId]
+            return next
+          })
+          setProofModal((s) => ({ ...s, open: false }))
+          setSuccessToast(`${proofModal.outcomeTitle} updated to ${proofModal.newValue}${proofModal.unit}`)
+          setTimeout(() => setSuccessToast(null), 3500)
+        }}
+      />
+
+      {/* ── Outcome History Drawer ── */}
+      <OutcomeHistoryDrawer
+        open={historyDrawer.open}
+        onClose={() => setHistoryDrawer((s) => ({ ...s, open: false }))}
+        outcomeId={historyDrawer.outcomeId}
+        outcomeTitle={historyDrawer.outcomeTitle}
+        unit={historyDrawer.unit}
+      />
+
       {/* ── RC Hero + Alignment Gauge (2-col) ── */}
       {activeRallyCry && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -363,8 +423,8 @@ export function ManagerDashboard(): React.ReactElement {
               <BarChart3 className="h-4 w-4 text-[#1152d4]" />
             </div>
             <div className="flex-1 flex flex-col justify-center items-center gap-6">
-              {/* Circle gauge */}
-              <div className="relative size-32">
+              {/* Circle gauge with weight breakdown tooltip */}
+              <div className="relative size-32 group cursor-help">
                 <svg className="size-full" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" fill="none" r="45" strokeWidth="8" className="stroke-slate-100" />
                   <circle
@@ -379,14 +439,86 @@ export function ManagerDashboard(): React.ReactElement {
                   <span className="text-2xl font-black text-[#1e293b] leading-none">{alignment?.strategicPercentage ?? 70}%</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase">Strategic</span>
                 </div>
+
+                {/* Weight breakdown tooltip */}
+                {alignment && (
+                  <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+10px)] z-30 w-56 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col items-center">
+                    {/* Caret — points up toward the gauge */}
+                    <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-[#1e293b]" />
+                    <div className="bg-[#1e293b] text-white rounded-xl shadow-2xl p-3 space-y-2.5 text-[11px] w-full">
+                      <p className="font-black uppercase tracking-widest text-slate-400 text-[9px]">Weight Breakdown</p>
+
+                      {/* Strategic row */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 font-bold text-white">
+                            <span className="text-amber-400">♔♕♖</span> Strategic
+                          </span>
+                          <span className="font-black text-[#60a5fa]">{alignment.strategicWeight} pts</span>
+                        </div>
+                        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-[#1152d4]"
+                            style={{ width: `${alignment.strategicPercentage}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-slate-400 text-[9px]">
+                          <span>King ×20 · Queen ×10 · Rook ×5</span>
+                          <span>{alignment.strategicPercentage}%</span>
+                        </div>
+                      </div>
+
+                      {/* Tactical row */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 font-bold text-slate-300">
+                            <span>♗♘♙</span> Tactical
+                          </span>
+                          <span className="font-black text-slate-300">{alignment.tacticalWeight} pts</span>
+                        </div>
+                        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-slate-500"
+                            style={{ width: `${100 - alignment.strategicPercentage}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-slate-400 text-[9px]">
+                          <span>Bishop ×3 · Knight ×3 · Pawn ×1</span>
+                          <span>{100 - alignment.strategicPercentage}%</span>
+                        </div>
+                      </div>
+
+                      {/* Divider + totals */}
+                      <div className="border-t border-white/10 pt-2 space-y-1">
+                        <div className="flex justify-between text-slate-300">
+                          <span>Aligned weight</span>
+                          <span className="font-bold">{alignment.alignedWeight} pts</span>
+                        </div>
+                        <div className="flex justify-between text-slate-300">
+                          <span>Total committed</span>
+                          <span className="font-bold">{alignment.totalWeight} pts</span>
+                        </div>
+                        {alignment.lockedOnMondayWeight > 0 && (
+                          <div className="flex justify-between text-slate-400 text-[9px]">
+                            <span>Locked Monday</span>
+                            <span>{alignment.lockedOnMondayWeight} pts</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+
               <div className="w-full space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Crown className="h-3.5 w-3.5 text-amber-500" />
                     <span className="text-xs font-semibold">Strategic (King/Queen/Rook)</span>
                   </div>
-                  <span className="text-xs font-bold">{alignment?.strategicPercentage ?? 70}%</span>
+                  <span className="text-xs font-bold">
+                    {alignment ? `${alignment.strategicWeight} pts · ` : ''}{alignment?.strategicPercentage ?? 70}%
+                  </span>
                 </div>
                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-[#1152d4] rounded-full" style={{ width: `${alignment?.strategicPercentage ?? 70}%` }} />
@@ -396,7 +528,9 @@ export function ManagerDashboard(): React.ReactElement {
                     <Users className="h-3.5 w-3.5 text-slate-400" />
                     <span className="text-xs font-semibold text-slate-500">Tactical (Bishop/Knight/Pawn)</span>
                   </div>
-                  <span className="text-xs font-bold text-slate-500">{100 - (alignment?.strategicPercentage ?? 70)}%</span>
+                  <span className="text-xs font-bold text-slate-500">
+                    {alignment ? `${alignment.tacticalWeight} pts · ` : ''}{100 - (alignment?.strategicPercentage ?? 70)}%
+                  </span>
                 </div>
               </div>
             </div>
@@ -498,6 +632,34 @@ export function ManagerDashboard(): React.ReactElement {
                               Low Velocity
                             </div>
                           )}
+                          {/* Outcome history links for this DO */}
+                          {rcdo && (() => {
+                            const doOutcomes = rcdo.rallyCries
+                              .flatMap((rc) => rc.definingObjectives)
+                              .find((d) => d.id === obj.definingObjectiveId)?.outcomes ?? []
+                            const measurableOutcomes = doOutcomes.filter((o) => o.targetValue != null)
+                            if (measurableOutcomes.length === 0) return null
+                            return (
+                              <div className="flex flex-wrap gap-1">
+                                {measurableOutcomes.map((o) => (
+                                  <button
+                                    key={o.id}
+                                    onClick={() => setHistoryDrawer({
+                                      open: true,
+                                      outcomeId: o.id,
+                                      outcomeTitle: o.title,
+                                      unit: o.unit ?? '',
+                                    })}
+                                    className="flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-[#1152d4] hover:bg-[#1152d4]/10 px-1.5 py-0.5 rounded transition-colors"
+                                    title={`View history: ${o.title}`}
+                                  >
+                                    <History className="h-2.5 w-2.5" />
+                                    {o.title.length > 20 ? o.title.slice(0, 18) + '…' : o.title}
+                                  </button>
+                                ))}
+                              </div>
+                            )
+                          })()}
                           <div className="flex justify-between items-center">
                             <span className="relative group cursor-help">
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide border-b border-dotted border-slate-300">Effort Share</span>
@@ -581,17 +743,31 @@ export function ManagerDashboard(): React.ReactElement {
                         }}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 truncate">
                               {outcome.doTitle}
                             </p>
                             <p className="text-sm font-bold text-slate-800 leading-snug mt-0.5">{outcome.title}</p>
                           </div>
-                          {isStale && (
-                            <span className="text-[9px] font-black uppercase shrink-0 px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">
-                              STALE
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {isStale && (
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">
+                                STALE
+                              </span>
+                            )}
+                            <button
+                              onClick={() => setHistoryDrawer({
+                                open: true,
+                                outcomeId: outcome.id,
+                                outcomeTitle: outcome.title,
+                                unit: outcome.unit ?? '',
+                              })}
+                              className="w-6 h-6 rounded flex items-center justify-center text-slate-300 hover:text-[#1152d4] hover:bg-[#1152d4]/10 transition-colors"
+                              title="View update history"
+                            >
+                              <History className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
 
                         {outcome.startValue != null && outcome.targetValue != null && (
@@ -627,15 +803,14 @@ export function ManagerDashboard(): React.ReactElement {
                             disabled={!isDirty || updateCurrentValue.isPending}
                             onClick={() => {
                               if (isDirty && editVal != null) {
-                                void updateCurrentValue
-                                  .mutateAsync({ id: outcome.id, body: { currentValue: Number(editVal) } })
-                                  .then(() => {
-                                    setPulseEdits((prev) => {
-                                      const next = { ...prev }
-                                      delete next[outcome.id]
-                                      return next
-                                    })
-                                  })
+                                setProofModal({
+                                  open: true,
+                                  outcomeId: outcome.id,
+                                  outcomeTitle: outcome.title,
+                                  oldValue: outcome.currentValue ?? outcome.startValue ?? null,
+                                  newValue: Number(editVal),
+                                  unit: outcome.unit ?? '',
+                                })
                               }
                             }}
                             className="h-8 px-3 text-xs font-bold rounded-lg transition-all text-white disabled:opacity-40"

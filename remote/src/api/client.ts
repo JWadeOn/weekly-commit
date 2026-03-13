@@ -25,6 +25,7 @@ import type {
   CreateOutcomeRequest,
   UpdateOutcomeRequest,
   UpdateOutcomeCurrentValueRequest,
+  OutcomeUpdateDto,
 } from '@/types'
 
 const BASE_URL = 'http://localhost:8080/api'
@@ -183,5 +184,7 @@ export const manager = {
       request(`/manager/rcdo/outcomes/${id}`, { method: 'DELETE' }),
     updateOutcomeCurrentValue: (id: string, body: UpdateOutcomeCurrentValueRequest): Promise<RcDoAdminResponse['rallyCries'][0]['definingObjectives'][0]['outcomes'][0]> =>
       request(`/manager/rcdo/outcomes/${id}/current-value`, { method: 'PATCH', body: JSON.stringify(body) }),
+    getOutcomeHistory: (id: string): Promise<OutcomeUpdateDto[]> =>
+      request(`/manager/rcdo/outcomes/${id}/history`),
   },
 }

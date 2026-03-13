@@ -24,7 +24,8 @@ public class CommitItem {
     @Column(name = "weekly_commit_id", nullable = false)
     private UUID weeklyCommitId;
 
-    @Column(name = "outcome_id", nullable = false)
+    /** Null only for KLO items which are not tied to an RCDO outcome. */
+    @Column(name = "outcome_id")
     private UUID outcomeId;
 
     @Column(nullable = false)
@@ -59,6 +60,15 @@ public class CommitItem {
 
     @Column(name = "unplanned", nullable = false)
     private boolean unplanned;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "task_type", nullable = false)
+    @Builder.Default
+    private TaskType taskType = TaskType.STRATEGIC;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "klo_category", length = 20)
+    private KloCategory kloCategory;
 
     @Column(name = "bumped_item_id")
     private UUID bumpedItemId;

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Check } from 'lucide-react'
 import { useRcdo } from '@/hooks/useRcdo'
-import { CHESS_ICON } from '@/types'
+import { CHESS_ICON, CHESS_WEIGHT } from '@/types'
 import type { ChessPiece, CreateCommitItemRequest, CommitItemResponse } from '@/types'
 import type { RcDoHierarchyResponse } from '@/types'
 
@@ -32,6 +32,20 @@ const CHESS_DESCRIPTION: Record<ChessPiece, string> = {
   BISHOP: 'Medium — meaningful progress.',
   KNIGHT: 'Lower — good to have.',
   PAWN: 'Lowest — small but valuable.',
+}
+
+const POWER_MULTIPLIER: Record<ChessPiece, string> = {
+  KING: 'King Move: 20x Impact',
+  QUEEN: 'Queen Move: 10x Impact',
+  ROOK: 'Rook Move: 5x Impact',
+  BISHOP: 'Bishop Move: 3x Impact',
+  KNIGHT: 'Knight Move: 3x Impact',
+  PAWN: 'Pawn Move: 1x Impact',
+}
+
+const STRATEGIC_GLOW: Partial<Record<ChessPiece, React.CSSProperties>> = {
+  KING: { boxShadow: '0 0 0 1px rgba(212,175,55,0.5), 0 0 28px rgba(212,175,55,0.25)' },
+  QUEEN: { boxShadow: '0 0 0 1px rgba(124,58,237,0.4), 0 0 28px rgba(124,58,237,0.2)' },
 }
 
 function findDoIdForOutcome(rcdo: RcDoHierarchyResponse | undefined, outcomeId: string): string {
@@ -108,9 +122,11 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
     }
   }
 
+  const glowStyle = STRATEGIC_GLOW[chessPiece] ?? {}
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg transition-shadow duration-300" style={glowStyle}>
         <DialogHeader>
           <DialogTitle className="text-lg font-black text-[#1e293b]">
             {editItem ? 'Edit Commit Item' : 'Add Commit Item'}
@@ -253,6 +269,23 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
                 ))}
               </SelectContent>
             </Select>
+            {/* Power Multiplier preview */}
+            <div
+              className="flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-bold transition-all duration-200"
+              style={
+                chessPiece === 'KING'
+                  ? { borderColor: 'rgba(212,175,55,0.5)', backgroundColor: 'rgba(212,175,55,0.07)', color: '#7a5c00' }
+                  : chessPiece === 'QUEEN'
+                  ? { borderColor: 'rgba(124,58,237,0.4)', backgroundColor: 'rgba(124,58,237,0.06)', color: '#5b21b6' }
+                  : { borderColor: '#e2e8f0', backgroundColor: '#f8faff', color: '#64748b' }
+              }
+            >
+              <span>{POWER_MULTIPLIER[chessPiece]}</span>
+              <span className="font-black text-sm" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                ×{CHESS_WEIGHT[chessPiece]}
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400">{CHESS_DESCRIPTION[chessPiece]}</p>
           </div>
 
           {error && <p className="text-sm text-red-500 font-medium">{error}</p>}

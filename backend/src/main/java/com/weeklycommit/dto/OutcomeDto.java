@@ -21,5 +21,9 @@ public class OutcomeDto {
     private Double targetValue;
     private Double currentValue;
     private String unit;
+    private String unitLabel;
+    private String unitType;
+    /** True when targetValue < startValue — gauge fills as the number decreases. */
+    private boolean inverted;
     private LocalDateTime lastUpdated;
 }

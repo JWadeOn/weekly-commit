@@ -113,4 +113,11 @@ public class ManagerRcdoController {
         UUID orgId = SecurityContextHelper.getCurrentOrgId();
         return ResponseEntity.ok(rcdoAdminService.updateOutcomeCurrentValue(managerId, orgId, id, req));
     }
+
+    @GetMapping("/outcomes/{id}/history")
+    public ResponseEntity<List<OutcomeUpdateDto>> getOutcomeHistory(@PathVariable UUID id) {
+        UUID managerId = SecurityContextHelper.getCurrentUserId();
+        UUID orgId = SecurityContextHelper.getCurrentOrgId();
+        return ResponseEntity.ok(rcdoAdminService.getOutcomeHistory(managerId, orgId, id));
+    }
 }

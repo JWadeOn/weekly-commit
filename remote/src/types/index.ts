@@ -42,8 +42,8 @@ export interface OutcomeBreadcrumbDto {
 export interface CommitItemResponse {
   id: string
   weeklyCommitId: string
-  outcomeId: string
-  outcomeBreadcrumb: OutcomeBreadcrumbDto
+  outcomeId: string | null
+  outcomeBreadcrumb: OutcomeBreadcrumbDto | null
   title: string
   description: string | null
   chessPiece: ChessPiece
@@ -55,6 +55,10 @@ export interface CommitItemResponse {
   carryForwardCount: number
   carriedFromId: string | null
   unplanned: boolean
+  /** STRATEGIC (default) or KLO */
+  taskType: TaskType
+  /** Non-null only for KLO items */
+  kloCategory: KloCategory | null
   bumpedItemId: string | null
   bumpedItemTitle: string | null
   createdAt: string
@@ -73,6 +77,10 @@ export interface WeeklyCommitResponse {
   viewedAt: string | null
   totalWeight: number
   alignmentScore: number | null
+  /** Snapshot of total weight taken when the commit was locked. Null until locked. */
+  totalLockedWeight: number | null
+  /** Sum of chessWeight for items currently marked COMPLETED. */
+  totalDoneWeight: number
   items: CommitItemResponse[]
 }
 
@@ -97,6 +105,39 @@ export interface PagedResponse<T> {
   totalPages: number
 }
 
+export type UnitType = 'NUMERIC' | 'PERCENT' | 'CURRENCY' | 'TIME'
+
+export type TaskType = 'STRATEGIC' | 'KLO'
+
+export type KloCategory = 'BUGFIX' | 'MAINTENANCE' | 'SECURITY' | 'ADMIN'
+
+export const KLO_CATEGORY_LABELS: Record<KloCategory, string> = {
+  BUGFIX: 'Bug Fix',
+  MAINTENANCE: 'Maintenance',
+  SECURITY: 'Security',
+  ADMIN: 'Admin',
+}
+
+export type VerificationType = 'LOAD_TEST' | 'QA' | 'PEER_REVIEW' | 'DASHBOARD'
+
+export const VERIFICATION_LABELS: Record<VerificationType, string> = {
+  LOAD_TEST: 'Load Test',
+  QA: 'QA Sign-Off',
+  PEER_REVIEW: 'Peer Review',
+  DASHBOARD: 'Dashboard / Metrics',
+}
+
+export interface OutcomeUpdateDto {
+  id: string
+  outcomeId: string
+  oldValue: number | null
+  newValue: number
+  actionTaken: string
+  verificationType: VerificationType
+  updatedByName: string | null
+  timestamp: string
+}
+
 export interface OutcomeDto {
   id: string
   title: string
@@ -105,6 +146,10 @@ export interface OutcomeDto {
   targetValue: number | null
   currentValue: number | null
   unit: string | null
+  unitLabel: string | null
+  unitType: UnitType | null
+  /** True when targetValue < startValue — gauge fills as the number decreases. */
+  inverted: boolean
   lastUpdated: string | null
 }
 
@@ -264,6 +309,10 @@ export interface AdminOutcomeDto {
   targetValue: number | null
   currentValue: number | null
   unit: string | null
+  unitLabel: string | null
+  unitType: UnitType | null
+  /** True when targetValue < startValue — gauge fills as the number decreases. */
+  inverted: boolean
   lastUpdated: string | null
 }
 
@@ -325,6 +374,8 @@ export interface CreateOutcomeRequest {
   startValue?: number
   targetValue: number
   unit: string
+  unitLabel?: string
+  unitType?: UnitType
 }
 
 export interface UpdateOutcomeRequest {
@@ -336,10 +387,14 @@ export interface UpdateOutcomeRequest {
   targetValue?: number
   currentValue?: number
   unit?: string
+  unitLabel?: string
+  unitType?: UnitType
 }
 
 export interface UpdateOutcomeCurrentValueRequest {
   currentValue: number
+  actionTaken: string
+  verificationType: VerificationType
 }
 
 export interface ReconciliationSummary {
@@ -378,9 +433,15 @@ export interface CreateCommitItemRequest {
 export interface CreateUnplannedItemRequest {
   title: string
   description?: string
-  outcomeId: string
+  /** Required for STRATEGIC; omit for KLO. */
+  outcomeId?: string
   chessPiece: ChessPiece
-  bumpedItemId: string
+  /** Omit when adding into existing ghost capacity (no new displacement needed). */
+  bumpedItemId?: string
+  taskType?: TaskType
+  kloCategory?: KloCategory
+  /** Reason recorded when no displacement is needed (debt-first path). */
+  pivotReason?: string
 }
 
 export interface UpdateCommitItemRequest {

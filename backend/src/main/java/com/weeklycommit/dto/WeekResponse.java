@@ -26,5 +26,9 @@ public class WeekResponse {
     private LocalDateTime viewedAt;
     private int totalWeight;
     private Integer alignmentScore;
+    /** Snapshot of total weight taken when the commit was locked. Null until locked. */
+    private Integer totalLockedWeight;
+    /** Sum of chessWeight for all items currently marked COMPLETED. */
+    private int totalDoneWeight;
     private List<CommitItemResponse> items;
 }

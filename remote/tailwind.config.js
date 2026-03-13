@@ -49,8 +49,8 @@ export default {
         'background-light': '#f1f5f9',
       },
       fontFamily: {
-        display: ['Inter', 'sans-serif'],
-        sans: ['Inter', 'sans-serif'],
+        display: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',

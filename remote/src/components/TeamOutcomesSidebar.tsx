@@ -1,6 +1,7 @@
 import React from 'react'
-import { User, X, PanelRight } from 'lucide-react'
-import type { RallyCryDto, CommitItemResponse } from '@/types'
+import { User, X, PanelRight, Wrench } from 'lucide-react'
+import type { RallyCryDto, CommitItemResponse, UnitType, KloCategory } from '@/types'
+import { KLO_CATEGORY_LABELS } from '@/types'
 import { SuccessGauge } from '@/components/SuccessGauge'
 
 interface OutcomeRow {
@@ -17,6 +18,8 @@ interface OutcomeRow {
   targetValue: number | null
   currentValue: number | null
   unit: string | null
+  unitLabel: string | null
+  unitType: UnitType | null
   lastUpdated: string | null
 }
 
@@ -63,6 +66,16 @@ export function TeamOutcomesSidebar({
   mobileOpen,
   onMobileClose,
 }: TeamOutcomesSidebarProps): React.ReactElement {
+  // KLO items — unplanned items tagged as operational work
+  const kloItems = commitItems.filter((i) => i.taskType === 'KLO')
+  const kloTotalWeight = kloItems.reduce((sum, i) => sum + i.chessWeight, 0)
+  const kloByCat = kloItems.reduce<Partial<Record<KloCategory, number>>>((acc, i) => {
+    if (i.kloCategory) {
+      acc[i.kloCategory] = (acc[i.kloCategory] ?? 0) + i.chessWeight
+    }
+    return acc
+  }, {})
+
   const outcomeRows: OutcomeRow[] = rallyCries.flatMap((rc) =>
     rc.definingObjectives.flatMap((doObj) =>
       doObj.outcomes.map((outcome) => {
@@ -85,6 +98,8 @@ export function TeamOutcomesSidebar({
           targetValue: outcome.targetValue ?? null,
           currentValue: outcome.currentValue ?? null,
           unit: outcome.unit ?? null,
+          unitLabel: outcome.unitLabel ?? null,
+          unitType: outcome.unitType ?? null,
           lastUpdated: outcome.lastUpdated ?? null,
         }
       })
@@ -197,6 +212,8 @@ export function TeamOutcomesSidebar({
                   targetValue={row.targetValue}
                   currentValue={row.currentValue}
                   unit={row.unit}
+                  unitLabel={row.unitLabel}
+                  unitType={row.unitType}
                   teamChessWeight={row.teamWeight > 0 ? row.teamWeight : undefined}
                   lastUpdated={row.lastUpdated}
                   compact
@@ -205,6 +222,50 @@ export function TeamOutcomesSidebar({
             </div>
           )
         })}
+      </div>
+
+      {/* ── KLO / Whirlwind section ── */}
+      <div className="border-t border-white/10">
+        <div className="px-4 py-2.5 flex items-center gap-2">
+          <Wrench className="h-3 w-3 text-slate-500 shrink-0" />
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">
+            Whirlwind / KLO
+          </p>
+          {kloTotalWeight > 0 && (
+            <span
+              className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded"
+              style={{ backgroundColor: 'rgba(100,116,139,0.3)', color: '#94a3b8' }}
+            >
+              {kloTotalWeight} wt
+            </span>
+          )}
+        </div>
+
+        {kloTotalWeight === 0 ? (
+          <p className="px-4 pb-3 text-[10px] text-slate-600 italic">No KLO work this week.</p>
+        ) : (
+          <div className="px-4 pb-3 space-y-1.5">
+            {(Object.keys(kloByCat) as KloCategory[]).map((cat) => (
+              <div key={cat} className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-400">{KLO_CATEGORY_LABELS[cat]}</span>
+                <span className="text-[10px] font-bold text-slate-500">{kloByCat[cat]} wt</span>
+              </div>
+            ))}
+            <div className="mt-2 pt-2 border-t border-white/5">
+              <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-slate-500 transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (kloTotalWeight / Math.max(1, kloTotalWeight + outcomeRows.reduce((s, r) => s + r.teamWeight, 0))) * 100)}%`
+                  }}
+                />
+              </div>
+              <p className="text-[9px] text-slate-600 mt-1">
+                Excluded from alignment score · counts toward capacity
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}

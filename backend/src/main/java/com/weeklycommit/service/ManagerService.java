@@ -69,7 +69,8 @@ public class ManagerService {
                 int totalWeight = items.stream().mapToInt(CommitItem::getChessWeight).sum();
                 if (totalWeight > 0) {
                     int alignedWeight = items.stream()
-                            .filter(i -> i.getOutcomeId() != null)
+                            .filter(i -> (i.getTaskType() == null || i.getTaskType() == com.weeklycommit.model.TaskType.STRATEGIC)
+                                    && i.getOutcomeId() != null)
                             .mapToInt(CommitItem::getChessWeight)
                             .sum();
                     alignmentScore = (double) alignedWeight / totalWeight * 100.0;
@@ -266,7 +267,8 @@ public class ManagerService {
                 } else {
                     tacticalWeight += w;
                 }
-                if (item.getOutcomeId() != null) {
+                if (item.getOutcomeId() != null
+                        && (item.getTaskType() == null || item.getTaskType() == com.weeklycommit.model.TaskType.STRATEGIC)) {
                     alignedWeight += w;
                     UUID rallyCryId = commitService.getRallyCryIdForOutcome(item.getOutcomeId());
                     if (rallyCryId != null) {

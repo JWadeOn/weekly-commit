@@ -1,10 +1,15 @@
 import React from 'react'
+import type { UnitType } from '@/types'
 
 interface SuccessGaugeProps {
   startValue: number
   targetValue: number
   currentValue: number
   unit: string
+  /** Human-readable label shown as a suffix (e.g. "Questions", "Bugs"). Falls back to unit. */
+  unitLabel?: string | null
+  /** Controls how the delta is displayed in the current-value row. */
+  unitType?: UnitType | null
   /** Optional team chess-weight overlay shown as an energy icon above the progress point */
   teamChessWeight?: number
   /** ISO timestamp — triggers amber "stale" styling if > 7 days old */
@@ -17,6 +22,7 @@ function computeGauge(start: number, target: number, current: number) {
   const range = Math.abs(target - start)
   if (range === 0) return { pct: 0, color: '#94a3b8', isStuck: true }
 
+  // Works for both ascending (target > start) and descending (target < start)
   const isMovingTowardTarget = target > start ? current >= start : current <= start
   const isRegressing = current !== start && !isMovingTowardTarget
   const notStarted = current === start
@@ -32,11 +38,19 @@ function isDataStale(lastUpdated: string | null | undefined): boolean {
   return Date.now() - new Date(lastUpdated).getTime() > 7 * 24 * 60 * 60 * 1000
 }
 
+/** Formats the delta line for NUMERIC unit types: e.g. "+12 Bugs" or "-8 Questions". */
+function formatDelta(delta: number, suffix: string): string {
+  const sign = delta > 0 ? '+' : ''
+  return `${sign}${delta} ${suffix}`
+}
+
 export function SuccessGauge({
   startValue,
   targetValue,
   currentValue,
   unit,
+  unitLabel,
+  unitType,
   teamChessWeight,
   lastUpdated,
   compact = false,
@@ -44,6 +58,18 @@ export function SuccessGauge({
   const { pct, color, isStuck } = computeGauge(startValue, targetValue, currentValue)
   const stale = isDataStale(lastUpdated)
   const energyLeft = Math.max(4, Math.min(96, pct))
+
+  // Suffix shown after numeric values in labels
+  const suffix = unitLabel ?? unit
+
+  // For NUMERIC type, show the absolute delta instead of the raw current value
+  const isNumeric = unitType === 'NUMERIC'
+  const delta = Math.round((currentValue - startValue) * 100) / 100
+  const currentDisplay = isNumeric
+    ? formatDelta(delta, suffix)
+    : `${currentValue}${suffix}`
+
+  const isOptimization = targetValue < startValue
 
   if (isStuck) {
     return (
@@ -71,7 +97,7 @@ export function SuccessGauge({
         </div>
         <div className="flex items-center justify-between text-[9px]">
           <span className={stale ? 'text-amber-500 font-bold' : 'text-slate-400'}>
-            {currentValue}{unit}{stale ? ' ⚠' : ''}
+            {currentDisplay}{stale ? ' ⚠' : ''}
           </span>
           <span className="font-bold" style={{ color }}>
             {Math.round(pct)}%
@@ -85,11 +111,11 @@ export function SuccessGauge({
     <div className="space-y-1.5">
       {/* Baseline → Target labels */}
       <div className="flex items-center justify-between text-[10px] text-slate-500">
-        <span>{startValue}{unit}</span>
+        <span>{startValue}{suffix}</span>
         <span className="font-bold" style={{ color }}>
-          {Math.round(pct)}% achieved
+          {Math.round(pct)}% {isOptimization ? 'optimized' : 'achieved'}
         </span>
-        <span>{targetValue}{unit}</span>
+        <span>{targetValue}{suffix}</span>
       </div>
 
       {/* Track */}
@@ -110,10 +136,10 @@ export function SuccessGauge({
         )}
       </div>
 
-      {/* Current value + stale indicator */}
+      {/* Current value / delta + stale indicator */}
       <div className="flex items-center justify-between text-[10px]">
         <span className={`font-medium ${stale ? 'text-amber-500' : 'text-slate-400'}`}>
-          Current: {currentValue}{unit}
+          {isNumeric ? 'Change' : 'Current'}: {currentDisplay}
           {stale && <span className="ml-1 font-bold">⚠ stale</span>}
         </span>
         {teamChessWeight != null && teamChessWeight > 0 && (

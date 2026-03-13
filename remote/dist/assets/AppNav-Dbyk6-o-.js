@@ -152,7 +152,7 @@ function createBrowserHistory(options = {}) {
     options
   );
 }
-function invariant$1(value, message) {
+function invariant(value, message) {
   if (value === false || value === null || typeof value === "undefined") {
     throw new Error(message);
   }
@@ -325,7 +325,7 @@ function createBrowserURLImpl(to, isAbsolute = false) {
   if (typeof window !== "undefined") {
     base = window.location.origin !== "null" ? window.location.origin : window.location.href;
   }
-  invariant$1(base, "No window.location.(origin|href) available to create URL");
+  invariant(base, "No window.location.(origin|href) available to create URL");
   let href = typeof to === "string" ? to : createPath(to);
   href = href.replace(/ $/, "%20");
   if (!isAbsolute && href.startsWith("//")) {
@@ -367,7 +367,7 @@ function flattenRoutes(routes, branches = [], parentsMeta = [], parentPath = "",
       if (!meta.relativePath.startsWith(parentPath) && hasParentOptionalSegments) {
         return;
       }
-      invariant$1(
+      invariant(
         meta.relativePath.startsWith(parentPath),
         `Absolute route path "${meta.relativePath}" nested under path "${parentPath}" is not valid. An absolute child route path must start with the combined path of all its parent routes.`
       );
@@ -376,7 +376,7 @@ function flattenRoutes(routes, branches = [], parentsMeta = [], parentPath = "",
     let path = joinPaths([parentPath, meta.relativePath]);
     let routesMeta = parentsMeta.concat(meta);
     if (route.children && route.children.length > 0) {
-      invariant$1(
+      invariant(
         // Our types know better, but runtime JS may not!
         // @ts-expect-error
         route.index !== true,
@@ -668,15 +668,15 @@ function resolveTo(toArg, routePathnames, locationPathname, isPathRelative = fal
     to = parsePath(toArg);
   } else {
     to = { ...toArg };
-    invariant$1(
+    invariant(
       !to.pathname || !to.pathname.includes("?"),
       getInvalidPathError("?", "pathname", "search", to)
     );
-    invariant$1(
+    invariant(
       !to.pathname || !to.pathname.includes("#"),
       getInvalidPathError("#", "pathname", "hash", to)
     );
-    invariant$1(
+    invariant(
       !to.search || !to.search.includes("#"),
       getInvalidPathError("#", "search", "hash", to)
     );
@@ -729,7 +729,7 @@ function isRouteErrorResponse(error) {
 function getRoutePattern(matches) {
   return matches.map((m) => m.route.path).filter(Boolean).join("/").replace(/\/\/*/g, "/") || "/";
 }
-var isBrowser$2 = typeof window !== "undefined" && typeof window.document !== "undefined" && typeof window.document.createElement !== "undefined";
+var isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined" && typeof window.document.createElement !== "undefined";
 function parseToInfo(_to, basename) {
   let to = _to;
   if (typeof to !== "string" || !ABSOLUTE_URL_REGEX.test(to)) {
@@ -741,7 +741,7 @@ function parseToInfo(_to, basename) {
   }
   let absoluteURL = to;
   let isExternal = false;
-  if (isBrowser$2) {
+  if (isBrowser) {
     try {
       let currentUrl = new URL(window.location.href);
       let targetUrl = to.startsWith("//") ? new URL(currentUrl.protocol + to) : new URL(to);
@@ -779,41 +779,41 @@ var validRequestMethodsArr = [
   ...validMutationMethodsArr
 ];
 new Set(validRequestMethodsArr);
-const React$10 = await importShared('react');
+const React$_ = await importShared('react');
 
-var DataRouterContext = React$10.createContext(null);
+var DataRouterContext = React$_.createContext(null);
 DataRouterContext.displayName = "DataRouter";
-var DataRouterStateContext = React$10.createContext(null);
+var DataRouterStateContext = React$_.createContext(null);
 DataRouterStateContext.displayName = "DataRouterState";
-var RSCRouterContext = React$10.createContext(false);
+var RSCRouterContext = React$_.createContext(false);
 function useIsRSCRouterContext() {
-  return React$10.useContext(RSCRouterContext);
+  return React$_.useContext(RSCRouterContext);
 }
-var ViewTransitionContext = React$10.createContext({
+var ViewTransitionContext = React$_.createContext({
   isTransitioning: false
 });
 ViewTransitionContext.displayName = "ViewTransition";
-var FetchersContext = React$10.createContext(
+var FetchersContext = React$_.createContext(
   /* @__PURE__ */ new Map()
 );
 FetchersContext.displayName = "Fetchers";
-var AwaitContext = React$10.createContext(null);
+var AwaitContext = React$_.createContext(null);
 AwaitContext.displayName = "Await";
-var NavigationContext = React$10.createContext(
+var NavigationContext = React$_.createContext(
   null
 );
 NavigationContext.displayName = "Navigation";
-var LocationContext = React$10.createContext(
+var LocationContext = React$_.createContext(
   null
 );
 LocationContext.displayName = "Location";
-var RouteContext = React$10.createContext({
+var RouteContext = React$_.createContext({
   outlet: null,
   matches: [],
   isDataRoute: false
 });
 RouteContext.displayName = "Route";
-var RouteErrorContext = React$10.createContext(null);
+var RouteErrorContext = React$_.createContext(null);
 RouteErrorContext.displayName = "RouteError";
 const React2$1 = await importShared('react');
 
@@ -849,7 +849,7 @@ function decodeRouteErrorResponseDigest(digest) {
   }
 }
 function useHref(to, { relative } = {}) {
-  invariant$1(
+  invariant(
     useInRouterContext(),
     // TODO: This error is probably because they somehow have 2 versions of the
     // router loaded. We can help them understand how to avoid that.
@@ -867,7 +867,7 @@ function useInRouterContext() {
   return React2$1.useContext(LocationContext) != null;
 }
 function useLocation() {
-  invariant$1(
+  invariant(
     useInRouterContext(),
     // TODO: This error is probably because they somehow have 2 versions of the
     // router loaded. We can help them understand how to avoid that.
@@ -876,7 +876,7 @@ function useLocation() {
   return React2$1.useContext(LocationContext).location;
 }
 var navigateEffectWarning = `You should call navigate() in a React.useEffect(), not when your component is first rendered.`;
-function useIsomorphicLayoutEffect$3(cb) {
+function useIsomorphicLayoutEffect$2(cb) {
   let isStatic = React2$1.useContext(NavigationContext).static;
   if (!isStatic) {
     React2$1.useLayoutEffect(cb);
@@ -887,7 +887,7 @@ function useNavigate() {
   return isDataRoute ? useNavigateStable() : useNavigateUnstable();
 }
 function useNavigateUnstable() {
-  invariant$1(
+  invariant(
     useInRouterContext(),
     // TODO: This error is probably because they somehow have 2 versions of the
     // router loaded. We can help them understand how to avoid that.
@@ -899,7 +899,7 @@ function useNavigateUnstable() {
   let { pathname: locationPathname } = useLocation();
   let routePathnamesJson = JSON.stringify(getResolveToMatches(matches));
   let activeRef = React2$1.useRef(false);
-  useIsomorphicLayoutEffect$3(() => {
+  useIsomorphicLayoutEffect$2(() => {
     activeRef.current = true;
   });
   let navigate = React2$1.useCallback(
@@ -959,7 +959,7 @@ function useRoutes(routes, locationArg) {
   return useRoutesImpl(routes, locationArg);
 }
 function useRoutesImpl(routes, locationArg, dataRouterOpts) {
-  invariant$1(
+  invariant(
     useInRouterContext(),
     // TODO: This error is probably because they somehow have 2 versions of the
     // router loaded. We can help them understand how to avoid that.
@@ -986,7 +986,7 @@ Please change the parent <Route path="${parentPath}"> to <Route path="${parentPa
   let location;
   if (locationArg) {
     let parsedLocationArg = typeof locationArg === "string" ? parsePath(locationArg) : locationArg;
-    invariant$1(
+    invariant(
       parentPathnameBase === "/" || parsedLocationArg.pathname?.startsWith(parentPathnameBase),
       `When overriding the location using \`<Routes location>\` or \`useRoutes(routes, location)\`, the location pathname must begin with the portion of the URL pathname that was matched by all parent routes. The current pathname base is "${parentPathnameBase}" but pathname "${parsedLocationArg.pathname}" was given in the \`location\` prop.`
     );
@@ -1150,7 +1150,7 @@ function RSCErrorHandler({
       let existingRedirect = errorRedirectHandledMap.get(error);
       if (existingRedirect) throw existingRedirect;
       let parsed = parseToInfo(redirect2.location, basename);
-      if (isBrowser$2 && !errorRedirectHandledMap.get(error)) {
+      if (isBrowser && !errorRedirectHandledMap.get(error)) {
         if (parsed.isExternal || redirect2.reloadDocument) {
           window.location.href = parsed.absoluteURL || parsed.to;
         } else {
@@ -1201,7 +1201,7 @@ function _renderMatches(matches, parentMatches = [], dataRouterOpts) {
     let errorIndex = renderedMatches.findIndex(
       (m) => m.route.id && errors?.[m.route.id] !== void 0
     );
-    invariant$1(
+    invariant(
       errorIndex >= 0,
       `Could not find a matching route for errors on route IDs: ${Object.keys(
         errors
@@ -1319,23 +1319,23 @@ function getDataRouterConsoleError(hookName) {
 }
 function useDataRouterContext(hookName) {
   let ctx = React2$1.useContext(DataRouterContext);
-  invariant$1(ctx, getDataRouterConsoleError(hookName));
+  invariant(ctx, getDataRouterConsoleError(hookName));
   return ctx;
 }
 function useDataRouterState(hookName) {
   let state = React2$1.useContext(DataRouterStateContext);
-  invariant$1(state, getDataRouterConsoleError(hookName));
+  invariant(state, getDataRouterConsoleError(hookName));
   return state;
 }
 function useRouteContext(hookName) {
   let route = React2$1.useContext(RouteContext);
-  invariant$1(route, getDataRouterConsoleError(hookName));
+  invariant(route, getDataRouterConsoleError(hookName));
   return route;
 }
 function useCurrentRouteId(hookName) {
   let route = useRouteContext(hookName);
   let thisRoute = route.matches[route.matches.length - 1];
-  invariant$1(
+  invariant(
     thisRoute.route.id,
     `${hookName} can only be used on routes that contain a unique "id"`
   );
@@ -1372,7 +1372,7 @@ function useNavigateStable() {
     /* UseNavigateStable */
   );
   let activeRef = React2$1.useRef(false);
-  useIsomorphicLayoutEffect$3(() => {
+  useIsomorphicLayoutEffect$2(() => {
     activeRef.current = true;
   });
   let navigate = React2$1.useCallback(
@@ -1466,7 +1466,7 @@ function Navigate({
   state,
   relative
 }) {
-  invariant$1(
+  invariant(
     useInRouterContext(),
     // TODO: This error is probably because they somehow have 2 versions of
     // the router loaded. We can help them understand how to avoid that.
@@ -1493,7 +1493,7 @@ function Navigate({
   return null;
 }
 function Route(props) {
-  invariant$1(
+  invariant(
     false,
     `A <Route> is only ever to be used as the child of <Routes> element, never rendered directly. Please wrap your <Route> in a <Routes>.`
   );
@@ -1507,7 +1507,7 @@ function Router({
   static: staticProp = false,
   unstable_useTransitions
 }) {
-  invariant$1(
+  invariant(
     !useInRouterContext(),
     `You cannot render a <Router> inside another <Router>. You should never have more than one in your app.`
   );
@@ -1649,11 +1649,11 @@ function createRoutesFromChildren(children, parentPath = []) {
       );
       return;
     }
-    invariant$1(
+    invariant(
       element.type === Route,
       `[${typeof element.type === "string" ? element.type : element.type.name}] is not a <Route> component. All component children of <Routes> must be a <Route> or <React.Fragment>`
     );
-    invariant$1(
+    invariant(
       !element.props.index || !element.props.children,
       "An index route cannot have child routes."
     );
@@ -2772,7 +2772,7 @@ function getDataRouterConsoleError2(hookName) {
 }
 function useDataRouterContext3(hookName) {
   let ctx = React10.useContext(DataRouterContext);
-  invariant$1(ctx, getDataRouterConsoleError2(hookName));
+  invariant(ctx, getDataRouterConsoleError2(hookName));
   return ctx;
 }
 function useLinkClickHandler(to, {
@@ -2910,7 +2910,7 @@ function useSubmit() {
 function useFormAction(action, { relative } = {}) {
   let { basename } = React10.useContext(NavigationContext);
   let routeContext = React10.useContext(RouteContext);
-  invariant$1(routeContext, "useFormAction must be used inside a RouteContext");
+  invariant(routeContext, "useFormAction must be used inside a RouteContext");
   let [match] = routeContext.matches.slice(-1);
   let path = { ...useResolvedPath(action ? action : ".", { relative }) };
   let location = useLocation();
@@ -2936,7 +2936,7 @@ function useFormAction(action, { relative } = {}) {
 }
 function useViewTransitionState(to, { relative } = {}) {
   let vtContext = React10.useContext(ViewTransitionContext);
-  invariant$1(
+  invariant(
     vtContext != null,
     "`useViewTransitionState` must be used within `react-router-dom`'s `RouterProvider`.  Did you accidentally import `RouterProvider` from `react-router`?"
   );
@@ -3024,7 +3024,7 @@ function systemSetTimeoutZero(callback) {
 }
 
 var isServer = typeof window === "undefined" || "Deno" in globalThis;
-function noop$3() {
+function noop$2() {
 }
 function functionalUpdate(updater, input) {
   return typeof updater === "function" ? updater(input) : updater;
@@ -3692,7 +3692,7 @@ var Query = class extends Removable {
   cancel(options) {
     const promise = this.#retryer?.promise;
     this.#retryer?.cancel(options);
-    return promise ? promise.then(noop$3).catch(noop$3) : Promise.resolve();
+    return promise ? promise.then(noop$2).catch(noop$2) : Promise.resolve();
   }
   destroy() {
     super.destroy();
@@ -4203,7 +4203,7 @@ var QueryObserver = class extends Subscribable {
       fetchOptions
     );
     if (!fetchOptions?.throwOnError) {
-      promise = promise.catch(noop$3);
+      promise = promise.catch(noop$2);
     }
     return promise;
   }
@@ -4972,7 +4972,7 @@ var MutationCache = class extends Subscribable {
     const pausedMutations = this.getAll().filter((x) => x.state.isPaused);
     return notifyManager.batch(
       () => Promise.all(
-        pausedMutations.map((mutation) => mutation.continue().catch(noop$3))
+        pausedMutations.map((mutation) => mutation.continue().catch(noop$2))
       )
     );
   }
@@ -5529,7 +5529,7 @@ var QueryClient = class {
     const promises = notifyManager.batch(
       () => this.#queryCache.findAll(filters).map((query) => query.cancel(defaultedCancelOptions))
     );
-    return Promise.all(promises).then(noop$3).catch(noop$3);
+    return Promise.all(promises).then(noop$2).catch(noop$2);
   }
   invalidateQueries(filters, options = {}) {
     return notifyManager.batch(() => {
@@ -5557,12 +5557,12 @@ var QueryClient = class {
       () => this.#queryCache.findAll(filters).filter((query) => !query.isDisabled() && !query.isStatic()).map((query) => {
         let promise = query.fetch(void 0, fetchOptions);
         if (!fetchOptions.throwOnError) {
-          promise = promise.catch(noop$3);
+          promise = promise.catch(noop$2);
         }
         return query.state.fetchStatus === "paused" ? Promise.resolve() : promise;
       })
     );
-    return Promise.all(promises).then(noop$3);
+    return Promise.all(promises).then(noop$2);
   }
   fetchQuery(options) {
     const defaultedOptions = this.defaultQueryOptions(options);
@@ -5575,14 +5575,14 @@ var QueryClient = class {
     ) ? query.fetch(defaultedOptions) : Promise.resolve(query.state.data);
   }
   prefetchQuery(options) {
-    return this.fetchQuery(options).then(noop$3).catch(noop$3);
+    return this.fetchQuery(options).then(noop$2).catch(noop$2);
   }
   fetchInfiniteQuery(options) {
     options.behavior = infiniteQueryBehavior(options.pages);
     return this.fetchQuery(options);
   }
   prefetchInfiniteQuery(options) {
-    return this.fetchInfiniteQuery(options).then(noop$3).catch(noop$3);
+    return this.fetchInfiniteQuery(options).then(noop$2).catch(noop$2);
   }
   ensureInfiniteQueryData(options) {
     options.behavior = infiniteQueryBehavior(options.pages);
@@ -5686,12 +5686,12 @@ var QueryClient = class {
 };
 
 // src/QueryClientProvider.tsx
-const React$$ = await importShared('react');
-var QueryClientContext = React$$.createContext(
+const React$Z = await importShared('react');
+var QueryClientContext = React$Z.createContext(
   void 0
 );
 var useQueryClient = (queryClient) => {
-  const client = React$$.useContext(QueryClientContext);
+  const client = React$Z.useContext(QueryClientContext);
   if (!client) {
     throw new Error("No QueryClient set, use QueryClientProvider to set one");
   }
@@ -5701,7 +5701,7 @@ var QueryClientProvider = ({
   client,
   children
 }) => {
-  React$$.useEffect(() => {
+  React$Z.useEffect(() => {
     client.mount();
     return () => {
       client.unmount();
@@ -5711,14 +5711,14 @@ var QueryClientProvider = ({
 };
 
 // src/IsRestoringProvider.ts
-const React$_ = await importShared('react');
+const React$Y = await importShared('react');
 
-var IsRestoringContext = React$_.createContext(false);
-var useIsRestoring = () => React$_.useContext(IsRestoringContext);
+var IsRestoringContext = React$Y.createContext(false);
+var useIsRestoring = () => React$Y.useContext(IsRestoringContext);
 IsRestoringContext.Provider;
 
 // src/QueryErrorResetBoundary.tsx
-const React$Z = await importShared('react');
+const React$X = await importShared('react');
 function createValue() {
   let isReset = false;
   return {
@@ -5733,11 +5733,11 @@ function createValue() {
     }
   };
 }
-var QueryErrorResetBoundaryContext = React$Z.createContext(createValue());
-var useQueryErrorResetBoundary = () => React$Z.useContext(QueryErrorResetBoundaryContext);
+var QueryErrorResetBoundaryContext = React$X.createContext(createValue());
+var useQueryErrorResetBoundary = () => React$X.useContext(QueryErrorResetBoundaryContext);
 
 // src/errorBoundaryUtils.ts
-const React$Y = await importShared('react');
+const React$W = await importShared('react');
 var ensurePreventErrorBoundaryRetry = (options, errorResetBoundary, query) => {
   const throwOnError = query?.state.error && typeof options.throwOnError === "function" ? shouldThrowError(options.throwOnError, [query.state.error, query]) : options.throwOnError;
   if (options.suspense || options.experimental_prefetchInRender || throwOnError) {
@@ -5747,7 +5747,7 @@ var ensurePreventErrorBoundaryRetry = (options, errorResetBoundary, query) => {
   }
 };
 var useClearResetErrorBoundary = (errorResetBoundary) => {
-  React$Y.useEffect(() => {
+  React$W.useEffect(() => {
     errorResetBoundary.clearReset();
   }, [errorResetBoundary]);
 };
@@ -5783,7 +5783,7 @@ var fetchOptimistic = (defaultedOptions, observer, errorResetBoundary) => observ
 });
 
 // src/useQueries.ts
-const React$X = await importShared('react');
+const React$V = await importShared('react');
 function useQueries({
   queries,
   ...options
@@ -5791,7 +5791,7 @@ function useQueries({
   const client = useQueryClient();
   const isRestoring = useIsRestoring();
   const errorResetBoundary = useQueryErrorResetBoundary();
-  const defaultedQueries = React$X.useMemo(
+  const defaultedQueries = React$V.useMemo(
     () => queries.map((opts) => {
       const defaultedOptions = client.defaultQueryOptions(
         opts
@@ -5807,7 +5807,7 @@ function useQueries({
     ensurePreventErrorBoundaryRetry(queryOptions, errorResetBoundary, query);
   });
   useClearResetErrorBoundary(errorResetBoundary);
-  const [observer] = React$X.useState(
+  const [observer] = React$V.useState(
     () => new QueriesObserver(
       client,
       defaultedQueries,
@@ -5819,15 +5819,15 @@ function useQueries({
     options.combine
   );
   const shouldSubscribe = !isRestoring && options.subscribed !== false;
-  React$X.useSyncExternalStore(
-    React$X.useCallback(
-      (onStoreChange) => shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop$3,
+  React$V.useSyncExternalStore(
+    React$V.useCallback(
+      (onStoreChange) => shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop$2,
       [observer, shouldSubscribe]
     ),
     () => observer.getCurrentResult(),
     () => observer.getCurrentResult()
   );
-  React$X.useEffect(() => {
+  React$V.useEffect(() => {
     observer.setQueries(
       defaultedQueries,
       options
@@ -5865,7 +5865,7 @@ function useQueries({
   return getCombinedResult(trackResult());
 }
 
-const React$W = await importShared('react');
+const React$U = await importShared('react');
 function useBaseQuery(options, Observer, queryClient) {
   const isRestoring = useIsRestoring();
   const errorResetBoundary = useQueryErrorResetBoundary();
@@ -5880,7 +5880,7 @@ function useBaseQuery(options, Observer, queryClient) {
   ensurePreventErrorBoundaryRetry(defaultedOptions, errorResetBoundary, query);
   useClearResetErrorBoundary(errorResetBoundary);
   const isNewCacheEntry = !client.getQueryCache().get(defaultedOptions.queryHash);
-  const [observer] = React$W.useState(
+  const [observer] = React$U.useState(
     () => new Observer(
       client,
       defaultedOptions
@@ -5888,10 +5888,10 @@ function useBaseQuery(options, Observer, queryClient) {
   );
   const result = observer.getOptimisticResult(defaultedOptions);
   const shouldSubscribe = !isRestoring && options.subscribed !== false;
-  React$W.useSyncExternalStore(
-    React$W.useCallback(
+  React$U.useSyncExternalStore(
+    React$U.useCallback(
       (onStoreChange) => {
-        const unsubscribe = shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop$3;
+        const unsubscribe = shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop$2;
         observer.updateResult();
         return unsubscribe;
       },
@@ -5900,7 +5900,7 @@ function useBaseQuery(options, Observer, queryClient) {
     () => observer.getCurrentResult(),
     () => observer.getCurrentResult()
   );
-  React$W.useEffect(() => {
+  React$U.useEffect(() => {
     observer.setOptions(defaultedOptions);
   }, [defaultedOptions, observer]);
   if (shouldSuspend(defaultedOptions, result)) {
@@ -5927,7 +5927,7 @@ function useBaseQuery(options, Observer, queryClient) {
       // subscribe to the "cache promise" so that we can finalize the currentThenable once data comes in
       query?.promise
     );
-    promise?.catch(noop$3).finally(() => {
+    promise?.catch(noop$2).finally(() => {
       observer.updateResult();
     });
   }
@@ -5939,29 +5939,29 @@ function useQuery(options, queryClient) {
 }
 
 // src/useMutation.ts
-const React$V = await importShared('react');
+const React$T = await importShared('react');
 function useMutation(options, queryClient) {
   const client = useQueryClient();
-  const [observer] = React$V.useState(
+  const [observer] = React$T.useState(
     () => new MutationObserver$1(
       client,
       options
     )
   );
-  React$V.useEffect(() => {
+  React$T.useEffect(() => {
     observer.setOptions(options);
   }, [observer, options]);
-  const result = React$V.useSyncExternalStore(
-    React$V.useCallback(
+  const result = React$T.useSyncExternalStore(
+    React$T.useCallback(
       (onStoreChange) => observer.subscribe(notifyManager.batchCalls(onStoreChange)),
       [observer]
     ),
     () => observer.getCurrentResult(),
     () => observer.getCurrentResult()
   );
-  const mutate = React$V.useCallback(
+  const mutate = React$T.useCallback(
     (variables, mutateOptions) => {
-      observer.mutate(variables, mutateOptions).catch(noop$3);
+      observer.mutate(variables, mutateOptions).catch(noop$2);
     },
     [observer]
   );
@@ -5994,16 +5994,16 @@ const createStoreImpl = (createState) => {
 };
 const createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
 
-const React$U = await importShared('react');
+const React$S = await importShared('react');
 
 const identity = (arg) => arg;
 function useStore(api, selector = identity) {
-  const slice = React$U.useSyncExternalStore(
+  const slice = React$S.useSyncExternalStore(
     api.subscribe,
-    React$U.useCallback(() => selector(api.getState()), [api, selector]),
-    React$U.useCallback(() => selector(api.getInitialState()), [api, selector])
+    React$S.useCallback(() => selector(api.getState()), [api, selector]),
+    React$S.useCallback(() => selector(api.getInitialState()), [api, selector])
   );
-  React$U.useDebugValue(slice);
+  React$S.useDebugValue(slice);
   return slice;
 }
 const createImpl = (createState) => {
@@ -6108,7 +6108,8 @@ const manager = {
     createOutcome: (body) => request("/manager/rcdo/outcomes", { method: "POST", body: JSON.stringify(body) }),
     updateOutcome: (id, body) => request(`/manager/rcdo/outcomes/${id}`, { method: "PUT", body: JSON.stringify(body) }),
     deactivateOutcome: (id) => request(`/manager/rcdo/outcomes/${id}`, { method: "DELETE" }),
-    updateOutcomeCurrentValue: (id, body) => request(`/manager/rcdo/outcomes/${id}/current-value`, { method: "PATCH", body: JSON.stringify(body) })
+    updateOutcomeCurrentValue: (id, body) => request(`/manager/rcdo/outcomes/${id}/current-value`, { method: "PATCH", body: JSON.stringify(body) }),
+    getOutcomeHistory: (id) => request(`/manager/rcdo/outcomes/${id}/history`)
   }
 };
 
@@ -6146,11 +6147,11 @@ const useAuthStore = create((set) => {
   };
 });
 
-const {createContext: createContext$7,useContext: useContext$b} = await importShared('react');
+const {createContext: createContext$1,useContext: useContext$3} = await importShared('react');
 
-const ActiveRallyCryContext = createContext$7(void 0);
+const ActiveRallyCryContext = createContext$1(void 0);
 
-const {useMemo: useMemo$c,useLayoutEffect: useLayoutEffect$2,useEffect: useEffect$7,useRef: useRef$7,useCallback: useCallback$4} = await importShared('react');
+const {useMemo: useMemo$6,useLayoutEffect: useLayoutEffect$1,useEffect: useEffect$5,useRef: useRef$2,useCallback: useCallback$2} = await importShared('react');
 
 
 function useCombinedRefs() {
@@ -6158,7 +6159,7 @@ function useCombinedRefs() {
     refs[_key] = arguments[_key];
   }
 
-  return useMemo$c(() => node => {
+  return useMemo$6(() => node => {
     refs.forEach(ref => ref(node));
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   refs);
@@ -6202,7 +6203,7 @@ function isDocument(node) {
   return node instanceof Document;
 }
 
-function isHTMLElement$2(node) {
+function isHTMLElement$1(node) {
   if (isWindow(node)) {
     return false;
   }
@@ -6210,7 +6211,7 @@ function isHTMLElement$2(node) {
   return node instanceof getWindow$1(node).HTMLElement;
 }
 
-function isSVGElement$1(node) {
+function isSVGElement(node) {
   return node instanceof getWindow$1(node).SVGElement;
 }
 
@@ -6231,7 +6232,7 @@ function getOwnerDocument(target) {
     return target;
   }
 
-  if (isHTMLElement$2(target) || isSVGElement$1(target)) {
+  if (isHTMLElement$1(target) || isSVGElement(target)) {
     return target.ownerDocument;
   }
 
@@ -6243,14 +6244,14 @@ function getOwnerDocument(target) {
  * @param callback {function} Callback function that is invoked when the dependencies of the hook change
  */
 
-const useIsomorphicLayoutEffect$2 = canUseDOM ? useLayoutEffect$2 : useEffect$7;
+const useIsomorphicLayoutEffect$1 = canUseDOM ? useLayoutEffect$1 : useEffect$5;
 
 function useEvent(handler) {
-  const handlerRef = useRef$7(handler);
-  useIsomorphicLayoutEffect$2(() => {
+  const handlerRef = useRef$2(handler);
+  useIsomorphicLayoutEffect$1(() => {
     handlerRef.current = handler;
   });
-  return useCallback$4(function () {
+  return useCallback$2(function () {
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
     }
@@ -6260,11 +6261,11 @@ function useEvent(handler) {
 }
 
 function useInterval() {
-  const intervalRef = useRef$7(null);
-  const set = useCallback$4((listener, duration) => {
+  const intervalRef = useRef$2(null);
+  const set = useCallback$2((listener, duration) => {
     intervalRef.current = setInterval(listener, duration);
   }, []);
-  const clear = useCallback$4(() => {
+  const clear = useCallback$2(() => {
     if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -6278,8 +6279,8 @@ function useLatestValue(value, dependencies) {
     dependencies = [value];
   }
 
-  const valueRef = useRef$7(value);
-  useIsomorphicLayoutEffect$2(() => {
+  const valueRef = useRef$2(value);
+  useIsomorphicLayoutEffect$1(() => {
     if (valueRef.current !== value) {
       valueRef.current = value;
     }
@@ -6288,8 +6289,8 @@ function useLatestValue(value, dependencies) {
 }
 
 function useLazyMemo(callback, dependencies) {
-  const valueRef = useRef$7();
-  return useMemo$c(() => {
+  const valueRef = useRef$2();
+  return useMemo$6(() => {
     const newValue = callback(valueRef.current);
     valueRef.current = newValue;
     return newValue;
@@ -6299,8 +6300,8 @@ function useLazyMemo(callback, dependencies) {
 
 function useNodeRef(onChange) {
   const onChangeHandler = useEvent(onChange);
-  const node = useRef$7(null);
-  const setNodeRef = useCallback$4(element => {
+  const node = useRef$2(null);
+  const setNodeRef = useCallback$2(element => {
     if (element !== node.current) {
       onChangeHandler == null ? void 0 : onChangeHandler(element, node.current);
     }
@@ -6312,8 +6313,8 @@ function useNodeRef(onChange) {
 }
 
 function usePrevious$1(value) {
-  const ref = useRef$7();
-  useEffect$7(() => {
+  const ref = useRef$2();
+  useEffect$5(() => {
     ref.current = value;
   }, [value]);
   return ref.current;
@@ -6321,7 +6322,7 @@ function usePrevious$1(value) {
 
 let ids = {};
 function useUniqueId(prefix, value) {
-  return useMemo$c(() => {
+  return useMemo$6(() => {
     if (value) {
       return value;
     }
@@ -6482,8 +6483,8 @@ function findFirstFocusableNode(element) {
   return element.querySelector(SELECTOR);
 }
 
-const React$T = await importShared('react');
-const {useState: useState$c,useCallback: useCallback$3} = React$T;
+const React$R = await importShared('react');
+const {useState: useState$c,useCallback: useCallback$1} = React$R;
 
 
 const hiddenStyles = {
@@ -6494,7 +6495,7 @@ function HiddenText(_ref) {
     id,
     value
   } = _ref;
-  return React$T.createElement("div", {
+  return React$R.createElement("div", {
     id: id,
     style: hiddenStyles
   }, value);
@@ -6521,7 +6522,7 @@ function LiveRegion(_ref) {
     clipPath: 'inset(100%)',
     whiteSpace: 'nowrap'
   };
-  return React$T.createElement("div", {
+  return React$R.createElement("div", {
     id: id,
     style: visuallyHidden,
     role: "status",
@@ -6532,7 +6533,7 @@ function LiveRegion(_ref) {
 
 function useAnnouncement() {
   const [announcement, setAnnouncement] = useState$c('');
-  const announce = useCallback$3(value => {
+  const announce = useCallback$1(value => {
     if (value != null) {
       setAnnouncement(value);
     }
@@ -6543,16 +6544,16 @@ function useAnnouncement() {
   };
 }
 
-const React$S = await importShared('react');
-const {createContext: createContext$6,useContext: useContext$a,useEffect: useEffect$6,useState: useState$b,useCallback: useCallback$2,useMemo: useMemo$b,useRef: useRef$6,memo: memo$1,useReducer,cloneElement,forwardRef: forwardRef$2} = React$S;
+const React$Q = await importShared('react');
+const {createContext,useContext: useContext$2,useEffect: useEffect$4,useState: useState$b,useCallback,useMemo: useMemo$5,useRef: useRef$1,memo,useReducer,cloneElement,forwardRef: forwardRef$1} = React$Q;
 
 const {createPortal,unstable_batchedUpdates} = await importShared('react-dom');
 
-const DndMonitorContext = /*#__PURE__*/createContext$6(null);
+const DndMonitorContext = /*#__PURE__*/createContext(null);
 
 function useDndMonitor(listener) {
-  const registerListener = useContext$a(DndMonitorContext);
-  useEffect$6(() => {
+  const registerListener = useContext$2(DndMonitorContext);
+  useEffect$4(() => {
     if (!registerListener) {
       throw new Error('useDndMonitor must be used within a children of <DndContext>');
     }
@@ -6564,11 +6565,11 @@ function useDndMonitor(listener) {
 
 function useDndMonitorProvider() {
   const [listeners] = useState$b(() => new Set());
-  const registerListener = useCallback$2(listener => {
+  const registerListener = useCallback(listener => {
     listeners.add(listener);
     return () => listeners.delete(listener);
   }, [listeners]);
-  const dispatch = useCallback$2(_ref => {
+  const dispatch = useCallback(_ref => {
     let {
       type,
       event
@@ -6641,10 +6642,10 @@ function Accessibility(_ref) {
   } = useAnnouncement();
   const liveRegionId = useUniqueId("DndLiveRegion");
   const [mounted, setMounted] = useState$b(false);
-  useEffect$6(() => {
+  useEffect$4(() => {
     setMounted(true);
   }, []);
-  useDndMonitor(useMemo$b(() => ({
+  useDndMonitor(useMemo$5(() => ({
     onDragStart(_ref2) {
       let {
         active
@@ -6707,10 +6708,10 @@ function Accessibility(_ref) {
     return null;
   }
 
-  const markup = React$S.createElement(React$S.Fragment, null, React$S.createElement(HiddenText, {
+  const markup = React$Q.createElement(React$Q.Fragment, null, React$Q.createElement(HiddenText, {
     id: hiddenTextDescribedById,
     value: screenReaderInstructions.draggable
-  }), React$S.createElement(LiveRegion, {
+  }), React$Q.createElement(LiveRegion, {
     id: liveRegionId,
     announcement: announcement
   }));
@@ -6730,10 +6731,10 @@ var Action$1;
   Action["UnregisterDroppable"] = "unregisterDroppable";
 })(Action$1 || (Action$1 = {}));
 
-function noop$2() {}
+function noop$1() {}
 
 function useSensor(sensor, options) {
-  return useMemo$b(() => ({
+  return useMemo$5(() => ({
     sensor,
     options: options != null ? options : {}
   }), // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -6745,7 +6746,7 @@ function useSensors() {
     sensors[_key] = arguments[_key];
   }
 
-  return useMemo$b(() => [...sensors].filter(sensor => sensor != null), // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo$5(() => [...sensors].filter(sensor => sensor != null), // eslint-disable-next-line react-hooks/exhaustive-deps
   [...sensors]);
 }
 
@@ -7170,7 +7171,7 @@ function getScrollableAncestors(element, limit) {
       return scrollParents;
     }
 
-    if (!isHTMLElement$2(node) || isSVGElement$1(node)) {
+    if (!isHTMLElement$1(node) || isSVGElement(node)) {
       return scrollParents;
     }
 
@@ -7221,7 +7222,7 @@ function getScrollableElement(element) {
     return window;
   }
 
-  if (isHTMLElement$2(element)) {
+  if (isHTMLElement$1(element)) {
     return element;
   }
 
@@ -8252,15 +8253,15 @@ function useAutoScroller(_ref) {
     disabled: !enabled
   });
   const [setAutoScrollInterval, clearAutoScrollInterval] = useInterval();
-  const scrollSpeed = useRef$6({
+  const scrollSpeed = useRef$1({
     x: 0,
     y: 0
   });
-  const scrollDirection = useRef$6({
+  const scrollDirection = useRef$1({
     x: 0,
     y: 0
   });
-  const rect = useMemo$b(() => {
+  const rect = useMemo$5(() => {
     switch (activator) {
       case AutoScrollActivator.Pointer:
         return pointerCoordinates ? {
@@ -8274,8 +8275,8 @@ function useAutoScroller(_ref) {
         return draggingRect;
     }
   }, [activator, draggingRect, pointerCoordinates]);
-  const scrollContainerRef = useRef$6(null);
-  const autoScroll = useCallback$2(() => {
+  const scrollContainerRef = useRef$1(null);
+  const autoScroll = useCallback(() => {
     const scrollContainer = scrollContainerRef.current;
 
     if (!scrollContainer) {
@@ -8286,8 +8287,8 @@ function useAutoScroller(_ref) {
     const scrollTop = scrollSpeed.current.y * scrollDirection.current.y;
     scrollContainer.scrollBy(scrollLeft, scrollTop);
   }, []);
-  const sortedScrollableAncestors = useMemo$b(() => order === TraversalOrder.TreeOrder ? [...scrollableAncestors].reverse() : scrollableAncestors, [order, scrollableAncestors]);
-  useEffect$6(() => {
+  const sortedScrollableAncestors = useMemo$5(() => order === TraversalOrder.TreeOrder ? [...scrollableAncestors].reverse() : scrollableAncestors, [order, scrollableAncestors]);
+  useEffect$4(() => {
     if (!enabled || !scrollableAncestors.length || !rect) {
       clearAutoScrollInterval();
       return;
@@ -8401,7 +8402,7 @@ function useCachedNode(draggableNodes, id) {
 }
 
 function useCombineActivators(sensors, getSyntheticHandler) {
-  return useMemo$b(() => sensors.reduce((accumulator, sensor) => {
+  return useMemo$5(() => sensors.reduce((accumulator, sensor) => {
     const {
       sensor: Sensor
     } = sensor;
@@ -8440,10 +8441,10 @@ function useDroppableMeasuring(containers, _ref) {
     measure,
     strategy
   } = config;
-  const containersRef = useRef$6(containers);
+  const containersRef = useRef$1(containers);
   const disabled = isDisabled();
   const disabledRef = useLatestValue(disabled);
-  const measureDroppableContainers = useCallback$2(function (ids) {
+  const measureDroppableContainers = useCallback(function (ids) {
     if (ids === void 0) {
       ids = [];
     }
@@ -8460,7 +8461,7 @@ function useDroppableMeasuring(containers, _ref) {
       return value.concat(ids.filter(id => !value.includes(id)));
     });
   }, [disabledRef]);
-  const timeoutId = useRef$6(null);
+  const timeoutId = useRef$1(null);
   const droppableRects = useLazyMemo(previousValue => {
     if (disabled && !dragging) {
       return defaultValue;
@@ -8494,10 +8495,10 @@ function useDroppableMeasuring(containers, _ref) {
 
     return previousValue;
   }, [containers, queue, dragging, disabled, measure]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     containersRef.current = containers;
   }, [containers]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     if (disabled) {
       return;
     }
@@ -8505,13 +8506,13 @@ function useDroppableMeasuring(containers, _ref) {
     measureDroppableContainers();
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   [dragging, disabled]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     if (queue && queue.length > 0) {
       setQueue(null);
     }
   }, //eslint-disable-next-line react-hooks/exhaustive-deps
   [JSON.stringify(queue)]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     if (disabled || typeof frequency !== 'number' || timeoutId.current !== null) {
       return;
     }
@@ -8571,7 +8572,7 @@ function useMutationObserver(_ref) {
     disabled
   } = _ref;
   const handleMutations = useEvent(callback);
-  const mutationObserver = useMemo$b(() => {
+  const mutationObserver = useMemo$5(() => {
     if (disabled || typeof window === 'undefined' || typeof window.MutationObserver === 'undefined') {
       return undefined;
     }
@@ -8581,7 +8582,7 @@ function useMutationObserver(_ref) {
     } = window;
     return new MutationObserver(handleMutations);
   }, [handleMutations, disabled]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     return () => mutationObserver == null ? void 0 : mutationObserver.disconnect();
   }, [mutationObserver]);
   return mutationObserver;
@@ -8598,7 +8599,7 @@ function useResizeObserver(_ref) {
     disabled
   } = _ref;
   const handleResize = useEvent(callback);
-  const resizeObserver = useMemo$b(() => {
+  const resizeObserver = useMemo$5(() => {
     if (disabled || typeof window === 'undefined' || typeof window.ResizeObserver === 'undefined') {
       return undefined;
     }
@@ -8609,7 +8610,7 @@ function useResizeObserver(_ref) {
     return new ResizeObserver(handleResize);
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   [disabled]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     return () => resizeObserver == null ? void 0 : resizeObserver.disconnect();
   }, [resizeObserver]);
   return resizeObserver;
@@ -8673,7 +8674,7 @@ function useRect(element, measure, fallbackRect) {
   const resizeObserver = useResizeObserver({
     callback: measureRect
   });
-  useIsomorphicLayoutEffect$2(() => {
+  useIsomorphicLayoutEffect$1(() => {
     measureRect();
 
     if (element) {
@@ -8697,7 +8698,7 @@ function useRectDelta(rect) {
 
 const defaultValue$1 = [];
 function useScrollableAncestors(node) {
-  const previousNode = useRef$6(node);
+  const previousNode = useRef$1(node);
   const ancestors = useLazyMemo(previousValue => {
     if (!node) {
       return defaultValue$1;
@@ -8709,7 +8710,7 @@ function useScrollableAncestors(node) {
 
     return getScrollableAncestors(node);
   }, [node]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     previousNode.current = node;
   }, [node]);
   return ancestors;
@@ -8717,9 +8718,9 @@ function useScrollableAncestors(node) {
 
 function useScrollOffsets(elements) {
   const [scrollCoordinates, setScrollCoordinates] = useState$b(null);
-  const prevElements = useRef$6(elements); // To-do: Throttle the handleScroll callback
+  const prevElements = useRef$1(elements); // To-do: Throttle the handleScroll callback
 
-  const handleScroll = useCallback$2(event => {
+  const handleScroll = useCallback(event => {
     const scrollingElement = getScrollableElement(event.target);
 
     if (!scrollingElement) {
@@ -8735,7 +8736,7 @@ function useScrollOffsets(elements) {
       return new Map(scrollCoordinates);
     });
   }, []);
-  useEffect$6(() => {
+  useEffect$4(() => {
     const previousElements = prevElements.current;
 
     if (elements !== previousElements) {
@@ -8768,7 +8769,7 @@ function useScrollOffsets(elements) {
       });
     }
   }, [handleScroll, elements]);
-  return useMemo$b(() => {
+  return useMemo$5(() => {
     if (elements.length) {
       return scrollCoordinates ? Array.from(scrollCoordinates.values()).reduce((acc, coordinates) => add(acc, coordinates), defaultCoordinates) : getScrollOffsets(elements);
     }
@@ -8782,12 +8783,12 @@ function useScrollOffsetsDelta(scrollOffsets, dependencies) {
     dependencies = [];
   }
 
-  const initialScrollOffsets = useRef$6(null);
-  useEffect$6(() => {
+  const initialScrollOffsets = useRef$1(null);
+  useEffect$4(() => {
     initialScrollOffsets.current = null;
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   dependencies);
-  useEffect$6(() => {
+  useEffect$4(() => {
     const hasScrollOffsets = scrollOffsets !== defaultCoordinates;
 
     if (hasScrollOffsets && !initialScrollOffsets.current) {
@@ -8802,7 +8803,7 @@ function useScrollOffsetsDelta(scrollOffsets, dependencies) {
 }
 
 function useSensorSetup(sensors) {
-  useEffect$6(() => {
+  useEffect$4(() => {
     if (!canUseDOM) {
       return;
     }
@@ -8829,7 +8830,7 @@ function useSensorSetup(sensors) {
 }
 
 function useSyntheticListeners(listeners, id) {
-  return useMemo$b(() => {
+  return useMemo$5(() => {
     return listeners.reduce((acc, _ref) => {
       let {
         eventName,
@@ -8846,7 +8847,7 @@ function useSyntheticListeners(listeners, id) {
 }
 
 function useWindowRect(element) {
-  return useMemo$b(() => element ? getWindowClientRect(element) : null, [element]);
+  return useMemo$5(() => element ? getWindowClientRect(element) : null, [element]);
 }
 
 const defaultValue$2 = [];
@@ -8872,7 +8873,7 @@ function useRects(elements, measure) {
   const resizeObserver = useResizeObserver({
     callback: measureRects
   });
-  useIsomorphicLayoutEffect$2(() => {
+  useIsomorphicLayoutEffect$1(() => {
     resizeObserver == null ? void 0 : resizeObserver.disconnect();
     measureRects();
     elements.forEach(element => resizeObserver == null ? void 0 : resizeObserver.observe(element));
@@ -8890,7 +8891,7 @@ function getMeasurableNode(node) {
   }
 
   const firstChild = node.children[0];
-  return isHTMLElement$2(firstChild) ? firstChild : node;
+  return isHTMLElement$1(firstChild) ? firstChild : node;
 }
 
 function useDragOverlayMeasuring(_ref) {
@@ -8898,11 +8899,11 @@ function useDragOverlayMeasuring(_ref) {
     measure
   } = _ref;
   const [rect, setRect] = useState$b(null);
-  const handleResize = useCallback$2(entries => {
+  const handleResize = useCallback(entries => {
     for (const {
       target
     } of entries) {
-      if (isHTMLElement$2(target)) {
+      if (isHTMLElement$1(target)) {
         setRect(rect => {
           const newRect = measure(target);
           return rect ? { ...rect,
@@ -8917,7 +8918,7 @@ function useDragOverlayMeasuring(_ref) {
   const resizeObserver = useResizeObserver({
     callback: handleResize
   });
-  const handleNodeChange = useCallback$2(element => {
+  const handleNodeChange = useCallback(element => {
     const node = getMeasurableNode(element);
     resizeObserver == null ? void 0 : resizeObserver.disconnect();
 
@@ -8928,7 +8929,7 @@ function useDragOverlayMeasuring(_ref) {
     setRect(node ? measure(node) : null);
   }, [measure, resizeObserver]);
   const [nodeRef, setRef] = useNodeRef(handleNodeChange);
-  return useMemo$b(() => ({
+  return useMemo$5(() => ({
     nodeRef,
     rect,
     setRef
@@ -9003,12 +9004,12 @@ const defaultPublicContext = {
       current: null
     },
     rect: null,
-    setRef: noop$2
+    setRef: noop$1
   },
   scrollableAncestors: [],
   scrollableAncestorRects: [],
   measuringConfiguration: defaultMeasuringConfiguration,
-  measureDroppableContainers: noop$2,
+  measureDroppableContainers: noop$1,
   windowRect: null,
   measuringScheduled: false
 };
@@ -9020,13 +9021,13 @@ const defaultInternalContext = {
   ariaDescribedById: {
     draggable: ''
   },
-  dispatch: noop$2,
+  dispatch: noop$1,
   draggableNodes: /*#__PURE__*/new Map(),
   over: null,
-  measureDroppableContainers: noop$2
+  measureDroppableContainers: noop$1
 };
-const InternalContext = /*#__PURE__*/createContext$6(defaultInternalContext);
-const PublicContext = /*#__PURE__*/createContext$6(defaultPublicContext);
+const InternalContext = /*#__PURE__*/createContext(defaultInternalContext);
+const PublicContext = /*#__PURE__*/createContext(defaultPublicContext);
 
 function getInitialState() {
   return {
@@ -9164,11 +9165,11 @@ function RestoreFocus(_ref) {
     active,
     activatorEvent,
     draggableNodes
-  } = useContext$a(InternalContext);
+  } = useContext$2(InternalContext);
   const previousActivatorEvent = usePrevious$1(activatorEvent);
   const previousActiveId = usePrevious$1(active == null ? void 0 : active.id); // Restore keyboard focus on the activator node
 
-  useEffect$6(() => {
+  useEffect$4(() => {
     if (disabled) {
       return;
     }
@@ -9231,7 +9232,7 @@ function applyModifiers(modifiers, _ref) {
 }
 
 function useMeasuringConfiguration(config) {
-  return useMemo$b(() => ({
+  return useMemo$5(() => ({
     draggable: { ...defaultMeasuringConfiguration.draggable,
       ...(config == null ? void 0 : config.draggable)
     },
@@ -9252,7 +9253,7 @@ function useLayoutShiftScrollCompensation(_ref) {
     initialRect,
     config = true
   } = _ref;
-  const initialized = useRef$6(false);
+  const initialized = useRef$1(false);
   const {
     x,
     y
@@ -9260,7 +9261,7 @@ function useLayoutShiftScrollCompensation(_ref) {
     x: config,
     y: config
   } : config;
-  useIsomorphicLayoutEffect$2(() => {
+  useIsomorphicLayoutEffect$1(() => {
     const disabled = !x && !y;
 
     if (disabled || !activeNode) {
@@ -9310,7 +9311,7 @@ function useLayoutShiftScrollCompensation(_ref) {
   }, [activeNode, x, y, initialRect, measure]);
 }
 
-const ActiveDraggableContext = /*#__PURE__*/createContext$6({ ...defaultCoordinates,
+const ActiveDraggableContext = /*#__PURE__*/createContext({ ...defaultCoordinates,
   scaleX: 1,
   scaleY: 1
 });
@@ -9322,7 +9323,7 @@ var Status;
   Status[Status["Initialized"] = 2] = "Initialized";
 })(Status || (Status = {}));
 
-const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
+const DndContext = /*#__PURE__*/memo(function DndContext(_ref) {
   var _sensorContext$curren, _dragOverlay$nodeRef$, _dragOverlay$rect, _over$rect;
 
   let {
@@ -9352,11 +9353,11 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     }
   } = state;
   const node = activeId != null ? draggableNodes.get(activeId) : null;
-  const activeRects = useRef$6({
+  const activeRects = useRef$1({
     initial: null,
     translated: null
   });
-  const active = useMemo$b(() => {
+  const active = useMemo$5(() => {
     var _node$data;
 
     return activeId != null ? {
@@ -9366,12 +9367,12 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
       rect: activeRects
     } : null;
   }, [activeId, node]);
-  const activeRef = useRef$6(null);
+  const activeRef = useRef$1(null);
   const [activeSensor, setActiveSensor] = useState$b(null);
   const [activatorEvent, setActivatorEvent] = useState$b(null);
   const latestProps = useLatestValue(props, Object.values(props));
   const draggableDescribedById = useUniqueId("DndDescribedBy", id);
-  const enabledDroppableContainers = useMemo$b(() => droppableContainers.getEnabled(), [droppableContainers]);
+  const enabledDroppableContainers = useMemo$5(() => droppableContainers.getEnabled(), [droppableContainers]);
   const measuringConfiguration = useMeasuringConfiguration(measuring);
   const {
     droppableRects,
@@ -9383,7 +9384,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     config: measuringConfiguration.droppable
   });
   const activeNode = useCachedNode(draggableNodes, activeId);
-  const activationCoordinates = useMemo$b(() => activatorEvent ? getEventCoordinates(activatorEvent) : null, [activatorEvent]);
+  const activationCoordinates = useMemo$5(() => activatorEvent ? getEventCoordinates(activatorEvent) : null, [activatorEvent]);
   const autoScrollOptions = getAutoScrollerOptions();
   const initialActiveNodeRect = useInitialRect(activeNode, measuringConfiguration.draggable.measure);
   useLayoutShiftScrollCompensation({
@@ -9394,7 +9395,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
   });
   const activeNodeRect = useRect(activeNode, measuringConfiguration.draggable.measure, initialActiveNodeRect);
   const containerNodeRect = useRect(activeNode ? activeNode.parentElement : null);
-  const sensorContext = useRef$6({
+  const sensorContext = useRef$1({
     activatorEvent: null,
     active: null,
     activeNode,
@@ -9465,8 +9466,8 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
 
   const appliedTranslate = usesDragOverlay ? modifiedTranslate : add(modifiedTranslate, activeNodeScrollDelta);
   const transform = adjustScale(appliedTranslate, (_over$rect = over == null ? void 0 : over.rect) != null ? _over$rect : null, activeNodeRect);
-  const activeSensorRef = useRef$6(null);
-  const instantiateSensor = useCallback$2((event, _ref2) => {
+  const activeSensorRef = useRef$1(null);
+  const instantiateSensor = useCallback((event, _ref2) => {
     let {
       sensor: Sensor,
       options
@@ -9644,7 +9645,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     }
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   [draggableNodes]);
-  const bindActivatorToSensorInstantiator = useCallback$2((handler, sensor) => {
+  const bindActivatorToSensorInstantiator = useCallback((handler, sensor) => {
     return (event, active) => {
       const nativeEvent = event.nativeEvent;
       const activeDraggableNode = draggableNodes.get(active);
@@ -9672,12 +9673,12 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
   }, [draggableNodes, instantiateSensor]);
   const activators = useCombineActivators(sensors, bindActivatorToSensorInstantiator);
   useSensorSetup(sensors);
-  useIsomorphicLayoutEffect$2(() => {
+  useIsomorphicLayoutEffect$1(() => {
     if (activeNodeRect && status === Status.Initializing) {
       setStatus(Status.Initialized);
     }
   }, [activeNodeRect, status]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     const {
       onDragMove
     } = latestProps.current;
@@ -9711,7 +9712,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     });
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   [scrollAdjustedTranslate.x, scrollAdjustedTranslate.y]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     const {
       active,
       activatorEvent,
@@ -9754,7 +9755,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     });
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   [overId]);
-  useIsomorphicLayoutEffect$2(() => {
+  useIsomorphicLayoutEffect$1(() => {
     sensorContext.current = {
       activatorEvent,
       active,
@@ -9782,7 +9783,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     scrollableAncestors,
     scrollableAncestorRects
   });
-  const publicContext = useMemo$b(() => {
+  const publicContext = useMemo$5(() => {
     const context = {
       active,
       activeNode,
@@ -9804,7 +9805,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     };
     return context;
   }, [active, activeNode, activeNodeRect, activatorEvent, collisions, containerNodeRect, dragOverlay, draggableNodes, droppableContainers, droppableRects, over, measureDroppableContainers, scrollableAncestors, scrollableAncestorRects, measuringConfiguration, measuringScheduled, windowRect]);
-  const internalContext = useMemo$b(() => {
+  const internalContext = useMemo$5(() => {
     const context = {
       activatorEvent,
       activators,
@@ -9820,17 +9821,17 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
     };
     return context;
   }, [activatorEvent, activators, active, activeNodeRect, dispatch, draggableDescribedById, draggableNodes, over, measureDroppableContainers]);
-  return React$S.createElement(DndMonitorContext.Provider, {
+  return React$Q.createElement(DndMonitorContext.Provider, {
     value: registerMonitorListener
-  }, React$S.createElement(InternalContext.Provider, {
+  }, React$Q.createElement(InternalContext.Provider, {
     value: internalContext
-  }, React$S.createElement(PublicContext.Provider, {
+  }, React$Q.createElement(PublicContext.Provider, {
     value: publicContext
-  }, React$S.createElement(ActiveDraggableContext.Provider, {
+  }, React$Q.createElement(ActiveDraggableContext.Provider, {
     value: transform
-  }, children)), React$S.createElement(RestoreFocus, {
+  }, children)), React$Q.createElement(RestoreFocus, {
     disabled: (accessibility == null ? void 0 : accessibility.restoreFocus) === false
-  })), React$S.createElement(Accessibility, { ...accessibility,
+  })), React$Q.createElement(Accessibility, { ...accessibility,
     hiddenTextDescribedById: draggableDescribedById
   }));
 
@@ -9851,7 +9852,7 @@ const DndContext = /*#__PURE__*/memo$1(function DndContext(_ref) {
   }
 });
 
-const NullContext = /*#__PURE__*/createContext$6(null);
+const NullContext = /*#__PURE__*/createContext(null);
 const defaultRole = 'button';
 const ID_PREFIX$1 = 'Draggable';
 function useDraggable(_ref) {
@@ -9870,19 +9871,19 @@ function useDraggable(_ref) {
     ariaDescribedById,
     draggableNodes,
     over
-  } = useContext$a(InternalContext);
+  } = useContext$2(InternalContext);
   const {
     role = defaultRole,
     roleDescription = 'draggable',
     tabIndex = 0
   } = attributes != null ? attributes : {};
   const isDragging = (active == null ? void 0 : active.id) === id;
-  const transform = useContext$a(isDragging ? ActiveDraggableContext : NullContext);
+  const transform = useContext$2(isDragging ? ActiveDraggableContext : NullContext);
   const [node, setNodeRef] = useNodeRef();
   const [activatorNode, setActivatorNodeRef] = useNodeRef();
   const listeners = useSyntheticListeners(activators, id);
   const dataRef = useLatestValue(data);
-  useIsomorphicLayoutEffect$2(() => {
+  useIsomorphicLayoutEffect$1(() => {
     draggableNodes.set(id, {
       id,
       key,
@@ -9899,7 +9900,7 @@ function useDraggable(_ref) {
     };
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   [draggableNodes, id]);
-  const memoizedAttributes = useMemo$b(() => ({
+  const memoizedAttributes = useMemo$5(() => ({
     role,
     tabIndex,
     'aria-disabled': disabled,
@@ -9923,7 +9924,7 @@ function useDraggable(_ref) {
 }
 
 function useDndContext() {
-  return useContext$a(PublicContext);
+  return useContext$2(PublicContext);
 }
 
 const ID_PREFIX$1$1 = 'Droppable';
@@ -9943,13 +9944,13 @@ function useDroppable(_ref) {
     dispatch,
     over,
     measureDroppableContainers
-  } = useContext$a(InternalContext);
-  const previous = useRef$6({
+  } = useContext$2(InternalContext);
+  const previous = useRef$1({
     disabled
   });
-  const resizeObserverConnected = useRef$6(false);
-  const rect = useRef$6(null);
-  const callbackId = useRef$6(null);
+  const resizeObserverConnected = useRef$1(false);
+  const rect = useRef$1(null);
+  const callbackId = useRef$1(null);
   const {
     disabled: resizeObserverDisabled,
     updateMeasurementsFor,
@@ -9958,7 +9959,7 @@ function useDroppable(_ref) {
     ...resizeObserverConfig
   };
   const ids = useLatestValue(updateMeasurementsFor != null ? updateMeasurementsFor : id);
-  const handleResize = useCallback$2(() => {
+  const handleResize = useCallback(() => {
     if (!resizeObserverConnected.current) {
       // ResizeObserver invokes the `handleResize` callback as soon as `observe` is called,
       // assuming the element is rendered and displayed.
@@ -9980,7 +9981,7 @@ function useDroppable(_ref) {
     callback: handleResize,
     disabled: resizeObserverDisabled || !active
   });
-  const handleNodeChange = useCallback$2((newElement, previousElement) => {
+  const handleNodeChange = useCallback((newElement, previousElement) => {
     if (!resizeObserver) {
       return;
     }
@@ -9996,7 +9997,7 @@ function useDroppable(_ref) {
   }, [resizeObserver]);
   const [nodeRef, setNodeRef] = useNodeRef(handleNodeChange);
   const dataRef = useLatestValue(data);
-  useEffect$6(() => {
+  useEffect$4(() => {
     if (!resizeObserver || !nodeRef.current) {
       return;
     }
@@ -10005,7 +10006,7 @@ function useDroppable(_ref) {
     resizeObserverConnected.current = false;
     resizeObserver.observe(nodeRef.current);
   }, [nodeRef, resizeObserver]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     dispatch({
       type: Action$1.RegisterDroppable,
       element: {
@@ -10024,7 +10025,7 @@ function useDroppable(_ref) {
     });
   }, // eslint-disable-next-line react-hooks/exhaustive-deps
   [id]);
-  useEffect$6(() => {
+  useEffect$4(() => {
     if (disabled !== previous.current.disabled) {
       dispatch({
         type: Action$1.SetDroppableDisabled,
@@ -10045,8 +10046,8 @@ function useDroppable(_ref) {
   };
 }
 
-const React$R = await importShared('react');
-const {useMemo: useMemo$a,useRef: useRef$5,useEffect: useEffect$5,useState: useState$a,useContext: useContext$9} = React$R;
+const React$P = await importShared('react');
+const {useMemo: useMemo$4,useRef,useEffect: useEffect$3,useState: useState$a,useContext: useContext$1} = React$P;
 
 /**
  * Move an array item to a different position. Returns a new array with the item moved to the new position.
@@ -10202,7 +10203,7 @@ function getItemGap$1(clientRects, index, activeIndex) {
 }
 
 const ID_PREFIX = 'Sortable';
-const Context = /*#__PURE__*/React$R.createContext({
+const Context = /*#__PURE__*/React$P.createContext({
   activeIndex: -1,
   containerId: ID_PREFIX,
   disableTransforms: false,
@@ -10233,23 +10234,23 @@ function SortableContext(_ref) {
   } = useDndContext();
   const containerId = useUniqueId(ID_PREFIX, id);
   const useDragOverlay = Boolean(dragOverlay.rect !== null);
-  const items = useMemo$a(() => userDefinedItems.map(item => typeof item === 'object' && 'id' in item ? item.id : item), [userDefinedItems]);
+  const items = useMemo$4(() => userDefinedItems.map(item => typeof item === 'object' && 'id' in item ? item.id : item), [userDefinedItems]);
   const isDragging = active != null;
   const activeIndex = active ? items.indexOf(active.id) : -1;
   const overIndex = over ? items.indexOf(over.id) : -1;
-  const previousItemsRef = useRef$5(items);
+  const previousItemsRef = useRef(items);
   const itemsHaveChanged = !itemsEqual(items, previousItemsRef.current);
   const disableTransforms = overIndex !== -1 && activeIndex === -1 || itemsHaveChanged;
   const disabled = normalizeDisabled(disabledProp);
-  useIsomorphicLayoutEffect$2(() => {
+  useIsomorphicLayoutEffect$1(() => {
     if (itemsHaveChanged && isDragging) {
       measureDroppableContainers(items);
     }
   }, [itemsHaveChanged, items, isDragging, measureDroppableContainers]);
-  useEffect$5(() => {
+  useEffect$3(() => {
     previousItemsRef.current = items;
   }, [items]);
-  const contextValue = useMemo$a(() => ({
+  const contextValue = useMemo$4(() => ({
     activeIndex,
     containerId,
     disabled,
@@ -10261,7 +10262,7 @@ function SortableContext(_ref) {
     strategy
   }), // eslint-disable-next-line react-hooks/exhaustive-deps
   [activeIndex, containerId, disabled.draggable, disabled.droppable, disableTransforms, items, overIndex, droppableRects, useDragOverlay, strategy]);
-  return React$R.createElement(Context.Provider, {
+  return React$P.createElement(Context.Provider, {
     value: contextValue
   }, children);
 }
@@ -10329,8 +10330,8 @@ function useDerivedTransform(_ref) {
     rect
   } = _ref;
   const [derivedTransform, setDerivedtransform] = useState$a(null);
-  const previousIndex = useRef$5(index);
-  useIsomorphicLayoutEffect$2(() => {
+  const previousIndex = useRef(index);
+  useIsomorphicLayoutEffect$1(() => {
     if (!disabled && index !== previousIndex.current && node.current) {
       const initial = rect.current;
 
@@ -10355,7 +10356,7 @@ function useDerivedTransform(_ref) {
       previousIndex.current = index;
     }
   }, [disabled, index, node, rect]);
-  useEffect$5(() => {
+  useEffect$3(() => {
     if (derivedTransform) {
       setDerivedtransform(null);
     }
@@ -10385,10 +10386,10 @@ function useSortable(_ref) {
     overIndex,
     useDragOverlay,
     strategy: globalStrategy
-  } = useContext$9(Context);
+  } = useContext$1(Context);
   const disabled = normalizeLocalDisabled(localDisabled, globalDisabled);
   const index = items.indexOf(id);
-  const data = useMemo$a(() => ({
+  const data = useMemo$4(() => ({
     sortable: {
       containerId,
       index,
@@ -10396,7 +10397,7 @@ function useSortable(_ref) {
     },
     ...customData
   }), [containerId, customData, index, items]);
-  const itemsAfterCurrentSortable = useMemo$a(() => items.slice(items.indexOf(id)), [items, id]);
+  const itemsAfterCurrentSortable = useMemo$4(() => items.slice(items.indexOf(id)), [items, id]);
   const {
     rect,
     node,
@@ -10450,7 +10451,7 @@ function useSortable(_ref) {
     overIndex
   }) : index;
   const activeId = active == null ? void 0 : active.id;
-  const previous = useRef$5({
+  const previous = useRef({
     activeId,
     items,
     newIndex,
@@ -10477,7 +10478,7 @@ function useSortable(_ref) {
     node,
     rect
   });
-  useEffect$5(() => {
+  useEffect$3(() => {
     if (isSorting && previous.current.newIndex !== newIndex) {
       previous.current.newIndex = newIndex;
     }
@@ -10490,7 +10491,7 @@ function useSortable(_ref) {
       previous.current.items = items;
     }
   }, [isSorting, newIndex, containerId, items]);
-  useEffect$5(() => {
+  useEffect$3(() => {
     if (activeId === previous.current.activeId) {
       return;
     }
@@ -10739,10 +10740,10 @@ const toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").to
  * See the LICENSE file in the root directory of this source tree.
  */
 
-const {forwardRef: forwardRef$1,createElement: createElement$1} = await importShared('react');
+const {forwardRef,createElement} = await importShared('react');
 
 const createLucideIcon = (iconName, iconNode) => {
-  const Component = forwardRef$1(
+  const Component = forwardRef(
     ({
       color = "currentColor",
       size = 24,
@@ -10752,7 +10753,7 @@ const createLucideIcon = (iconName, iconNode) => {
       children,
       ...rest
     }, ref) => {
-      return createElement$1(
+      return createElement(
         "svg",
         {
           ref,
@@ -10765,7 +10766,7 @@ const createLucideIcon = (iconName, iconNode) => {
           ...rest
         },
         [
-          ...iconNode.map(([tag, attrs]) => createElement$1(tag, attrs)),
+          ...iconNode.map(([tag, attrs]) => createElement(tag, attrs)),
           ...Array.isArray(children) ? children : [children]
         ]
       );
@@ -10821,7 +10822,7 @@ const ArrowRight = createLucideIcon("ArrowRight", [
  */
 
 
-const BarChart3$1 = createLucideIcon("BarChart3", [
+const BarChart3 = createLucideIcon("BarChart3", [
   ["path", { d: "M3 3v18h18", key: "1s2lah" }],
   ["path", { d: "M18 17V9", key: "2bz60n" }],
   ["path", { d: "M13 17V5", key: "1frdt8" }],
@@ -11096,6 +11097,20 @@ const GripVertical = createLucideIcon("GripVertical", [
   ["circle", { cx: "15", cy: "12", r: "1", key: "1tmaij" }],
   ["circle", { cx: "15", cy: "5", r: "1", key: "19l28e" }],
   ["circle", { cx: "15", cy: "19", r: "1", key: "f4zoj3" }]
+]);
+
+/**
+ * @license lucide-react v0.363.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const History = createLucideIcon("History", [
+  ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
+  ["path", { d: "M3 3v5h5", key: "1xhq8a" }],
+  ["path", { d: "M12 7v5l4 2", key: "1fdv2h" }]
 ]);
 
 /**
@@ -11396,6 +11411,24 @@ const Wifi = createLucideIcon("Wifi", [
   ["path", { d: "M2 8.82a15 15 0 0 1 20 0", key: "dnpr2z" }],
   ["path", { d: "M5 12.859a10 10 0 0 1 14 0", key: "1x1e6c" }],
   ["path", { d: "M8.5 16.429a5 5 0 0 1 7 0", key: "1bycff" }]
+]);
+
+/**
+ * @license lucide-react v0.363.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Wrench = createLucideIcon("Wrench", [
+  [
+    "path",
+    {
+      d: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
+      key: "cbrjhi"
+    }
+  ]
 ]);
 
 /**
@@ -13968,7 +14001,7 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-const React$Q = await importShared('react');
+const React$O = await importShared('react');
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
@@ -13994,7 +14027,7 @@ const buttonVariants = cva(
     }
   }
 );
-const Button = React$Q.forwardRef(
+const Button = React$O.forwardRef(
   ({ className, variant, size, ...props }, ref) => {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       "button",
@@ -14032,8 +14065,8 @@ function Badge({ className, variant, ...props }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn(badgeVariants({ variant }), className), ...props });
 }
 
-const React$P = await importShared('react');
-const Textarea = React$P.forwardRef(
+const React$N = await importShared('react');
+const Textarea = React$N.forwardRef(
   ({ className, ...props }, ref) => {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       "textarea",
@@ -14051,7 +14084,7 @@ const Textarea = React$P.forwardRef(
 Textarea.displayName = "Textarea";
 
 // packages/core/number/src/number.ts
-function clamp$2(value, [min, max]) {
+function clamp$1(value, [min, max]) {
   return Math.min(max, Math.max(min, value));
 }
 
@@ -14066,17 +14099,17 @@ function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForD
 }
 
 // packages/react/context/src/create-context.tsx
-const React$O = await importShared('react');
+const React$M = await importShared('react');
 function createContext2(rootComponentName, defaultContext) {
-  const Context = React$O.createContext(defaultContext);
+  const Context = React$M.createContext(defaultContext);
   const Provider = (props) => {
     const { children, ...context } = props;
-    const value = React$O.useMemo(() => context, Object.values(context));
+    const value = React$M.useMemo(() => context, Object.values(context));
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Context.Provider, { value, children });
   };
   Provider.displayName = rootComponentName + "Provider";
   function useContext2(consumerName) {
-    const context = React$O.useContext(Context);
+    const context = React$M.useContext(Context);
     if (context) return context;
     if (defaultContext !== void 0) return defaultContext;
     throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
@@ -14086,19 +14119,19 @@ function createContext2(rootComponentName, defaultContext) {
 function createContextScope(scopeName, createContextScopeDeps = []) {
   let defaultContexts = [];
   function createContext3(rootComponentName, defaultContext) {
-    const BaseContext = React$O.createContext(defaultContext);
+    const BaseContext = React$M.createContext(defaultContext);
     const index = defaultContexts.length;
     defaultContexts = [...defaultContexts, defaultContext];
     const Provider = (props) => {
       const { scope, children, ...context } = props;
       const Context = scope?.[scopeName]?.[index] || BaseContext;
-      const value = React$O.useMemo(() => context, Object.values(context));
+      const value = React$M.useMemo(() => context, Object.values(context));
       return /* @__PURE__ */ jsxRuntimeExports.jsx(Context.Provider, { value, children });
     };
     Provider.displayName = rootComponentName + "Provider";
     function useContext2(consumerName, scope) {
       const Context = scope?.[scopeName]?.[index] || BaseContext;
-      const context = React$O.useContext(Context);
+      const context = React$M.useContext(Context);
       if (context) return context;
       if (defaultContext !== void 0) return defaultContext;
       throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
@@ -14107,11 +14140,11 @@ function createContextScope(scopeName, createContextScopeDeps = []) {
   }
   const createScope = () => {
     const scopeContexts = defaultContexts.map((defaultContext) => {
-      return React$O.createContext(defaultContext);
+      return React$M.createContext(defaultContext);
     });
     return function useScope(scope) {
       const contexts = scope?.[scopeName] || scopeContexts;
-      return React$O.useMemo(
+      return React$M.useMemo(
         () => ({ [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts } }),
         [scope, contexts]
       );
@@ -14134,7 +14167,7 @@ function composeContextScopes(...scopes) {
         const currentScope = scopeProps[`__scope${scopeName}`];
         return { ...nextScopes2, ...currentScope };
       }, {});
-      return React$O.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
+      return React$M.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
     };
   };
   createScope.scopeName = baseScope.scopeName;
@@ -14142,20 +14175,20 @@ function composeContextScopes(...scopes) {
 }
 
 // packages/react/compose-refs/src/compose-refs.tsx
-const React$N = await importShared('react');
+const React$L = await importShared('react');
 
-function setRef$1(ref, value) {
+function setRef(ref, value) {
   if (typeof ref === "function") {
     return ref(value);
   } else if (ref !== null && ref !== void 0) {
     ref.current = value;
   }
 }
-function composeRefs$1(...refs) {
+function composeRefs(...refs) {
   return (node) => {
     let hasCleanup = false;
     const cleanups = refs.map((ref) => {
-      const cleanup = setRef$1(ref, node);
+      const cleanup = setRef(ref, node);
       if (!hasCleanup && typeof cleanup == "function") {
         hasCleanup = true;
       }
@@ -14168,37 +14201,37 @@ function composeRefs$1(...refs) {
           if (typeof cleanup == "function") {
             cleanup();
           } else {
-            setRef$1(refs[i], null);
+            setRef(refs[i], null);
           }
         }
       };
     }
   };
 }
-function useComposedRefs$1(...refs) {
-  return React$N.useCallback(composeRefs$1(...refs), refs);
+function useComposedRefs(...refs) {
+  return React$L.useCallback(composeRefs(...refs), refs);
 }
 
 // src/slot.tsx
-const React$M = await importShared('react');
+const React$K = await importShared('react');
 // @__NO_SIDE_EFFECTS__
 function createSlot$2(ownerName) {
   const SlotClone = /* @__PURE__ */ createSlotClone$2(ownerName);
-  const Slot2 = React$M.forwardRef((props, forwardedRef) => {
+  const Slot2 = React$K.forwardRef((props, forwardedRef) => {
     const { children, ...slotProps } = props;
-    const childrenArray = React$M.Children.toArray(children);
+    const childrenArray = React$K.Children.toArray(children);
     const slottable = childrenArray.find(isSlottable$2);
     if (slottable) {
       const newElement = slottable.props.children;
       const newChildren = childrenArray.map((child) => {
         if (child === slottable) {
-          if (React$M.Children.count(newElement) > 1) return React$M.Children.only(null);
-          return React$M.isValidElement(newElement) ? newElement.props.children : null;
+          if (React$K.Children.count(newElement) > 1) return React$K.Children.only(null);
+          return React$K.isValidElement(newElement) ? newElement.props.children : null;
         } else {
           return child;
         }
       });
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: React$M.isValidElement(newElement) ? React$M.cloneElement(newElement, void 0, newChildren) : null });
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: React$K.isValidElement(newElement) ? React$K.cloneElement(newElement, void 0, newChildren) : null });
     }
     return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children });
   });
@@ -14207,17 +14240,17 @@ function createSlot$2(ownerName) {
 }
 // @__NO_SIDE_EFFECTS__
 function createSlotClone$2(ownerName) {
-  const SlotClone = React$M.forwardRef((props, forwardedRef) => {
+  const SlotClone = React$K.forwardRef((props, forwardedRef) => {
     const { children, ...slotProps } = props;
-    if (React$M.isValidElement(children)) {
+    if (React$K.isValidElement(children)) {
       const childrenRef = getElementRef$3(children);
       const props2 = mergeProps$2(slotProps, children.props);
-      if (children.type !== React$M.Fragment) {
-        props2.ref = forwardedRef ? composeRefs$1(forwardedRef, childrenRef) : childrenRef;
+      if (children.type !== React$K.Fragment) {
+        props2.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
       }
-      return React$M.cloneElement(children, props2);
+      return React$K.cloneElement(children, props2);
     }
-    return React$M.Children.count(children) > 1 ? React$M.Children.only(null) : null;
+    return React$K.Children.count(children) > 1 ? React$K.Children.only(null) : null;
   });
   SlotClone.displayName = `${ownerName}.SlotClone`;
   return SlotClone;
@@ -14233,7 +14266,7 @@ function createSlottable(ownerName) {
   return Slottable2;
 }
 function isSlottable$2(child) {
-  return React$M.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER$2;
+  return React$K.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER$2;
 }
 function mergeProps$2(slotProps, childProps) {
   const overrideProps = { ...childProps };
@@ -14274,7 +14307,7 @@ function getElementRef$3(element) {
 }
 
 // src/collection-legacy.tsx
-const React$L = await importShared('react');
+const React$J = await importShared('react');
 function createCollection(name) {
   const PROVIDER_NAME = name + "CollectionProvider";
   const [createCollectionContext, createCollectionScope] = createContextScope(PROVIDER_NAME);
@@ -14284,18 +14317,18 @@ function createCollection(name) {
   );
   const CollectionProvider = (props) => {
     const { scope, children } = props;
-    const ref = React$L.useRef(null);
-    const itemMap = React$L.useRef(/* @__PURE__ */ new Map()).current;
+    const ref = React$J.useRef(null);
+    const itemMap = React$J.useRef(/* @__PURE__ */ new Map()).current;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(CollectionProviderImpl, { scope, itemMap, collectionRef: ref, children });
   };
   CollectionProvider.displayName = PROVIDER_NAME;
   const COLLECTION_SLOT_NAME = name + "CollectionSlot";
   const CollectionSlotImpl = createSlot$2(COLLECTION_SLOT_NAME);
-  const CollectionSlot = React$L.forwardRef(
+  const CollectionSlot = React$J.forwardRef(
     (props, forwardedRef) => {
       const { scope, children } = props;
       const context = useCollectionContext(COLLECTION_SLOT_NAME, scope);
-      const composedRefs = useComposedRefs$1(forwardedRef, context.collectionRef);
+      const composedRefs = useComposedRefs(forwardedRef, context.collectionRef);
       return /* @__PURE__ */ jsxRuntimeExports.jsx(CollectionSlotImpl, { ref: composedRefs, children });
     }
   );
@@ -14303,13 +14336,13 @@ function createCollection(name) {
   const ITEM_SLOT_NAME = name + "CollectionItemSlot";
   const ITEM_DATA_ATTR = "data-radix-collection-item";
   const CollectionItemSlotImpl = createSlot$2(ITEM_SLOT_NAME);
-  const CollectionItemSlot = React$L.forwardRef(
+  const CollectionItemSlot = React$J.forwardRef(
     (props, forwardedRef) => {
       const { scope, children, ...itemData } = props;
-      const ref = React$L.useRef(null);
-      const composedRefs = useComposedRefs$1(forwardedRef, ref);
+      const ref = React$J.useRef(null);
+      const composedRefs = useComposedRefs(forwardedRef, ref);
       const context = useCollectionContext(ITEM_SLOT_NAME, scope);
-      React$L.useEffect(() => {
+      React$J.useEffect(() => {
         context.itemMap.set(ref, { ref, ...itemData });
         return () => void context.itemMap.delete(ref);
       });
@@ -14319,7 +14352,7 @@ function createCollection(name) {
   CollectionItemSlot.displayName = ITEM_SLOT_NAME;
   function useCollection(scope) {
     const context = useCollectionContext(name + "CollectionConsumer", scope);
-    const getItems = React$L.useCallback(() => {
+    const getItems = React$J.useCallback(() => {
       const collectionNode = context.collectionRef.current;
       if (!collectionNode) return [];
       const orderedNodes = Array.from(collectionNode.querySelectorAll(`[${ITEM_DATA_ATTR}]`));
@@ -14342,15 +14375,15 @@ function createCollection(name) {
 await importShared('react');
 
 // packages/react/direction/src/direction.tsx
-const React$K = await importShared('react');
-var DirectionContext = React$K.createContext(void 0);
+const React$I = await importShared('react');
+var DirectionContext = React$I.createContext(void 0);
 function useDirection(localDir) {
-  const globalDir = React$K.useContext(DirectionContext);
+  const globalDir = React$I.useContext(DirectionContext);
   return localDir || globalDir || "ltr";
 }
 
 // src/primitive.tsx
-const React$J = await importShared('react');
+const React$H = await importShared('react');
 
 const ReactDOM$3 = await importShared('react-dom');
 var NODES$2 = [
@@ -14374,7 +14407,7 @@ var NODES$2 = [
 ];
 var Primitive$2 = NODES$2.reduce((primitive, node) => {
   const Slot = createSlot$2(`Primitive.${node}`);
-  const Node = React$J.forwardRef((props, forwardedRef) => {
+  const Node = React$H.forwardRef((props, forwardedRef) => {
     const { asChild, ...primitiveProps } = props;
     const Comp = asChild ? Slot : node;
     if (typeof window !== "undefined") {
@@ -14390,21 +14423,21 @@ function dispatchDiscreteCustomEvent(target, event) {
 }
 
 // packages/react/use-callback-ref/src/use-callback-ref.tsx
-const React$I = await importShared('react');
+const React$G = await importShared('react');
 
 function useCallbackRef$1(callback) {
-  const callbackRef = React$I.useRef(callback);
-  React$I.useEffect(() => {
+  const callbackRef = React$G.useRef(callback);
+  React$G.useEffect(() => {
     callbackRef.current = callback;
   });
-  return React$I.useMemo(() => (...args) => callbackRef.current?.(...args), []);
+  return React$G.useMemo(() => (...args) => callbackRef.current?.(...args), []);
 }
 
 // packages/react/use-escape-keydown/src/use-escape-keydown.tsx
-const React$H = await importShared('react');
+const React$F = await importShared('react');
 function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.document) {
   const onEscapeKeyDown = useCallbackRef$1(onEscapeKeyDownProp);
-  React$H.useEffect(() => {
+  React$F.useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         onEscapeKeyDown(event);
@@ -14416,18 +14449,18 @@ function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.docum
 }
 
 // src/dismissable-layer.tsx
-const React$G = await importShared('react');
+const React$E = await importShared('react');
 var DISMISSABLE_LAYER_NAME = "DismissableLayer";
 var CONTEXT_UPDATE = "dismissableLayer.update";
 var POINTER_DOWN_OUTSIDE = "dismissableLayer.pointerDownOutside";
 var FOCUS_OUTSIDE = "dismissableLayer.focusOutside";
 var originalBodyPointerEvents;
-var DismissableLayerContext = React$G.createContext({
+var DismissableLayerContext = React$E.createContext({
   layers: /* @__PURE__ */ new Set(),
   layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
   branches: /* @__PURE__ */ new Set()
 });
-var DismissableLayer = React$G.forwardRef(
+var DismissableLayer = React$E.forwardRef(
   (props, forwardedRef) => {
     const {
       disableOutsidePointerEvents = false,
@@ -14438,11 +14471,11 @@ var DismissableLayer = React$G.forwardRef(
       onDismiss,
       ...layerProps
     } = props;
-    const context = React$G.useContext(DismissableLayerContext);
-    const [node, setNode] = React$G.useState(null);
+    const context = React$E.useContext(DismissableLayerContext);
+    const [node, setNode] = React$E.useState(null);
     const ownerDocument = node?.ownerDocument ?? globalThis?.document;
-    const [, force] = React$G.useState({});
-    const composedRefs = useComposedRefs$1(forwardedRef, (node2) => setNode(node2));
+    const [, force] = React$E.useState({});
+    const composedRefs = useComposedRefs(forwardedRef, (node2) => setNode(node2));
     const layers = Array.from(context.layers);
     const [highestLayerWithOutsidePointerEventsDisabled] = [...context.layersWithOutsidePointerEventsDisabled].slice(-1);
     const highestLayerWithOutsidePointerEventsDisabledIndex = layers.indexOf(highestLayerWithOutsidePointerEventsDisabled);
@@ -14474,7 +14507,7 @@ var DismissableLayer = React$G.forwardRef(
         onDismiss();
       }
     }, ownerDocument);
-    React$G.useEffect(() => {
+    React$E.useEffect(() => {
       if (!node) return;
       if (disableOutsidePointerEvents) {
         if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
@@ -14491,7 +14524,7 @@ var DismissableLayer = React$G.forwardRef(
         }
       };
     }, [node, ownerDocument, disableOutsidePointerEvents, context]);
-    React$G.useEffect(() => {
+    React$E.useEffect(() => {
       return () => {
         if (!node) return;
         context.layers.delete(node);
@@ -14499,7 +14532,7 @@ var DismissableLayer = React$G.forwardRef(
         dispatchUpdate();
       };
     }, [node, context]);
-    React$G.useEffect(() => {
+    React$E.useEffect(() => {
       const handleUpdate = () => force({});
       document.addEventListener(CONTEXT_UPDATE, handleUpdate);
       return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
@@ -14525,11 +14558,11 @@ var DismissableLayer = React$G.forwardRef(
 );
 DismissableLayer.displayName = DISMISSABLE_LAYER_NAME;
 var BRANCH_NAME = "DismissableLayerBranch";
-var DismissableLayerBranch = React$G.forwardRef((props, forwardedRef) => {
-  const context = React$G.useContext(DismissableLayerContext);
-  const ref = React$G.useRef(null);
-  const composedRefs = useComposedRefs$1(forwardedRef, ref);
-  React$G.useEffect(() => {
+var DismissableLayerBranch = React$E.forwardRef((props, forwardedRef) => {
+  const context = React$E.useContext(DismissableLayerContext);
+  const ref = React$E.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, ref);
+  React$E.useEffect(() => {
     const node = ref.current;
     if (node) {
       context.branches.add(node);
@@ -14543,10 +14576,10 @@ var DismissableLayerBranch = React$G.forwardRef((props, forwardedRef) => {
 DismissableLayerBranch.displayName = BRANCH_NAME;
 function usePointerDownOutside(onPointerDownOutside, ownerDocument = globalThis?.document) {
   const handlePointerDownOutside = useCallbackRef$1(onPointerDownOutside);
-  const isPointerInsideReactTreeRef = React$G.useRef(false);
-  const handleClickRef = React$G.useRef(() => {
+  const isPointerInsideReactTreeRef = React$E.useRef(false);
+  const handleClickRef = React$E.useRef(() => {
   });
-  React$G.useEffect(() => {
+  React$E.useEffect(() => {
     const handlePointerDown = (event) => {
       if (event.target && !isPointerInsideReactTreeRef.current) {
         let handleAndDispatchPointerDownOutsideEvent2 = function() {
@@ -14586,8 +14619,8 @@ function usePointerDownOutside(onPointerDownOutside, ownerDocument = globalThis?
 }
 function useFocusOutside(onFocusOutside, ownerDocument = globalThis?.document) {
   const handleFocusOutside = useCallbackRef$1(onFocusOutside);
-  const isFocusInsideReactTreeRef = React$G.useRef(false);
-  React$G.useEffect(() => {
+  const isFocusInsideReactTreeRef = React$E.useRef(false);
+  React$E.useEffect(() => {
     const handleFocus = (event) => {
       if (event.target && !isFocusInsideReactTreeRef.current) {
         const eventDetail = { originalEvent: event };
@@ -14620,11 +14653,11 @@ function handleAndDispatchCustomEvent(name, handler, detail, { discrete }) {
 }
 
 // src/focus-guards.tsx
-const React$F = await importShared('react');
+const React$D = await importShared('react');
 
 var count$1 = 0;
 function useFocusGuards() {
-  React$F.useEffect(() => {
+  React$D.useEffect(() => {
     const edgeGuards = document.querySelectorAll("[data-radix-focus-guard]");
     document.body.insertAdjacentElement("afterbegin", edgeGuards[0] ?? createFocusGuard());
     document.body.insertAdjacentElement("beforeend", edgeGuards[1] ?? createFocusGuard());
@@ -14649,12 +14682,12 @@ function createFocusGuard() {
 }
 
 // src/focus-scope.tsx
-const React$E = await importShared('react');
+const React$C = await importShared('react');
 var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
 var AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
 var EVENT_OPTIONS = { bubbles: false, cancelable: true };
 var FOCUS_SCOPE_NAME = "FocusScope";
-var FocusScope = React$E.forwardRef((props, forwardedRef) => {
+var FocusScope = React$C.forwardRef((props, forwardedRef) => {
   const {
     loop = false,
     trapped = false,
@@ -14662,12 +14695,12 @@ var FocusScope = React$E.forwardRef((props, forwardedRef) => {
     onUnmountAutoFocus: onUnmountAutoFocusProp,
     ...scopeProps
   } = props;
-  const [container, setContainer] = React$E.useState(null);
+  const [container, setContainer] = React$C.useState(null);
   const onMountAutoFocus = useCallbackRef$1(onMountAutoFocusProp);
   const onUnmountAutoFocus = useCallbackRef$1(onUnmountAutoFocusProp);
-  const lastFocusedElementRef = React$E.useRef(null);
-  const composedRefs = useComposedRefs$1(forwardedRef, (node) => setContainer(node));
-  const focusScope = React$E.useRef({
+  const lastFocusedElementRef = React$C.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContainer(node));
+  const focusScope = React$C.useRef({
     paused: false,
     pause() {
       this.paused = true;
@@ -14676,7 +14709,7 @@ var FocusScope = React$E.forwardRef((props, forwardedRef) => {
       this.paused = false;
     }
   }).current;
-  React$E.useEffect(() => {
+  React$C.useEffect(() => {
     if (trapped) {
       let handleFocusIn2 = function(event) {
         if (focusScope.paused || !container) return;
@@ -14711,7 +14744,7 @@ var FocusScope = React$E.forwardRef((props, forwardedRef) => {
       };
     }
   }, [trapped, container, focusScope.paused]);
-  React$E.useEffect(() => {
+  React$C.useEffect(() => {
     if (container) {
       focusScopesStack.add(focusScope);
       const previouslyFocusedElement = document.activeElement;
@@ -14742,7 +14775,7 @@ var FocusScope = React$E.forwardRef((props, forwardedRef) => {
       };
     }
   }, [container, onMountAutoFocus, onUnmountAutoFocus, focusScope]);
-  const handleKeyDown = React$E.useCallback(
+  const handleKeyDown = React$C.useCallback(
     (event) => {
       if (!loop && !trapped) return;
       if (focusScope.paused) return;
@@ -14851,17 +14884,17 @@ function removeLinks(items) {
 }
 
 // packages/react/use-layout-effect/src/use-layout-effect.tsx
-const React$D = await importShared('react');
+const React$B = await importShared('react');
 
-var useLayoutEffect2 = globalThis?.document ? React$D.useLayoutEffect : () => {
+var useLayoutEffect2 = globalThis?.document ? React$B.useLayoutEffect : () => {
 };
 
 // packages/react/id/src/id.tsx
-const React$C = await importShared('react');
-var useReactId = React$C[" useId ".trim().toString()] || (() => void 0);
+const React$A = await importShared('react');
+var useReactId = React$A[" useId ".trim().toString()] || (() => void 0);
 var count = 0;
-function useId$3(deterministicId) {
-  const [id, setId] = React$C.useState(useReactId());
+function useId(deterministicId) {
+  const [id, setId] = React$A.useState(useReactId());
   useLayoutEffect2(() => {
     setId((reactId) => reactId ?? String(count++));
   }, [deterministicId]);
@@ -14888,7 +14921,7 @@ const oppositeSideMap = {
   bottom: 'top',
   top: 'bottom'
 };
-function clamp$1(start, value, end) {
+function clamp(start, value, end) {
   return max(start, min(value, end));
 }
 function evaluate(value, param) {
@@ -15280,7 +15313,7 @@ const arrow$3 = options => ({
     const min$1 = minPadding;
     const max = clientSize - arrowDimensions[length] - maxPadding;
     const center = clientSize / 2 - arrowDimensions[length] / 2 + centerToReference;
-    const offset = clamp$1(min$1, center, max);
+    const offset = clamp(min$1, center, max);
 
     // If the reference is small enough that the arrow's padding causes it to
     // to point to nothing for an aligned placement, adjust the offset of the
@@ -15640,14 +15673,14 @@ const shift$2 = function (options) {
         const maxSide = mainAxis === 'y' ? 'bottom' : 'right';
         const min = mainAxisCoord + overflow[minSide];
         const max = mainAxisCoord - overflow[maxSide];
-        mainAxisCoord = clamp$1(min, mainAxisCoord, max);
+        mainAxisCoord = clamp(min, mainAxisCoord, max);
       }
       if (checkCrossAxis) {
         const minSide = crossAxis === 'y' ? 'top' : 'left';
         const maxSide = crossAxis === 'y' ? 'bottom' : 'right';
         const min = crossAxisCoord + overflow[minSide];
         const max = crossAxisCoord - overflow[maxSide];
-        crossAxisCoord = clamp$1(min, crossAxisCoord, max);
+        crossAxisCoord = clamp(min, crossAxisCoord, max);
       }
       const limitedCoords = limiter.fn({
         ...state,
@@ -15853,7 +15886,7 @@ function isElement(value) {
   }
   return value instanceof Element || value instanceof getWindow(value).Element;
 }
-function isHTMLElement$1(value) {
+function isHTMLElement(value) {
   if (!hasWindow()) {
     return false;
   }
@@ -15871,7 +15904,7 @@ function isOverflowElement(element) {
     overflowX,
     overflowY,
     display
-  } = getComputedStyle$2(element);
+  } = getComputedStyle$1(element);
   return /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) && display !== 'inline' && display !== 'contents';
 }
 function isTableElement(element) {
@@ -15896,7 +15929,7 @@ const containRe = /paint|layout|strict|content/;
 const isNotNone = value => !!value && value !== 'none';
 let isWebKitValue;
 function isContainingBlock(elementOrCss) {
-  const css = isElement(elementOrCss) ? getComputedStyle$2(elementOrCss) : elementOrCss;
+  const css = isElement(elementOrCss) ? getComputedStyle$1(elementOrCss) : elementOrCss;
 
   // https://developer.mozilla.org/en-US/docs/Web/CSS/Containing_block#identifying_the_containing_block
   // https://drafts.csswg.org/css-transforms-2/#individual-transforms
@@ -15904,7 +15937,7 @@ function isContainingBlock(elementOrCss) {
 }
 function getContainingBlock(element) {
   let currentNode = getParentNode(element);
-  while (isHTMLElement$1(currentNode) && !isLastTraversableNode(currentNode)) {
+  while (isHTMLElement(currentNode) && !isLastTraversableNode(currentNode)) {
     if (isContainingBlock(currentNode)) {
       return currentNode;
     } else if (isTopLayer(currentNode)) {
@@ -15923,7 +15956,7 @@ function isWebKit() {
 function isLastTraversableNode(node) {
   return /^(html|body|#document)$/.test(getNodeName(node));
 }
-function getComputedStyle$2(element) {
+function getComputedStyle$1(element) {
   return getWindow(element).getComputedStyle(element);
 }
 function getNodeScroll(element) {
@@ -15958,7 +15991,7 @@ function getNearestOverflowAncestor(node) {
   if (isLastTraversableNode(parentNode)) {
     return node.ownerDocument ? node.ownerDocument.body : node.body;
   }
-  if (isHTMLElement$1(parentNode) && isOverflowElement(parentNode)) {
+  if (isHTMLElement(parentNode) && isOverflowElement(parentNode)) {
     return parentNode;
   }
   return getNearestOverflowAncestor(parentNode);
@@ -15986,12 +16019,12 @@ function getFrameElement(win) {
 }
 
 function getCssDimensions(element) {
-  const css = getComputedStyle$2(element);
+  const css = getComputedStyle$1(element);
   // In testing environments, the `width` and `height` properties are empty
   // strings for SVG elements, returning NaN. Fallback to `0` in this case.
   let width = parseFloat(css.width) || 0;
   let height = parseFloat(css.height) || 0;
-  const hasOffset = isHTMLElement$1(element);
+  const hasOffset = isHTMLElement(element);
   const offsetWidth = hasOffset ? element.offsetWidth : width;
   const offsetHeight = hasOffset ? element.offsetHeight : height;
   const shouldFallback = round(width) !== offsetWidth || round(height) !== offsetHeight;
@@ -16012,7 +16045,7 @@ function unwrapElement(element) {
 
 function getScale(element) {
   const domElement = unwrapElement(element);
-  if (!isHTMLElement$1(domElement)) {
+  if (!isHTMLElement(domElement)) {
     return createCoords(1);
   }
   const rect = domElement.getBoundingClientRect();
@@ -16091,7 +16124,7 @@ function getBoundingClientRect(element, includeScale, isFixedStrategy, offsetPar
     while (currentIFrame && offsetParent && offsetWin !== currentWin) {
       const iframeScale = getScale(currentIFrame);
       const iframeRect = currentIFrame.getBoundingClientRect();
-      const css = getComputedStyle$2(currentIFrame);
+      const css = getComputedStyle$1(currentIFrame);
       const left = iframeRect.left + (currentIFrame.clientLeft + parseFloat(css.paddingLeft)) * iframeScale.x;
       const top = iframeRect.top + (currentIFrame.clientTop + parseFloat(css.paddingTop)) * iframeScale.y;
       x *= iframeScale.x;
@@ -16151,7 +16184,7 @@ function convertOffsetParentRelativeRectToViewportRelativeRect(_ref) {
   };
   let scale = createCoords(1);
   const offsets = createCoords(0);
-  const isOffsetParentAnElement = isHTMLElement$1(offsetParent);
+  const isOffsetParentAnElement = isHTMLElement(offsetParent);
   if (isOffsetParentAnElement || !isOffsetParentAnElement && !isFixed) {
     if (getNodeName(offsetParent) !== 'body' || isOverflowElement(documentElement)) {
       scroll = getNodeScroll(offsetParent);
@@ -16186,7 +16219,7 @@ function getDocumentRect(element) {
   const height = max(html.scrollHeight, html.clientHeight, body.scrollHeight, body.clientHeight);
   let x = -scroll.scrollLeft + getWindowScrollBarX(element);
   const y = -scroll.scrollTop;
-  if (getComputedStyle$2(body).direction === 'rtl') {
+  if (getComputedStyle$1(body).direction === 'rtl') {
     x += max(html.clientWidth, body.clientWidth) - width;
   }
   return {
@@ -16249,7 +16282,7 @@ function getInnerBoundingClientRect(element, strategy) {
   const clientRect = getBoundingClientRect(element, true, strategy === 'fixed');
   const top = clientRect.top + element.clientTop;
   const left = clientRect.left + element.clientLeft;
-  const scale = isHTMLElement$1(element) ? getScale(element) : createCoords(1);
+  const scale = isHTMLElement(element) ? getScale(element) : createCoords(1);
   const width = element.clientWidth * scale.x;
   const height = element.clientHeight * scale.y;
   const x = left * scale.x;
@@ -16285,7 +16318,7 @@ function hasFixedPositionAncestor(element, stopNode) {
   if (parentNode === stopNode || !isElement(parentNode) || isLastTraversableNode(parentNode)) {
     return false;
   }
-  return getComputedStyle$2(parentNode).position === 'fixed' || hasFixedPositionAncestor(parentNode, stopNode);
+  return getComputedStyle$1(parentNode).position === 'fixed' || hasFixedPositionAncestor(parentNode, stopNode);
 }
 
 // A "clipping ancestor" is an `overflow` element with the characteristic of
@@ -16298,12 +16331,12 @@ function getClippingElementAncestors(element, cache) {
   }
   let result = getOverflowAncestors(element, [], false).filter(el => isElement(el) && getNodeName(el) !== 'body');
   let currentContainingBlockComputedStyle = null;
-  const elementIsFixed = getComputedStyle$2(element).position === 'fixed';
+  const elementIsFixed = getComputedStyle$1(element).position === 'fixed';
   let currentNode = elementIsFixed ? getParentNode(element) : element;
 
   // https://developer.mozilla.org/en-US/docs/Web/CSS/Containing_block#identifying_the_containing_block
   while (isElement(currentNode) && !isLastTraversableNode(currentNode)) {
-    const computedStyle = getComputedStyle$2(currentNode);
+    const computedStyle = getComputedStyle$1(currentNode);
     const currentNodeIsContaining = isContainingBlock(currentNode);
     if (!currentNodeIsContaining && computedStyle.position === 'fixed') {
       currentContainingBlockComputedStyle = null;
@@ -16365,7 +16398,7 @@ function getDimensions(element) {
 }
 
 function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
-  const isOffsetParentAnElement = isHTMLElement$1(offsetParent);
+  const isOffsetParentAnElement = isHTMLElement(offsetParent);
   const documentElement = getDocumentElement(offsetParent);
   const isFixed = strategy === 'fixed';
   const rect = getBoundingClientRect(element, true, isFixed, offsetParent);
@@ -16407,11 +16440,11 @@ function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
 }
 
 function isStaticPositioned(element) {
-  return getComputedStyle$2(element).position === 'static';
+  return getComputedStyle$1(element).position === 'static';
 }
 
 function getTrueOffsetParent(element, polyfill) {
-  if (!isHTMLElement$1(element) || getComputedStyle$2(element).position === 'fixed') {
+  if (!isHTMLElement(element) || getComputedStyle$1(element).position === 'fixed') {
     return null;
   }
   if (polyfill) {
@@ -16436,7 +16469,7 @@ function getOffsetParent(element, polyfill) {
   if (isTopLayer(element)) {
     return win;
   }
-  if (!isHTMLElement$1(element)) {
+  if (!isHTMLElement(element)) {
     let svgOffsetParent = getParentNode(element);
     while (svgOffsetParent && !isLastTraversableNode(svgOffsetParent)) {
       if (isElement(svgOffsetParent) && !isStaticPositioned(svgOffsetParent)) {
@@ -16472,7 +16505,7 @@ const getElementRects = async function (data) {
 };
 
 function isRTL(element) {
-  return getComputedStyle$2(element).direction === 'rtl';
+  return getComputedStyle$1(element).direction === 'rtl';
 }
 
 const platform = {
@@ -16735,17 +16768,17 @@ const computePosition = (reference, floating, options) => {
   });
 };
 
-const React$B = await importShared('react');
+const React$z = await importShared('react');
 
-const {useLayoutEffect: useLayoutEffect$1} = await importShared('react');
+const {useLayoutEffect} = await importShared('react');
 
 const ReactDOM$2 = await importShared('react-dom');
 
 
 var isClient = typeof document !== 'undefined';
 
-var noop$1 = function noop() {};
-var index = isClient ? useLayoutEffect$1 : noop$1;
+var noop = function noop() {};
+var index = isClient ? useLayoutEffect : noop;
 
 // Fork of `fast-deep-equal` that only does the comparisons we need and compares
 // functions
@@ -16811,7 +16844,7 @@ function roundByDPR(element, value) {
 }
 
 function useLatestRef(value) {
-  const ref = React$B.useRef(value);
+  const ref = React$z.useRef(value);
   index(() => {
     ref.current = value;
   });
@@ -16839,7 +16872,7 @@ function useFloating(options) {
     whileElementsMounted,
     open
   } = options;
-  const [data, setData] = React$B.useState({
+  const [data, setData] = React$z.useState({
     x: 0,
     y: 0,
     strategy,
@@ -16847,19 +16880,19 @@ function useFloating(options) {
     middlewareData: {},
     isPositioned: false
   });
-  const [latestMiddleware, setLatestMiddleware] = React$B.useState(middleware);
+  const [latestMiddleware, setLatestMiddleware] = React$z.useState(middleware);
   if (!deepEqual(latestMiddleware, middleware)) {
     setLatestMiddleware(middleware);
   }
-  const [_reference, _setReference] = React$B.useState(null);
-  const [_floating, _setFloating] = React$B.useState(null);
-  const setReference = React$B.useCallback(node => {
+  const [_reference, _setReference] = React$z.useState(null);
+  const [_floating, _setFloating] = React$z.useState(null);
+  const setReference = React$z.useCallback(node => {
     if (node !== referenceRef.current) {
       referenceRef.current = node;
       _setReference(node);
     }
   }, []);
-  const setFloating = React$B.useCallback(node => {
+  const setFloating = React$z.useCallback(node => {
     if (node !== floatingRef.current) {
       floatingRef.current = node;
       _setFloating(node);
@@ -16867,14 +16900,14 @@ function useFloating(options) {
   }, []);
   const referenceEl = externalReference || _reference;
   const floatingEl = externalFloating || _floating;
-  const referenceRef = React$B.useRef(null);
-  const floatingRef = React$B.useRef(null);
-  const dataRef = React$B.useRef(data);
+  const referenceRef = React$z.useRef(null);
+  const floatingRef = React$z.useRef(null);
+  const dataRef = React$z.useRef(data);
   const hasWhileElementsMounted = whileElementsMounted != null;
   const whileElementsMountedRef = useLatestRef(whileElementsMounted);
   const platformRef = useLatestRef(platform);
   const openRef = useLatestRef(open);
-  const update = React$B.useCallback(() => {
+  const update = React$z.useCallback(() => {
     if (!referenceRef.current || !floatingRef.current) {
       return;
     }
@@ -16912,7 +16945,7 @@ function useFloating(options) {
       }));
     }
   }, [open]);
-  const isMountedRef = React$B.useRef(false);
+  const isMountedRef = React$z.useRef(false);
   index(() => {
     isMountedRef.current = true;
     return () => {
@@ -16929,17 +16962,17 @@ function useFloating(options) {
       update();
     }
   }, [referenceEl, floatingEl, update, whileElementsMountedRef, hasWhileElementsMounted]);
-  const refs = React$B.useMemo(() => ({
+  const refs = React$z.useMemo(() => ({
     reference: referenceRef,
     floating: floatingRef,
     setReference,
     setFloating
   }), [setReference, setFloating]);
-  const elements = React$B.useMemo(() => ({
+  const elements = React$z.useMemo(() => ({
     reference: referenceEl,
     floating: floatingEl
   }), [referenceEl, floatingEl]);
-  const floatingStyles = React$B.useMemo(() => {
+  const floatingStyles = React$z.useMemo(() => {
     const initialStyles = {
       position: strategy,
       left: 0,
@@ -16965,7 +16998,7 @@ function useFloating(options) {
       top: y
     };
   }, [strategy, transform, elements.floating, data.x, data.y]);
-  return React$B.useMemo(() => ({
+  return React$z.useMemo(() => ({
     ...data,
     update,
     refs,
@@ -17113,9 +17146,9 @@ const arrow = (options, deps) => {
 };
 
 // src/arrow.tsx
-const React$A = await importShared('react');
+const React$y = await importShared('react');
 var NAME$3 = "Arrow";
-var Arrow$1 = React$A.forwardRef((props, forwardedRef) => {
+var Arrow$1 = React$y.forwardRef((props, forwardedRef) => {
   const { children, width = 10, height = 5, ...arrowProps } = props;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Primitive$2.svg,
@@ -17134,9 +17167,9 @@ Arrow$1.displayName = NAME$3;
 var Root$3 = Arrow$1;
 
 // packages/react/use-size/src/use-size.tsx
-const React$z = await importShared('react');
+const React$x = await importShared('react');
 function useSize(element) {
-  const [size, setSize] = React$z.useState(void 0);
+  const [size, setSize] = React$x.useState(void 0);
   useLayoutEffect2(() => {
     if (element) {
       setSize({ width: element.offsetWidth, height: element.offsetHeight });
@@ -17171,25 +17204,25 @@ function useSize(element) {
 }
 
 // src/popper.tsx
-const React$y = await importShared('react');
+const React$w = await importShared('react');
 var POPPER_NAME = "Popper";
 var [createPopperContext, createPopperScope] = createContextScope(POPPER_NAME);
 var [PopperProvider, usePopperContext] = createPopperContext(POPPER_NAME);
 var Popper = (props) => {
   const { __scopePopper, children } = props;
-  const [anchor, setAnchor] = React$y.useState(null);
+  const [anchor, setAnchor] = React$w.useState(null);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(PopperProvider, { scope: __scopePopper, anchor, onAnchorChange: setAnchor, children });
 };
 Popper.displayName = POPPER_NAME;
 var ANCHOR_NAME = "PopperAnchor";
-var PopperAnchor = React$y.forwardRef(
+var PopperAnchor = React$w.forwardRef(
   (props, forwardedRef) => {
     const { __scopePopper, virtualRef, ...anchorProps } = props;
     const context = usePopperContext(ANCHOR_NAME, __scopePopper);
-    const ref = React$y.useRef(null);
-    const composedRefs = useComposedRefs$1(forwardedRef, ref);
-    const anchorRef = React$y.useRef(null);
-    React$y.useEffect(() => {
+    const ref = React$w.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, ref);
+    const anchorRef = React$w.useRef(null);
+    React$w.useEffect(() => {
       const previousAnchor = anchorRef.current;
       anchorRef.current = virtualRef?.current || ref.current;
       if (previousAnchor !== anchorRef.current) {
@@ -17202,7 +17235,7 @@ var PopperAnchor = React$y.forwardRef(
 PopperAnchor.displayName = ANCHOR_NAME;
 var CONTENT_NAME$3 = "PopperContent";
 var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME$3);
-var PopperContent = React$y.forwardRef(
+var PopperContent = React$w.forwardRef(
   (props, forwardedRef) => {
     const {
       __scopePopper,
@@ -17221,9 +17254,9 @@ var PopperContent = React$y.forwardRef(
       ...contentProps
     } = props;
     const context = usePopperContext(CONTENT_NAME$3, __scopePopper);
-    const [content, setContent] = React$y.useState(null);
-    const composedRefs = useComposedRefs$1(forwardedRef, (node) => setContent(node));
-    const [arrow$1, setArrow] = React$y.useState(null);
+    const [content, setContent] = React$w.useState(null);
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
+    const [arrow$1, setArrow] = React$w.useState(null);
     const arrowSize = useSize(arrow$1);
     const arrowWidth = arrowSize?.width ?? 0;
     const arrowHeight = arrowSize?.height ?? 0;
@@ -17233,7 +17266,7 @@ var PopperContent = React$y.forwardRef(
     const hasExplicitBoundaries = boundary.length > 0;
     const detectOverflowOptions = {
       padding: collisionPadding,
-      boundary: boundary.filter(isNotNull$2),
+      boundary: boundary.filter(isNotNull),
       // with `strategy: 'fixed'`, this is the only way to get it to respect boundaries
       altBoundary: hasExplicitBoundaries
     };
@@ -17285,7 +17318,7 @@ var PopperContent = React$y.forwardRef(
     const arrowX = middlewareData.arrow?.x;
     const arrowY = middlewareData.arrow?.y;
     const cannotCenterArrow = middlewareData.arrow?.centerOffset !== 0;
-    const [contentZIndex, setContentZIndex] = React$y.useState();
+    const [contentZIndex, setContentZIndex] = React$w.useState();
     useLayoutEffect2(() => {
       if (content) setContentZIndex(window.getComputedStyle(content).zIndex);
     }, [content]);
@@ -17351,7 +17384,7 @@ var OPPOSITE_SIDE = {
   bottom: "top",
   left: "right"
 };
-var PopperArrow = React$y.forwardRef(function PopperArrow2(props, forwardedRef) {
+var PopperArrow = React$w.forwardRef(function PopperArrow2(props, forwardedRef) {
   const { __scopePopper, ...arrowProps } = props;
   const contentContext = useContentContext(ARROW_NAME$1, __scopePopper);
   const baseSide = OPPOSITE_SIDE[contentContext.placedSide];
@@ -17399,7 +17432,7 @@ var PopperArrow = React$y.forwardRef(function PopperArrow2(props, forwardedRef) 
   );
 });
 PopperArrow.displayName = ARROW_NAME$1;
-function isNotNull$2(value) {
+function isNotNull(value) {
   return value !== null;
 }
 var transformOrigin = (options) => ({
@@ -17443,13 +17476,13 @@ var Content$1 = PopperContent;
 var Arrow = PopperArrow;
 
 // src/portal.tsx
-const React$x = await importShared('react');
+const React$v = await importShared('react');
 
 const ReactDOM$1 = await importShared('react-dom');
 var PORTAL_NAME$3 = "Portal";
-var Portal$2 = React$x.forwardRef((props, forwardedRef) => {
+var Portal$2 = React$v.forwardRef((props, forwardedRef) => {
   const { container: containerProp, ...portalProps } = props;
-  const [mounted, setMounted] = React$x.useState(false);
+  const [mounted, setMounted] = React$v.useState(false);
   useLayoutEffect2(() => setMounted(true), []);
   const container = containerProp || mounted && globalThis?.document?.body;
   return container ? ReactDOM$1.createPortal(/* @__PURE__ */ jsxRuntimeExports.jsx(Primitive$2.div, { ...portalProps, ref: forwardedRef }), container) : null;
@@ -17457,8 +17490,8 @@ var Portal$2 = React$x.forwardRef((props, forwardedRef) => {
 Portal$2.displayName = PORTAL_NAME$3;
 
 // src/use-controllable-state.tsx
-const React$w = await importShared('react');
-var useInsertionEffect$3 = React$w[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
+const React$u = await importShared('react');
+var useInsertionEffect = React$u[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
 function useControllableState({
   prop,
   defaultProp,
@@ -17473,8 +17506,8 @@ function useControllableState({
   const isControlled = prop !== void 0;
   const value = isControlled ? prop : uncontrolledProp;
   {
-    const isControlledRef = React$w.useRef(prop !== void 0);
-    React$w.useEffect(() => {
+    const isControlledRef = React$u.useRef(prop !== void 0);
+    React$u.useEffect(() => {
       const wasControlled = isControlledRef.current;
       if (wasControlled !== isControlled) {
         const from = wasControlled ? "controlled" : "uncontrolled";
@@ -17486,7 +17519,7 @@ function useControllableState({
       isControlledRef.current = isControlled;
     }, [isControlled, caller]);
   }
-  const setValue = React$w.useCallback(
+  const setValue = React$u.useCallback(
     (nextValue) => {
       if (isControlled) {
         const value2 = isFunction(nextValue) ? nextValue(prop) : nextValue;
@@ -17505,13 +17538,13 @@ function useUncontrolledState({
   defaultProp,
   onChange
 }) {
-  const [value, setValue] = React$w.useState(defaultProp);
-  const prevValueRef = React$w.useRef(value);
-  const onChangeRef = React$w.useRef(onChange);
-  useInsertionEffect$3(() => {
+  const [value, setValue] = React$u.useState(defaultProp);
+  const prevValueRef = React$u.useRef(value);
+  const onChangeRef = React$u.useRef(onChange);
+  useInsertionEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
-  React$w.useEffect(() => {
+  React$u.useEffect(() => {
     if (prevValueRef.current !== value) {
       onChangeRef.current?.(value);
       prevValueRef.current = value;
@@ -17527,11 +17560,11 @@ function isFunction(value) {
 await importShared('react');
 
 // packages/react/use-previous/src/use-previous.tsx
-const React$v = await importShared('react');
+const React$t = await importShared('react');
 
 function usePrevious(value) {
-  const ref = React$v.useRef({ value, previous: value });
-  return React$v.useMemo(() => {
+  const ref = React$t.useRef({ value, previous: value });
+  return React$t.useMemo(() => {
     if (ref.current.value !== value) {
       ref.current.previous = ref.current.value;
       ref.current.value = value;
@@ -17541,7 +17574,7 @@ function usePrevious(value) {
 }
 
 // src/visually-hidden.tsx
-const React$u = await importShared('react');
+const React$s = await importShared('react');
 var VISUALLY_HIDDEN_STYLES = Object.freeze({
   // See: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_visually-hidden.scss
   position: "absolute",
@@ -17556,7 +17589,7 @@ var VISUALLY_HIDDEN_STYLES = Object.freeze({
   wordWrap: "normal"
 });
 var NAME$2 = "VisuallyHidden";
-var VisuallyHidden = React$u.forwardRef(
+var VisuallyHidden = React$s.forwardRef(
   (props, forwardedRef) => {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Primitive$2.span,
@@ -17834,8 +17867,8 @@ function useCallbackRef(initialValue, callback) {
     return ref.facade;
 }
 
-const React$t = await importShared('react');
-var useIsomorphicLayoutEffect$1 = typeof window !== 'undefined' ? React$t.useLayoutEffect : React$t.useEffect;
+const React$r = await importShared('react');
+var useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React$r.useLayoutEffect : React$r.useEffect;
 var currentValues = new WeakMap();
 /**
  * Merges two or more refs together providing a single interface to set their value
@@ -17856,7 +17889,7 @@ function useMergeRefs(refs, defaultValue) {
         return refs.forEach(function (ref) { return assignRef(ref, newValue); });
     });
     // handle refs changes - added or removed
-    useIsomorphicLayoutEffect$1(function () {
+    useIsomorphicLayoutEffect(function () {
         var oldValue = currentValues.get(callbackRef);
         if (oldValue) {
             var prevRefs_1 = new Set(oldValue);
@@ -17952,7 +17985,7 @@ function createSidecarMedium(options) {
     return medium;
 }
 
-const React$s = await importShared('react');
+const React$q = await importShared('react');
 
 var SideCar$1 = function (_a) {
     var sideCar = _a.sideCar, rest = __rest(_a, ["sideCar"]);
@@ -17963,7 +17996,7 @@ var SideCar$1 = function (_a) {
     if (!Target) {
         throw new Error('Sidecar medium not found');
     }
-    return React$s.createElement(Target, __assign({}, rest));
+    return React$q.createElement(Target, __assign({}, rest));
 };
 SideCar$1.isSideCarExport = true;
 function exportSidecar(medium, exported) {
@@ -17973,16 +18006,16 @@ function exportSidecar(medium, exported) {
 
 var effectCar = createSidecarMedium();
 
-const React$r = await importShared('react');
+const React$p = await importShared('react');
 var nothing = function () {
     return;
 };
 /**
  * Removes scrollbar from the page and contain the scroll within the Lock
  */
-var RemoveScroll = React$r.forwardRef(function (props, parentRef) {
-    var ref = React$r.useRef(null);
-    var _a = React$r.useState({
+var RemoveScroll = React$p.forwardRef(function (props, parentRef) {
+    var ref = React$p.useRef(null);
+    var _a = React$p.useState({
         onScrollCapture: nothing,
         onWheelCapture: nothing,
         onTouchMoveCapture: nothing,
@@ -17991,9 +18024,9 @@ var RemoveScroll = React$r.forwardRef(function (props, parentRef) {
     var SideCar = sideCar;
     var containerRef = useMergeRefs([ref, parentRef]);
     var containerProps = __assign(__assign({}, rest), callbacks);
-    return (React$r.createElement(React$r.Fragment, null,
-        enabled && (React$r.createElement(SideCar, { sideCar: effectCar, removeScrollBar: removeScrollBar, shards: shards, noRelative: noRelative, noIsolation: noIsolation, inert: inert, setCallbacks: setCallbacks, allowPinchZoom: !!allowPinchZoom, lockRef: ref, gapMode: gapMode })),
-        forwardProps ? (React$r.cloneElement(React$r.Children.only(children), __assign(__assign({}, containerProps), { ref: containerRef }))) : (React$r.createElement(Container, __assign({}, containerProps, { className: className, ref: containerRef }), children))));
+    return (React$p.createElement(React$p.Fragment, null,
+        enabled && (React$p.createElement(SideCar, { sideCar: effectCar, removeScrollBar: removeScrollBar, shards: shards, noRelative: noRelative, noIsolation: noIsolation, inert: inert, setCallbacks: setCallbacks, allowPinchZoom: !!allowPinchZoom, lockRef: ref, gapMode: gapMode })),
+        forwardProps ? (React$p.cloneElement(React$p.Children.only(children), __assign(__assign({}, containerProps), { ref: containerRef }))) : (React$p.createElement(Container, __assign({}, containerProps, { className: className, ref: containerRef }), children))));
 });
 RemoveScroll.defaultProps = {
     enabled: true,
@@ -18060,7 +18093,7 @@ var stylesheetSingleton = function () {
     };
 };
 
-const React$q = await importShared('react');
+const React$o = await importShared('react');
 /**
  * creates a hook to control style singleton
  * @see {@link styleSingleton} for a safer component version
@@ -18073,7 +18106,7 @@ const React$q = await importShared('react');
 var styleHookSingleton = function () {
     var sheet = stylesheetSingleton();
     return function (styles, isDynamic) {
-        React$q.useEffect(function () {
+        React$o.useEffect(function () {
             sheet.add(styles);
             return function () {
                 sheet.remove();
@@ -18128,7 +18161,7 @@ var getGapWidth = function (gapMode) {
     };
 };
 
-const React$p = await importShared('react');
+const React$n = await importShared('react');
 var Style = styleSingleton();
 var lockAttribute = 'data-scroll-locked';
 // important tip - once we measure scrollBar width and remove them
@@ -18151,7 +18184,7 @@ var getCurrentUseCounter = function () {
     return isFinite(counter) ? counter : 0;
 };
 var useLockAttribute = function () {
-    React$p.useEffect(function () {
+    React$n.useEffect(function () {
         document.body.setAttribute(lockAttribute, (getCurrentUseCounter() + 1).toString());
         return function () {
             var newCounter = getCurrentUseCounter() - 1;
@@ -18175,8 +18208,8 @@ var RemoveScrollBar = function (_a) {
      however it will be used only by the "first" invocation
      due to singleton nature of <Style
      */
-    var gap = React$p.useMemo(function () { return getGapWidth(gapMode); }, [gapMode]);
-    return React$p.createElement(Style, { styles: getStyles(gap, !noRelative, gapMode, !noImportant ? '!important' : '') });
+    var gap = React$n.useMemo(function () { return getGapWidth(gapMode); }, [gapMode]);
+    return React$n.createElement(Style, { styles: getStyles(gap, !noRelative, gapMode, !noImportant ? '!important' : '') });
 };
 
 var passiveSupported = false;
@@ -18308,7 +18341,7 @@ var handleScroll = function (axis, endTarget, event, sourceDelta, noOverscroll) 
     return shouldCancelScroll;
 };
 
-const React$o = await importShared('react');
+const React$m = await importShared('react');
 var getTouchXY = function (event) {
     return 'changedTouches' in event ? [event.changedTouches[0].clientX, event.changedTouches[0].clientY] : [0, 0];
 };
@@ -18321,16 +18354,16 @@ var generateStyle = function (id) { return "\n  .block-interactivity-".concat(id
 var idCounter = 0;
 var lockStack = [];
 function RemoveScrollSideCar(props) {
-    var shouldPreventQueue = React$o.useRef([]);
-    var touchStartRef = React$o.useRef([0, 0]);
-    var activeAxis = React$o.useRef();
-    var id = React$o.useState(idCounter++)[0];
-    var Style = React$o.useState(styleSingleton)[0];
-    var lastProps = React$o.useRef(props);
-    React$o.useEffect(function () {
+    var shouldPreventQueue = React$m.useRef([]);
+    var touchStartRef = React$m.useRef([0, 0]);
+    var activeAxis = React$m.useRef();
+    var id = React$m.useState(idCounter++)[0];
+    var Style = React$m.useState(styleSingleton)[0];
+    var lastProps = React$m.useRef(props);
+    React$m.useEffect(function () {
         lastProps.current = props;
     }, [props]);
-    React$o.useEffect(function () {
+    React$m.useEffect(function () {
         if (props.inert) {
             document.body.classList.add("block-interactivity-".concat(id));
             var allow_1 = __spreadArray([props.lockRef.current], (props.shards || []).map(extractRef), true).filter(Boolean);
@@ -18342,7 +18375,7 @@ function RemoveScrollSideCar(props) {
         }
         return;
     }, [props.inert, props.lockRef.current, props.shards]);
-    var shouldCancelEvent = React$o.useCallback(function (event, parent) {
+    var shouldCancelEvent = React$m.useCallback(function (event, parent) {
         if (('touches' in event && event.touches.length === 2) || (event.type === 'wheel' && event.ctrlKey)) {
             return !lastProps.current.allowPinchZoom;
         }
@@ -18388,7 +18421,7 @@ function RemoveScrollSideCar(props) {
         var cancelingAxis = activeAxis.current || currentAxis;
         return handleScroll(cancelingAxis, parent, event, cancelingAxis === 'h' ? deltaX : deltaY);
     }, []);
-    var shouldPrevent = React$o.useCallback(function (_event) {
+    var shouldPrevent = React$m.useCallback(function (_event) {
         var event = _event;
         if (!lockStack.length || lockStack[lockStack.length - 1] !== Style) {
             // not the last active
@@ -18417,24 +18450,24 @@ function RemoveScrollSideCar(props) {
             }
         }
     }, []);
-    var shouldCancel = React$o.useCallback(function (name, delta, target, should) {
+    var shouldCancel = React$m.useCallback(function (name, delta, target, should) {
         var event = { name: name, delta: delta, target: target, should: should, shadowParent: getOutermostShadowParent(target) };
         shouldPreventQueue.current.push(event);
         setTimeout(function () {
             shouldPreventQueue.current = shouldPreventQueue.current.filter(function (e) { return e !== event; });
         }, 1);
     }, []);
-    var scrollTouchStart = React$o.useCallback(function (event) {
+    var scrollTouchStart = React$m.useCallback(function (event) {
         touchStartRef.current = getTouchXY(event);
         activeAxis.current = undefined;
     }, []);
-    var scrollWheel = React$o.useCallback(function (event) {
+    var scrollWheel = React$m.useCallback(function (event) {
         shouldCancel(event.type, getDeltaXY(event), event.target, shouldCancelEvent(event, props.lockRef.current));
     }, []);
-    var scrollTouchMove = React$o.useCallback(function (event) {
+    var scrollTouchMove = React$m.useCallback(function (event) {
         shouldCancel(event.type, getTouchXY(event), event.target, shouldCancelEvent(event, props.lockRef.current));
     }, []);
-    React$o.useEffect(function () {
+    React$m.useEffect(function () {
         lockStack.push(Style);
         props.setCallbacks({
             onScrollCapture: scrollWheel,
@@ -18452,9 +18485,9 @@ function RemoveScrollSideCar(props) {
         };
     }, []);
     var removeScrollBar = props.removeScrollBar, inert = props.inert;
-    return (React$o.createElement(React$o.Fragment, null,
-        inert ? React$o.createElement(Style, { styles: generateStyle(id) }) : null,
-        removeScrollBar ? React$o.createElement(RemoveScrollBar, { noRelative: props.noRelative, gapMode: props.gapMode }) : null));
+    return (React$m.createElement(React$m.Fragment, null,
+        inert ? React$m.createElement(Style, { styles: generateStyle(id) }) : null,
+        removeScrollBar ? React$m.createElement(RemoveScrollBar, { noRelative: props.noRelative, gapMode: props.gapMode }) : null));
 }
 function getOutermostShadowParent(node) {
     var shadowParent = null;
@@ -18470,12 +18503,12 @@ function getOutermostShadowParent(node) {
 
 const SideCar = exportSidecar(effectCar, RemoveScrollSideCar);
 
-const React$n = await importShared('react');
-var ReactRemoveScroll = React$n.forwardRef(function (props, ref) { return (React$n.createElement(RemoveScroll, __assign({}, props, { ref: ref, sideCar: SideCar }))); });
+const React$l = await importShared('react');
+var ReactRemoveScroll = React$l.forwardRef(function (props, ref) { return (React$l.createElement(RemoveScroll, __assign({}, props, { ref: ref, sideCar: SideCar }))); });
 ReactRemoveScroll.classNames = RemoveScroll.classNames;
 
 // src/select.tsx
-const React$m = await importShared('react');
+const React$k = await importShared('react');
 
 const ReactDOM = await importShared('react-dom');
 var OPEN_KEYS = [" ", "Enter", "ArrowUp", "ArrowDown"];
@@ -18507,9 +18540,9 @@ var Select$1 = (props) => {
     form
   } = props;
   const popperScope = usePopperScope(__scopeSelect);
-  const [trigger, setTrigger] = React$m.useState(null);
-  const [valueNode, setValueNode] = React$m.useState(null);
-  const [valueNodeHasChildren, setValueNodeHasChildren] = React$m.useState(false);
+  const [trigger, setTrigger] = React$k.useState(null);
+  const [valueNode, setValueNode] = React$k.useState(null);
+  const [valueNodeHasChildren, setValueNodeHasChildren] = React$k.useState(false);
   const direction = useDirection(dir);
   const [open, setOpen] = useControllableState({
     prop: openProp,
@@ -18523,9 +18556,9 @@ var Select$1 = (props) => {
     onChange: onValueChange,
     caller: SELECT_NAME
   });
-  const triggerPointerDownPosRef = React$m.useRef(null);
+  const triggerPointerDownPosRef = React$k.useRef(null);
   const isFormControl = trigger ? form || !!trigger.closest("form") : true;
-  const [nativeOptionsSet, setNativeOptionsSet] = React$m.useState(/* @__PURE__ */ new Set());
+  const [nativeOptionsSet, setNativeOptionsSet] = React$k.useState(/* @__PURE__ */ new Set());
   const nativeSelectKey = Array.from(nativeOptionsSet).map((option) => option.props.value).join(";");
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$2, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
     SelectProvider,
@@ -18538,7 +18571,7 @@ var Select$1 = (props) => {
       onValueNodeChange: setValueNode,
       valueNodeHasChildren,
       onValueNodeHasChildrenChange: setValueNodeHasChildren,
-      contentId: useId$3(),
+      contentId: useId(),
       value,
       onValueChange: setValue,
       open,
@@ -18551,10 +18584,10 @@ var Select$1 = (props) => {
           SelectNativeOptionsProvider,
           {
             scope: props.__scopeSelect,
-            onNativeOptionAdd: React$m.useCallback((option) => {
+            onNativeOptionAdd: React$k.useCallback((option) => {
               setNativeOptionsSet((prev) => new Set(prev).add(option));
             }, []),
-            onNativeOptionRemove: React$m.useCallback((option) => {
+            onNativeOptionRemove: React$k.useCallback((option) => {
               setNativeOptionsSet((prev) => {
                 const optionsSet = new Set(prev);
                 optionsSet.delete(option);
@@ -18589,15 +18622,15 @@ var Select$1 = (props) => {
 };
 Select$1.displayName = SELECT_NAME;
 var TRIGGER_NAME$2 = "SelectTrigger";
-var SelectTrigger$1 = React$m.forwardRef(
+var SelectTrigger$1 = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, disabled = false, ...triggerProps } = props;
     const popperScope = usePopperScope(__scopeSelect);
     const context = useSelectContext(TRIGGER_NAME$2, __scopeSelect);
     const isDisabled = context.disabled || disabled;
-    const composedRefs = useComposedRefs$1(forwardedRef, context.onTriggerChange);
+    const composedRefs = useComposedRefs(forwardedRef, context.onTriggerChange);
     const getItems = useCollection(__scopeSelect);
-    const pointerTypeRef = React$m.useRef("touch");
+    const pointerTypeRef = React$k.useRef("touch");
     const [searchRef, handleTypeaheadSearch, resetTypeahead] = useTypeaheadSearch((search) => {
       const enabledItems = getItems().filter((item) => !item.disabled);
       const currentItem = enabledItems.find((item) => item.value === context.value);
@@ -18667,13 +18700,13 @@ var SelectTrigger$1 = React$m.forwardRef(
 );
 SelectTrigger$1.displayName = TRIGGER_NAME$2;
 var VALUE_NAME = "SelectValue";
-var SelectValue$1 = React$m.forwardRef(
+var SelectValue$1 = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, className, style, children, placeholder = "", ...valueProps } = props;
     const context = useSelectContext(VALUE_NAME, __scopeSelect);
     const { onValueNodeHasChildrenChange } = context;
     const hasChildren = children !== void 0;
-    const composedRefs = useComposedRefs$1(forwardedRef, context.onValueNodeChange);
+    const composedRefs = useComposedRefs(forwardedRef, context.onValueNodeChange);
     useLayoutEffect2(() => {
       onValueNodeHasChildrenChange(hasChildren);
     }, [onValueNodeHasChildrenChange, hasChildren]);
@@ -18690,7 +18723,7 @@ var SelectValue$1 = React$m.forwardRef(
 );
 SelectValue$1.displayName = VALUE_NAME;
 var ICON_NAME = "SelectIcon";
-var SelectIcon = React$m.forwardRef(
+var SelectIcon = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, children, ...iconProps } = props;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive$2.span, { "aria-hidden": true, ...iconProps, ref: forwardedRef, children: children || "\u25BC" });
@@ -18703,10 +18736,10 @@ var SelectPortal = (props) => {
 };
 SelectPortal.displayName = PORTAL_NAME$2;
 var CONTENT_NAME$2 = "SelectContent";
-var SelectContent$1 = React$m.forwardRef(
+var SelectContent$1 = React$k.forwardRef(
   (props, forwardedRef) => {
     const context = useSelectContext(CONTENT_NAME$2, props.__scopeSelect);
-    const [fragment, setFragment] = React$m.useState();
+    const [fragment, setFragment] = React$k.useState();
     useLayoutEffect2(() => {
       setFragment(new DocumentFragment());
     }, []);
@@ -18725,7 +18758,7 @@ var CONTENT_MARGIN = 10;
 var [SelectContentProvider, useSelectContentContext] = createSelectContext(CONTENT_NAME$2);
 var CONTENT_IMPL_NAME = "SelectContentImpl";
 var Slot$1 = createSlot$2("SelectContent.RemoveScroll");
-var SelectContentImpl = React$m.forwardRef(
+var SelectContentImpl = React$k.forwardRef(
   (props, forwardedRef) => {
     const {
       __scopeSelect,
@@ -18749,21 +18782,21 @@ var SelectContentImpl = React$m.forwardRef(
       ...contentProps
     } = props;
     const context = useSelectContext(CONTENT_NAME$2, __scopeSelect);
-    const [content, setContent] = React$m.useState(null);
-    const [viewport, setViewport] = React$m.useState(null);
-    const composedRefs = useComposedRefs$1(forwardedRef, (node) => setContent(node));
-    const [selectedItem, setSelectedItem] = React$m.useState(null);
-    const [selectedItemText, setSelectedItemText] = React$m.useState(
+    const [content, setContent] = React$k.useState(null);
+    const [viewport, setViewport] = React$k.useState(null);
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
+    const [selectedItem, setSelectedItem] = React$k.useState(null);
+    const [selectedItemText, setSelectedItemText] = React$k.useState(
       null
     );
     const getItems = useCollection(__scopeSelect);
-    const [isPositioned, setIsPositioned] = React$m.useState(false);
-    const firstValidItemFoundRef = React$m.useRef(false);
-    React$m.useEffect(() => {
+    const [isPositioned, setIsPositioned] = React$k.useState(false);
+    const firstValidItemFoundRef = React$k.useRef(false);
+    React$k.useEffect(() => {
       if (content) return hideOthers(content);
     }, [content]);
     useFocusGuards();
-    const focusFirst = React$m.useCallback(
+    const focusFirst = React$k.useCallback(
       (candidates) => {
         const [firstItem, ...restItems] = getItems().map((item) => item.ref.current);
         const [lastItem] = restItems.slice(-1);
@@ -18779,17 +18812,17 @@ var SelectContentImpl = React$m.forwardRef(
       },
       [getItems, viewport]
     );
-    const focusSelectedItem = React$m.useCallback(
+    const focusSelectedItem = React$k.useCallback(
       () => focusFirst([selectedItem, content]),
       [focusFirst, selectedItem, content]
     );
-    React$m.useEffect(() => {
+    React$k.useEffect(() => {
       if (isPositioned) {
         focusSelectedItem();
       }
     }, [isPositioned, focusSelectedItem]);
     const { onOpenChange, triggerPointerDownPosRef } = context;
-    React$m.useEffect(() => {
+    React$k.useEffect(() => {
       if (content) {
         let pointerMoveDelta = { x: 0, y: 0 };
         const handlePointerMove = (event) => {
@@ -18819,7 +18852,7 @@ var SelectContentImpl = React$m.forwardRef(
         };
       }
     }, [content, onOpenChange, triggerPointerDownPosRef]);
-    React$m.useEffect(() => {
+    React$k.useEffect(() => {
       const close = () => onOpenChange(false);
       window.addEventListener("blur", close);
       window.addEventListener("resize", close);
@@ -18836,7 +18869,7 @@ var SelectContentImpl = React$m.forwardRef(
         setTimeout(() => nextItem.ref.current.focus());
       }
     });
-    const itemRefCallback = React$m.useCallback(
+    const itemRefCallback = React$k.useCallback(
       (node, value, disabled) => {
         const isFirstValidItem = !firstValidItemFoundRef.current && !disabled;
         const isSelectedItem = context.value !== void 0 && context.value === value;
@@ -18847,8 +18880,8 @@ var SelectContentImpl = React$m.forwardRef(
       },
       [context.value]
     );
-    const handleItemLeave = React$m.useCallback(() => content?.focus(), [content]);
-    const itemTextRefCallback = React$m.useCallback(
+    const handleItemLeave = React$k.useCallback(() => content?.focus(), [content]);
+    const itemTextRefCallback = React$k.useCallback(
       (node, value, disabled) => {
         const isFirstValidItem = !firstValidItemFoundRef.current && !disabled;
         const isSelectedItem = context.value !== void 0 && context.value === value;
@@ -18959,18 +18992,18 @@ var SelectContentImpl = React$m.forwardRef(
 );
 SelectContentImpl.displayName = CONTENT_IMPL_NAME;
 var ITEM_ALIGNED_POSITION_NAME = "SelectItemAlignedPosition";
-var SelectItemAlignedPosition = React$m.forwardRef((props, forwardedRef) => {
+var SelectItemAlignedPosition = React$k.forwardRef((props, forwardedRef) => {
   const { __scopeSelect, onPlaced, ...popperProps } = props;
   const context = useSelectContext(CONTENT_NAME$2, __scopeSelect);
   const contentContext = useSelectContentContext(CONTENT_NAME$2, __scopeSelect);
-  const [contentWrapper, setContentWrapper] = React$m.useState(null);
-  const [content, setContent] = React$m.useState(null);
-  const composedRefs = useComposedRefs$1(forwardedRef, (node) => setContent(node));
+  const [contentWrapper, setContentWrapper] = React$k.useState(null);
+  const [content, setContent] = React$k.useState(null);
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
   const getItems = useCollection(__scopeSelect);
-  const shouldExpandOnScrollRef = React$m.useRef(false);
-  const shouldRepositionRef = React$m.useRef(true);
+  const shouldExpandOnScrollRef = React$k.useRef(false);
+  const shouldRepositionRef = React$k.useRef(true);
   const { viewport, selectedItem, selectedItemText, focusSelectedItem } = contentContext;
-  const position = React$m.useCallback(() => {
+  const position = React$k.useCallback(() => {
     if (context.trigger && context.valueNode && contentWrapper && content && viewport && selectedItem && selectedItemText) {
       const triggerRect = context.trigger.getBoundingClientRect();
       const contentRect = content.getBoundingClientRect();
@@ -18983,7 +19016,7 @@ var SelectItemAlignedPosition = React$m.forwardRef((props, forwardedRef) => {
         const minContentWidth = triggerRect.width + leftDelta;
         const contentWidth = Math.max(minContentWidth, contentRect.width);
         const rightEdge = window.innerWidth - CONTENT_MARGIN;
-        const clampedLeft = clamp$2(left, [
+        const clampedLeft = clamp$1(left, [
           CONTENT_MARGIN,
           // Prevents the content from going off the starting edge of the
           // viewport. It may still go off the ending edge, but this can be
@@ -19001,7 +19034,7 @@ var SelectItemAlignedPosition = React$m.forwardRef((props, forwardedRef) => {
         const minContentWidth = triggerRect.width + rightDelta;
         const contentWidth = Math.max(minContentWidth, contentRect.width);
         const leftEdge = window.innerWidth - CONTENT_MARGIN;
-        const clampedRight = clamp$2(right, [
+        const clampedRight = clamp$1(right, [
           CONTENT_MARGIN,
           Math.max(CONTENT_MARGIN, leftEdge - contentWidth)
         ]);
@@ -19070,11 +19103,11 @@ var SelectItemAlignedPosition = React$m.forwardRef((props, forwardedRef) => {
     onPlaced
   ]);
   useLayoutEffect2(() => position(), [position]);
-  const [contentZIndex, setContentZIndex] = React$m.useState();
+  const [contentZIndex, setContentZIndex] = React$k.useState();
   useLayoutEffect2(() => {
     if (content) setContentZIndex(window.getComputedStyle(content).zIndex);
   }, [content]);
-  const handleScrollButtonChange = React$m.useCallback(
+  const handleScrollButtonChange = React$k.useCallback(
     (node) => {
       if (node && shouldRepositionRef.current === true) {
         position();
@@ -19123,7 +19156,7 @@ var SelectItemAlignedPosition = React$m.forwardRef((props, forwardedRef) => {
 });
 SelectItemAlignedPosition.displayName = ITEM_ALIGNED_POSITION_NAME;
 var POPPER_POSITION_NAME = "SelectPopperPosition";
-var SelectPopperPosition = React$m.forwardRef((props, forwardedRef) => {
+var SelectPopperPosition = React$k.forwardRef((props, forwardedRef) => {
   const {
     __scopeSelect,
     align = "start",
@@ -19158,13 +19191,13 @@ var SelectPopperPosition = React$m.forwardRef((props, forwardedRef) => {
 SelectPopperPosition.displayName = POPPER_POSITION_NAME;
 var [SelectViewportProvider, useSelectViewportContext] = createSelectContext(CONTENT_NAME$2, {});
 var VIEWPORT_NAME = "SelectViewport";
-var SelectViewport = React$m.forwardRef(
+var SelectViewport = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, nonce, ...viewportProps } = props;
     const contentContext = useSelectContentContext(VIEWPORT_NAME, __scopeSelect);
     const viewportContext = useSelectViewportContext(VIEWPORT_NAME, __scopeSelect);
-    const composedRefs = useComposedRefs$1(forwardedRef, contentContext.onViewportChange);
-    const prevScrollTopRef = React$m.useRef(0);
+    const composedRefs = useComposedRefs(forwardedRef, contentContext.onViewportChange);
+    const prevScrollTopRef = React$k.useRef(0);
     return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "style",
@@ -19227,16 +19260,16 @@ var SelectViewport = React$m.forwardRef(
 SelectViewport.displayName = VIEWPORT_NAME;
 var GROUP_NAME = "SelectGroup";
 var [SelectGroupContextProvider, useSelectGroupContext] = createSelectContext(GROUP_NAME);
-var SelectGroup = React$m.forwardRef(
+var SelectGroup = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, ...groupProps } = props;
-    const groupId = useId$3();
+    const groupId = useId();
     return /* @__PURE__ */ jsxRuntimeExports.jsx(SelectGroupContextProvider, { scope: __scopeSelect, id: groupId, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive$2.div, { role: "group", "aria-labelledby": groupId, ...groupProps, ref: forwardedRef }) });
   }
 );
 SelectGroup.displayName = GROUP_NAME;
 var LABEL_NAME = "SelectLabel";
-var SelectLabel$1 = React$m.forwardRef(
+var SelectLabel$1 = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, ...labelProps } = props;
     const groupContext = useSelectGroupContext(LABEL_NAME, __scopeSelect);
@@ -19246,7 +19279,7 @@ var SelectLabel$1 = React$m.forwardRef(
 SelectLabel$1.displayName = LABEL_NAME;
 var ITEM_NAME = "SelectItem";
 var [SelectItemContextProvider, useSelectItemContext] = createSelectContext(ITEM_NAME);
-var SelectItem$1 = React$m.forwardRef(
+var SelectItem$1 = React$k.forwardRef(
   (props, forwardedRef) => {
     const {
       __scopeSelect,
@@ -19258,14 +19291,14 @@ var SelectItem$1 = React$m.forwardRef(
     const context = useSelectContext(ITEM_NAME, __scopeSelect);
     const contentContext = useSelectContentContext(ITEM_NAME, __scopeSelect);
     const isSelected = context.value === value;
-    const [textValue, setTextValue] = React$m.useState(textValueProp ?? "");
-    const [isFocused, setIsFocused] = React$m.useState(false);
-    const composedRefs = useComposedRefs$1(
+    const [textValue, setTextValue] = React$k.useState(textValueProp ?? "");
+    const [isFocused, setIsFocused] = React$k.useState(false);
+    const composedRefs = useComposedRefs(
       forwardedRef,
       (node) => contentContext.itemRefCallback?.(node, value, disabled)
     );
-    const textId = useId$3();
-    const pointerTypeRef = React$m.useRef("touch");
+    const textId = useId();
+    const pointerTypeRef = React$k.useRef("touch");
     const handleSelect = () => {
       if (!disabled) {
         context.onValueChange(value);
@@ -19285,7 +19318,7 @@ var SelectItem$1 = React$m.forwardRef(
         disabled,
         textId,
         isSelected,
-        onItemTextChange: React$m.useCallback((node) => {
+        onItemTextChange: React$k.useCallback((node) => {
           setTextValue((prevTextValue) => prevTextValue || (node?.textContent ?? "").trim());
         }, []),
         children: /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -19348,22 +19381,22 @@ var SelectItem$1 = React$m.forwardRef(
 );
 SelectItem$1.displayName = ITEM_NAME;
 var ITEM_TEXT_NAME = "SelectItemText";
-var SelectItemText = React$m.forwardRef(
+var SelectItemText = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, className, style, ...itemTextProps } = props;
     const context = useSelectContext(ITEM_TEXT_NAME, __scopeSelect);
     const contentContext = useSelectContentContext(ITEM_TEXT_NAME, __scopeSelect);
     const itemContext = useSelectItemContext(ITEM_TEXT_NAME, __scopeSelect);
     const nativeOptionsContext = useSelectNativeOptionsContext(ITEM_TEXT_NAME, __scopeSelect);
-    const [itemTextNode, setItemTextNode] = React$m.useState(null);
-    const composedRefs = useComposedRefs$1(
+    const [itemTextNode, setItemTextNode] = React$k.useState(null);
+    const composedRefs = useComposedRefs(
       forwardedRef,
       (node) => setItemTextNode(node),
       itemContext.onItemTextChange,
       (node) => contentContext.itemTextRefCallback?.(node, itemContext.value, itemContext.disabled)
     );
     const textContent = itemTextNode?.textContent;
-    const nativeOption = React$m.useMemo(
+    const nativeOption = React$k.useMemo(
       () => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: itemContext.value, disabled: itemContext.disabled, children: textContent }, itemContext.value),
       [itemContext.disabled, itemContext.value, textContent]
     );
@@ -19380,7 +19413,7 @@ var SelectItemText = React$m.forwardRef(
 );
 SelectItemText.displayName = ITEM_TEXT_NAME;
 var ITEM_INDICATOR_NAME = "SelectItemIndicator";
-var SelectItemIndicator = React$m.forwardRef(
+var SelectItemIndicator = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, ...itemIndicatorProps } = props;
     const itemContext = useSelectItemContext(ITEM_INDICATOR_NAME, __scopeSelect);
@@ -19389,11 +19422,11 @@ var SelectItemIndicator = React$m.forwardRef(
 );
 SelectItemIndicator.displayName = ITEM_INDICATOR_NAME;
 var SCROLL_UP_BUTTON_NAME = "SelectScrollUpButton";
-var SelectScrollUpButton$1 = React$m.forwardRef((props, forwardedRef) => {
+var SelectScrollUpButton$1 = React$k.forwardRef((props, forwardedRef) => {
   const contentContext = useSelectContentContext(SCROLL_UP_BUTTON_NAME, props.__scopeSelect);
   const viewportContext = useSelectViewportContext(SCROLL_UP_BUTTON_NAME, props.__scopeSelect);
-  const [canScrollUp, setCanScrollUp] = React$m.useState(false);
-  const composedRefs = useComposedRefs$1(forwardedRef, viewportContext.onScrollButtonChange);
+  const [canScrollUp, setCanScrollUp] = React$k.useState(false);
+  const composedRefs = useComposedRefs(forwardedRef, viewportContext.onScrollButtonChange);
   useLayoutEffect2(() => {
     if (contentContext.viewport && contentContext.isPositioned) {
       let handleScroll2 = function() {
@@ -19422,11 +19455,11 @@ var SelectScrollUpButton$1 = React$m.forwardRef((props, forwardedRef) => {
 });
 SelectScrollUpButton$1.displayName = SCROLL_UP_BUTTON_NAME;
 var SCROLL_DOWN_BUTTON_NAME = "SelectScrollDownButton";
-var SelectScrollDownButton$1 = React$m.forwardRef((props, forwardedRef) => {
+var SelectScrollDownButton$1 = React$k.forwardRef((props, forwardedRef) => {
   const contentContext = useSelectContentContext(SCROLL_DOWN_BUTTON_NAME, props.__scopeSelect);
   const viewportContext = useSelectViewportContext(SCROLL_DOWN_BUTTON_NAME, props.__scopeSelect);
-  const [canScrollDown, setCanScrollDown] = React$m.useState(false);
-  const composedRefs = useComposedRefs$1(forwardedRef, viewportContext.onScrollButtonChange);
+  const [canScrollDown, setCanScrollDown] = React$k.useState(false);
+  const composedRefs = useComposedRefs(forwardedRef, viewportContext.onScrollButtonChange);
   useLayoutEffect2(() => {
     if (contentContext.viewport && contentContext.isPositioned) {
       let handleScroll2 = function() {
@@ -19455,18 +19488,18 @@ var SelectScrollDownButton$1 = React$m.forwardRef((props, forwardedRef) => {
   ) : null;
 });
 SelectScrollDownButton$1.displayName = SCROLL_DOWN_BUTTON_NAME;
-var SelectScrollButtonImpl = React$m.forwardRef((props, forwardedRef) => {
+var SelectScrollButtonImpl = React$k.forwardRef((props, forwardedRef) => {
   const { __scopeSelect, onAutoScroll, ...scrollIndicatorProps } = props;
   const contentContext = useSelectContentContext("SelectScrollButton", __scopeSelect);
-  const autoScrollTimerRef = React$m.useRef(null);
+  const autoScrollTimerRef = React$k.useRef(null);
   const getItems = useCollection(__scopeSelect);
-  const clearAutoScrollTimer = React$m.useCallback(() => {
+  const clearAutoScrollTimer = React$k.useCallback(() => {
     if (autoScrollTimerRef.current !== null) {
       window.clearInterval(autoScrollTimerRef.current);
       autoScrollTimerRef.current = null;
     }
   }, []);
-  React$m.useEffect(() => {
+  React$k.useEffect(() => {
     return () => clearAutoScrollTimer();
   }, [clearAutoScrollTimer]);
   useLayoutEffect2(() => {
@@ -19498,7 +19531,7 @@ var SelectScrollButtonImpl = React$m.forwardRef((props, forwardedRef) => {
   );
 });
 var SEPARATOR_NAME = "SelectSeparator";
-var SelectSeparator$1 = React$m.forwardRef(
+var SelectSeparator$1 = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, ...separatorProps } = props;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive$2.div, { "aria-hidden": true, ...separatorProps, ref: forwardedRef });
@@ -19506,7 +19539,7 @@ var SelectSeparator$1 = React$m.forwardRef(
 );
 SelectSeparator$1.displayName = SEPARATOR_NAME;
 var ARROW_NAME = "SelectArrow";
-var SelectArrow = React$m.forwardRef(
+var SelectArrow = React$k.forwardRef(
   (props, forwardedRef) => {
     const { __scopeSelect, ...arrowProps } = props;
     const popperScope = usePopperScope(__scopeSelect);
@@ -19517,12 +19550,12 @@ var SelectArrow = React$m.forwardRef(
 );
 SelectArrow.displayName = ARROW_NAME;
 var BUBBLE_INPUT_NAME = "SelectBubbleInput";
-var SelectBubbleInput = React$m.forwardRef(
+var SelectBubbleInput = React$k.forwardRef(
   ({ __scopeSelect, value, ...props }, forwardedRef) => {
-    const ref = React$m.useRef(null);
-    const composedRefs = useComposedRefs$1(forwardedRef, ref);
+    const ref = React$k.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, ref);
     const prevValue = usePrevious(value);
-    React$m.useEffect(() => {
+    React$k.useEffect(() => {
       const select = ref.current;
       if (!select) return;
       const selectProto = window.HTMLSelectElement.prototype;
@@ -19554,9 +19587,9 @@ function shouldShowPlaceholder(value) {
 }
 function useTypeaheadSearch(onSearchChange) {
   const handleSearchChange = useCallbackRef$1(onSearchChange);
-  const searchRef = React$m.useRef("");
-  const timerRef = React$m.useRef(0);
-  const handleTypeaheadSearch = React$m.useCallback(
+  const searchRef = React$k.useRef("");
+  const timerRef = React$k.useRef(0);
+  const handleTypeaheadSearch = React$k.useCallback(
     (key) => {
       const search = searchRef.current + key;
       handleSearchChange(search);
@@ -19568,11 +19601,11 @@ function useTypeaheadSearch(onSearchChange) {
     },
     [handleSearchChange]
   );
-  const resetTypeahead = React$m.useCallback(() => {
+  const resetTypeahead = React$k.useCallback(() => {
     searchRef.current = "";
     window.clearTimeout(timerRef.current);
   }, []);
-  React$m.useEffect(() => {
+  React$k.useEffect(() => {
     return () => window.clearTimeout(timerRef.current);
   }, []);
   return [searchRef, handleTypeaheadSearch, resetTypeahead];
@@ -19607,10 +19640,10 @@ var ScrollUpButton = SelectScrollUpButton$1;
 var ScrollDownButton = SelectScrollDownButton$1;
 var Separator$2 = SelectSeparator$1;
 
-const React$l = await importShared('react');
+const React$j = await importShared('react');
 const Select = Root2$1;
 const SelectValue = Value;
-const SelectTrigger = React$l.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+const SelectTrigger = React$j.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
   Trigger$1,
   {
     ref,
@@ -19626,7 +19659,7 @@ const SelectTrigger = React$l.forwardRef(({ className, children, ...props }, ref
   }
 ));
 SelectTrigger.displayName = Trigger$1.displayName;
-const SelectScrollUpButton = React$l.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const SelectScrollUpButton = React$j.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   ScrollUpButton,
   {
     ref,
@@ -19636,7 +19669,7 @@ const SelectScrollUpButton = React$l.forwardRef(({ className, ...props }, ref) =
   }
 ));
 SelectScrollUpButton.displayName = ScrollUpButton.displayName;
-const SelectScrollDownButton = React$l.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const SelectScrollDownButton = React$j.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   ScrollDownButton,
   {
     ref,
@@ -19646,7 +19679,7 @@ const SelectScrollDownButton = React$l.forwardRef(({ className, ...props }, ref)
   }
 ));
 SelectScrollDownButton.displayName = ScrollDownButton.displayName;
-const SelectContent = React$l.forwardRef(({ className, children, position = "popper", ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$1, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+const SelectContent = React$j.forwardRef(({ className, children, position = "popper", ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$1, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
   Content2$1,
   {
     ref,
@@ -19674,7 +19707,7 @@ const SelectContent = React$l.forwardRef(({ className, children, position = "pop
   }
 ) }));
 SelectContent.displayName = Content2$1.displayName;
-const SelectLabel = React$l.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const SelectLabel = React$j.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Label$2,
   {
     ref,
@@ -19683,7 +19716,7 @@ const SelectLabel = React$l.forwardRef(({ className, ...props }, ref) => /* @__P
   }
 ));
 SelectLabel.displayName = Label$2.displayName;
-const SelectItem = React$l.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+const SelectItem = React$j.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
   Item,
   {
     ref,
@@ -19699,7 +19732,7 @@ const SelectItem = React$l.forwardRef(({ className, children, ...props }, ref) =
   }
 ));
 SelectItem.displayName = Item.displayName;
-const SelectSeparator = React$l.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const SelectSeparator = React$j.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Separator$2,
   {
     ref,
@@ -19713,10 +19746,10 @@ SelectSeparator.displayName = Separator$2.displayName;
 const React2 = await importShared('react');
 
 // src/use-state-machine.tsx
-const React$k = await importShared('react');
+const React$i = await importShared('react');
 
 function useStateMachine(initialState, machine) {
-  return React$k.useReducer((state, event) => {
+  return React$i.useReducer((state, event) => {
     const nextState = machine[state][event];
     return nextState ?? state;
   }, initialState);
@@ -19725,14 +19758,14 @@ function useStateMachine(initialState, machine) {
 // src/presence.tsx
 var Presence = (props) => {
   const { present, children } = props;
-  const presence = usePresence$1(present);
+  const presence = usePresence(present);
   const child = typeof children === "function" ? children({ present: presence.isPresent }) : React2.Children.only(children);
-  const ref = useComposedRefs$1(presence.ref, getElementRef$2(child));
+  const ref = useComposedRefs(presence.ref, getElementRef$2(child));
   const forceMount = typeof children === "function";
   return forceMount || presence.isPresent ? React2.cloneElement(child, { ref }) : null;
 };
 Presence.displayName = "Presence";
-function usePresence$1(present) {
+function usePresence(present) {
   const [node, setNode] = React2.useState();
   const stylesRef = React2.useRef(null);
   const prevPresentRef = React2.useRef(present);
@@ -19841,7 +19874,7 @@ function getElementRef$2(element) {
 }
 
 // src/dialog.tsx
-const React$j = await importShared('react');
+const React$h = await importShared('react');
 var DIALOG_NAME = "Dialog";
 var [createDialogContext, createDialogScope] = createContextScope(DIALOG_NAME);
 var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
@@ -19854,8 +19887,8 @@ var Dialog$1 = (props) => {
     onOpenChange,
     modal = true
   } = props;
-  const triggerRef = React$j.useRef(null);
-  const contentRef = React$j.useRef(null);
+  const triggerRef = React$h.useRef(null);
+  const contentRef = React$h.useRef(null);
   const [open, setOpen] = useControllableState({
     prop: openProp,
     defaultProp: defaultOpen ?? false,
@@ -19868,12 +19901,12 @@ var Dialog$1 = (props) => {
       scope: __scopeDialog,
       triggerRef,
       contentRef,
-      contentId: useId$3(),
-      titleId: useId$3(),
-      descriptionId: useId$3(),
+      contentId: useId(),
+      titleId: useId(),
+      descriptionId: useId(),
       open,
       onOpenChange: setOpen,
-      onOpenToggle: React$j.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen]),
+      onOpenToggle: React$h.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen]),
       modal,
       children
     }
@@ -19881,11 +19914,11 @@ var Dialog$1 = (props) => {
 };
 Dialog$1.displayName = DIALOG_NAME;
 var TRIGGER_NAME$1 = "DialogTrigger";
-var DialogTrigger = React$j.forwardRef(
+var DialogTrigger = React$h.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, ...triggerProps } = props;
     const context = useDialogContext(TRIGGER_NAME$1, __scopeDialog);
-    const composedTriggerRef = useComposedRefs$1(forwardedRef, context.triggerRef);
+    const composedTriggerRef = useComposedRefs(forwardedRef, context.triggerRef);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Primitive$2.button,
       {
@@ -19909,11 +19942,11 @@ var [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME$1, {
 var DialogPortal$1 = (props) => {
   const { __scopeDialog, forceMount, children, container } = props;
   const context = useDialogContext(PORTAL_NAME$1, __scopeDialog);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: __scopeDialog, forceMount, children: React$j.Children.map(children, (child) => /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$2, { asChild: true, container, children: child }) })) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: __scopeDialog, forceMount, children: React$h.Children.map(children, (child) => /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$2, { asChild: true, container, children: child }) })) });
 };
 DialogPortal$1.displayName = PORTAL_NAME$1;
 var OVERLAY_NAME$1 = "DialogOverlay";
-var DialogOverlay$1 = React$j.forwardRef(
+var DialogOverlay$1 = React$h.forwardRef(
   (props, forwardedRef) => {
     const portalContext = usePortalContext(OVERLAY_NAME$1, props.__scopeDialog);
     const { forceMount = portalContext.forceMount, ...overlayProps } = props;
@@ -19923,7 +19956,7 @@ var DialogOverlay$1 = React$j.forwardRef(
 );
 DialogOverlay$1.displayName = OVERLAY_NAME$1;
 var Slot = createSlot$2("DialogOverlay.RemoveScroll");
-var DialogOverlayImpl = React$j.forwardRef(
+var DialogOverlayImpl = React$h.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, ...overlayProps } = props;
     const context = useDialogContext(OVERLAY_NAME$1, __scopeDialog);
@@ -19943,7 +19976,7 @@ var DialogOverlayImpl = React$j.forwardRef(
   }
 );
 var CONTENT_NAME$1 = "DialogContent";
-var DialogContent$1 = React$j.forwardRef(
+var DialogContent$1 = React$h.forwardRef(
   (props, forwardedRef) => {
     const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeDialog);
     const { forceMount = portalContext.forceMount, ...contentProps } = props;
@@ -19952,12 +19985,12 @@ var DialogContent$1 = React$j.forwardRef(
   }
 );
 DialogContent$1.displayName = CONTENT_NAME$1;
-var DialogContentModal = React$j.forwardRef(
+var DialogContentModal = React$h.forwardRef(
   (props, forwardedRef) => {
     const context = useDialogContext(CONTENT_NAME$1, props.__scopeDialog);
-    const contentRef = React$j.useRef(null);
-    const composedRefs = useComposedRefs$1(forwardedRef, context.contentRef, contentRef);
-    React$j.useEffect(() => {
+    const contentRef = React$h.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, context.contentRef, contentRef);
+    React$h.useEffect(() => {
       const content = contentRef.current;
       if (content) return hideOthers(content);
     }, []);
@@ -19986,11 +20019,11 @@ var DialogContentModal = React$j.forwardRef(
     );
   }
 );
-var DialogContentNonModal = React$j.forwardRef(
+var DialogContentNonModal = React$h.forwardRef(
   (props, forwardedRef) => {
     const context = useDialogContext(CONTENT_NAME$1, props.__scopeDialog);
-    const hasInteractedOutsideRef = React$j.useRef(false);
-    const hasPointerDownOutsideRef = React$j.useRef(false);
+    const hasInteractedOutsideRef = React$h.useRef(false);
+    const hasPointerDownOutsideRef = React$h.useRef(false);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       DialogContentImpl,
       {
@@ -20026,12 +20059,12 @@ var DialogContentNonModal = React$j.forwardRef(
     );
   }
 );
-var DialogContentImpl = React$j.forwardRef(
+var DialogContentImpl = React$h.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus, ...contentProps } = props;
     const context = useDialogContext(CONTENT_NAME$1, __scopeDialog);
-    const contentRef = React$j.useRef(null);
-    const composedRefs = useComposedRefs$1(forwardedRef, contentRef);
+    const contentRef = React$h.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, contentRef);
     useFocusGuards();
     return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -20065,7 +20098,7 @@ var DialogContentImpl = React$j.forwardRef(
   }
 );
 var TITLE_NAME$1 = "DialogTitle";
-var DialogTitle$1 = React$j.forwardRef(
+var DialogTitle$1 = React$h.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, ...titleProps } = props;
     const context = useDialogContext(TITLE_NAME$1, __scopeDialog);
@@ -20074,7 +20107,7 @@ var DialogTitle$1 = React$j.forwardRef(
 );
 DialogTitle$1.displayName = TITLE_NAME$1;
 var DESCRIPTION_NAME$1 = "DialogDescription";
-var DialogDescription$1 = React$j.forwardRef(
+var DialogDescription$1 = React$h.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, ...descriptionProps } = props;
     const context = useDialogContext(DESCRIPTION_NAME$1, __scopeDialog);
@@ -20083,7 +20116,7 @@ var DialogDescription$1 = React$j.forwardRef(
 );
 DialogDescription$1.displayName = DESCRIPTION_NAME$1;
 var CLOSE_NAME = "DialogClose";
-var DialogClose = React$j.forwardRef(
+var DialogClose = React$h.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDialog, ...closeProps } = props;
     const context = useDialogContext(CLOSE_NAME, __scopeDialog);
@@ -20115,7 +20148,7 @@ var TitleWarning = ({ titleId }) => {
 If you want to hide the \`${titleWarningContext.titleName}\`, you can wrap it with our VisuallyHidden component.
 
 For more information, see https://radix-ui.com/primitives/docs/components/${titleWarningContext.docsSlug}`;
-  React$j.useEffect(() => {
+  React$h.useEffect(() => {
     if (titleId) {
       const hasTitle = document.getElementById(titleId);
       if (!hasTitle) console.error(MESSAGE);
@@ -20127,7 +20160,7 @@ var DESCRIPTION_WARNING_NAME = "DialogDescriptionWarning";
 var DescriptionWarning$1 = ({ contentRef, descriptionId }) => {
   const descriptionWarningContext = useWarningContext(DESCRIPTION_WARNING_NAME);
   const MESSAGE = `Warning: Missing \`Description\` or \`aria-describedby={undefined}\` for {${descriptionWarningContext.contentName}}.`;
-  React$j.useEffect(() => {
+  React$h.useEffect(() => {
     const describedById = contentRef.current?.getAttribute("aria-describedby");
     if (descriptionId && describedById) {
       const hasDescription = document.getElementById(descriptionId);
@@ -20146,7 +20179,7 @@ var Description = DialogDescription$1;
 var Close = DialogClose;
 
 // src/alert-dialog.tsx
-const React$i = await importShared('react');
+const React$g = await importShared('react');
 var ROOT_NAME = "AlertDialog";
 var [createAlertDialogContext] = createContextScope(ROOT_NAME, [
   createDialogScope
@@ -20159,7 +20192,7 @@ var AlertDialog$1 = (props) => {
 };
 AlertDialog$1.displayName = ROOT_NAME;
 var TRIGGER_NAME = "AlertDialogTrigger";
-var AlertDialogTrigger$1 = React$i.forwardRef(
+var AlertDialogTrigger$1 = React$g.forwardRef(
   (props, forwardedRef) => {
     const { __scopeAlertDialog, ...triggerProps } = props;
     const dialogScope = useDialogScope(__scopeAlertDialog);
@@ -20175,7 +20208,7 @@ var AlertDialogPortal$1 = (props) => {
 };
 AlertDialogPortal$1.displayName = PORTAL_NAME;
 var OVERLAY_NAME = "AlertDialogOverlay";
-var AlertDialogOverlay$1 = React$i.forwardRef(
+var AlertDialogOverlay$1 = React$g.forwardRef(
   (props, forwardedRef) => {
     const { __scopeAlertDialog, ...overlayProps } = props;
     const dialogScope = useDialogScope(__scopeAlertDialog);
@@ -20186,13 +20219,13 @@ AlertDialogOverlay$1.displayName = OVERLAY_NAME;
 var CONTENT_NAME = "AlertDialogContent";
 var [AlertDialogContentProvider, useAlertDialogContentContext] = createAlertDialogContext(CONTENT_NAME);
 var Slottable = createSlottable("AlertDialogContent");
-var AlertDialogContent$1 = React$i.forwardRef(
+var AlertDialogContent$1 = React$g.forwardRef(
   (props, forwardedRef) => {
     const { __scopeAlertDialog, children, ...contentProps } = props;
     const dialogScope = useDialogScope(__scopeAlertDialog);
-    const contentRef = React$i.useRef(null);
-    const composedRefs = useComposedRefs$1(forwardedRef, contentRef);
-    const cancelRef = React$i.useRef(null);
+    const contentRef = React$g.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, contentRef);
+    const cancelRef = React$g.useRef(null);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       WarningProvider,
       {
@@ -20224,7 +20257,7 @@ var AlertDialogContent$1 = React$i.forwardRef(
 );
 AlertDialogContent$1.displayName = CONTENT_NAME;
 var TITLE_NAME = "AlertDialogTitle";
-var AlertDialogTitle$1 = React$i.forwardRef(
+var AlertDialogTitle$1 = React$g.forwardRef(
   (props, forwardedRef) => {
     const { __scopeAlertDialog, ...titleProps } = props;
     const dialogScope = useDialogScope(__scopeAlertDialog);
@@ -20233,14 +20266,14 @@ var AlertDialogTitle$1 = React$i.forwardRef(
 );
 AlertDialogTitle$1.displayName = TITLE_NAME;
 var DESCRIPTION_NAME = "AlertDialogDescription";
-var AlertDialogDescription$1 = React$i.forwardRef((props, forwardedRef) => {
+var AlertDialogDescription$1 = React$g.forwardRef((props, forwardedRef) => {
   const { __scopeAlertDialog, ...descriptionProps } = props;
   const dialogScope = useDialogScope(__scopeAlertDialog);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Description, { ...dialogScope, ...descriptionProps, ref: forwardedRef });
 });
 AlertDialogDescription$1.displayName = DESCRIPTION_NAME;
 var ACTION_NAME = "AlertDialogAction";
-var AlertDialogAction$1 = React$i.forwardRef(
+var AlertDialogAction$1 = React$g.forwardRef(
   (props, forwardedRef) => {
     const { __scopeAlertDialog, ...actionProps } = props;
     const dialogScope = useDialogScope(__scopeAlertDialog);
@@ -20249,12 +20282,12 @@ var AlertDialogAction$1 = React$i.forwardRef(
 );
 AlertDialogAction$1.displayName = ACTION_NAME;
 var CANCEL_NAME = "AlertDialogCancel";
-var AlertDialogCancel$1 = React$i.forwardRef(
+var AlertDialogCancel$1 = React$g.forwardRef(
   (props, forwardedRef) => {
     const { __scopeAlertDialog, ...cancelProps } = props;
     const { cancelRef } = useAlertDialogContentContext(CANCEL_NAME, __scopeAlertDialog);
     const dialogScope = useDialogScope(__scopeAlertDialog);
-    const ref = useComposedRefs$1(forwardedRef, cancelRef);
+    const ref = useComposedRefs(forwardedRef, cancelRef);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Close, { ...dialogScope, ...cancelProps, ref });
   }
 );
@@ -20267,7 +20300,7 @@ You can add a description to the \`${CONTENT_NAME}\` by passing a \`${DESCRIPTIO
 Alternatively, you can use your own component as a description by assigning it an \`id\` and passing the same value to the \`aria-describedby\` prop in \`${CONTENT_NAME}\`. If the description is confusing or duplicative for sighted users, you can use the \`@radix-ui/react-visually-hidden\` primitive as a wrapper around your description component.
 
 For more information, see https://radix-ui.com/primitives/docs/components/alert-dialog`;
-  React$i.useEffect(() => {
+  React$g.useEffect(() => {
     const hasDescription = document.getElementById(
       contentRef.current?.getAttribute("aria-describedby")
     );
@@ -20285,11 +20318,11 @@ var Cancel = AlertDialogCancel$1;
 var Title2 = AlertDialogTitle$1;
 var Description2 = AlertDialogDescription$1;
 
-const React$h = await importShared('react');
+const React$f = await importShared('react');
 const AlertDialog = Root2;
 const AlertDialogTrigger = Trigger2;
 const AlertDialogPortal = Portal2;
-const AlertDialogOverlay = React$h.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const AlertDialogOverlay = React$f.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Overlay2,
   {
     className: cn(
@@ -20301,7 +20334,7 @@ const AlertDialogOverlay = React$h.forwardRef(({ className, ...props }, ref) => 
   }
 ));
 AlertDialogOverlay.displayName = Overlay2.displayName;
-const AlertDialogContent = React$h.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogPortal, { children: [
+const AlertDialogContent = React$f.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogPortal, { children: [
   /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogOverlay, {}),
   /* @__PURE__ */ jsxRuntimeExports.jsx(
     Content2,
@@ -20320,7 +20353,7 @@ const AlertDialogHeader = ({ className, ...props }) => /* @__PURE__ */ jsxRuntim
 AlertDialogHeader.displayName = "AlertDialogHeader";
 const AlertDialogFooter = ({ className, ...props }) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className), ...props });
 AlertDialogFooter.displayName = "AlertDialogFooter";
-const AlertDialogTitle = React$h.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const AlertDialogTitle = React$f.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Title2,
   {
     ref,
@@ -20329,7 +20362,7 @@ const AlertDialogTitle = React$h.forwardRef(({ className, ...props }, ref) => /*
   }
 ));
 AlertDialogTitle.displayName = Title2.displayName;
-const AlertDialogDescription = React$h.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const AlertDialogDescription = React$f.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Description2,
   {
     ref,
@@ -20338,9 +20371,9 @@ const AlertDialogDescription = React$h.forwardRef(({ className, ...props }, ref)
   }
 ));
 AlertDialogDescription.displayName = Description2.displayName;
-const AlertDialogAction = React$h.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Action, { ref, className: cn(buttonVariants(), className), ...props }));
+const AlertDialogAction = React$f.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Action, { ref, className: cn(buttonVariants(), className), ...props }));
 AlertDialogAction.displayName = Action.displayName;
-const AlertDialogCancel = React$h.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const AlertDialogCancel = React$f.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Cancel,
   {
     ref,
@@ -20365,6 +20398,18 @@ const CHESS_ICON = {
   BISHOP: "♗",
   KNIGHT: "♘",
   PAWN: "♙"
+};
+const KLO_CATEGORY_LABELS = {
+  BUGFIX: "Bug Fix",
+  MAINTENANCE: "Maintenance",
+  SECURITY: "Security",
+  ADMIN: "Admin"
+};
+const VERIFICATION_LABELS = {
+  LOAD_TEST: "Load Test",
+  QA: "QA Sign-Off",
+  PEER_REVIEW: "Peer Review",
+  DASHBOARD: "Dashboard / Metrics"
 };
 
 function CommitItem({ item, isDraggable = false, isHighlighted = false, onEdit, onDelete }) {
@@ -20461,10 +20506,10 @@ function CommitItem({ item, isDraggable = false, isHighlighted = false, onEdit, 
   );
 }
 
-const React$g = await importShared('react');
+const React$e = await importShared('react');
 const Dialog = Root$2;
 const DialogPortal = Portal;
-const DialogOverlay = React$g.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const DialogOverlay = React$e.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Overlay,
   {
     ref,
@@ -20476,7 +20521,7 @@ const DialogOverlay = React$g.forwardRef(({ className, ...props }, ref) => /* @_
   }
 ));
 DialogOverlay.displayName = Overlay.displayName;
-const DialogContent = React$g.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogPortal, { children: [
+const DialogContent = React$e.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogPortal, { children: [
   /* @__PURE__ */ jsxRuntimeExports.jsx(DialogOverlay, {}),
   /* @__PURE__ */ jsxRuntimeExports.jsxs(
     Content,
@@ -20502,7 +20547,7 @@ const DialogHeader = ({ className, ...props }) => /* @__PURE__ */ jsxRuntimeExpo
 DialogHeader.displayName = "DialogHeader";
 const DialogFooter = ({ className, ...props }) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className), ...props });
 DialogFooter.displayName = "DialogFooter";
-const DialogTitle = React$g.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const DialogTitle = React$e.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Title,
   {
     ref,
@@ -20511,7 +20556,7 @@ const DialogTitle = React$g.forwardRef(({ className, ...props }, ref) => /* @__P
   }
 ));
 DialogTitle.displayName = Title.displayName;
-const DialogDescription = React$g.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const DialogDescription = React$e.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Description,
   {
     ref,
@@ -20521,8 +20566,8 @@ const DialogDescription = React$g.forwardRef(({ className, ...props }, ref) => /
 ));
 DialogDescription.displayName = Description.displayName;
 
-const React$f = await importShared('react');
-const Input = React$f.forwardRef(
+const React$d = await importShared('react');
+const Input = React$d.forwardRef(
   ({ className, type, ...props }, ref) => {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       "input",
@@ -20541,9 +20586,9 @@ const Input = React$f.forwardRef(
 Input.displayName = "Input";
 
 // src/slot.tsx
-const React$e = await importShared('react');
+const React$c = await importShared('react');
 var REACT_LAZY_TYPE$1 = Symbol.for("react.lazy");
-var use$1 = React$e[" use ".trim().toString()];
+var use$1 = React$c[" use ".trim().toString()];
 function isPromiseLike$1(value) {
   return typeof value === "object" && value !== null && "then" in value;
 }
@@ -20553,24 +20598,24 @@ function isLazyComponent$1(element) {
 // @__NO_SIDE_EFFECTS__
 function createSlot$1(ownerName) {
   const SlotClone = /* @__PURE__ */ createSlotClone$1(ownerName);
-  const Slot2 = React$e.forwardRef((props, forwardedRef) => {
+  const Slot2 = React$c.forwardRef((props, forwardedRef) => {
     let { children, ...slotProps } = props;
     if (isLazyComponent$1(children) && typeof use$1 === "function") {
       children = use$1(children._payload);
     }
-    const childrenArray = React$e.Children.toArray(children);
+    const childrenArray = React$c.Children.toArray(children);
     const slottable = childrenArray.find(isSlottable$1);
     if (slottable) {
       const newElement = slottable.props.children;
       const newChildren = childrenArray.map((child) => {
         if (child === slottable) {
-          if (React$e.Children.count(newElement) > 1) return React$e.Children.only(null);
-          return React$e.isValidElement(newElement) ? newElement.props.children : null;
+          if (React$c.Children.count(newElement) > 1) return React$c.Children.only(null);
+          return React$c.isValidElement(newElement) ? newElement.props.children : null;
         } else {
           return child;
         }
       });
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: React$e.isValidElement(newElement) ? React$e.cloneElement(newElement, void 0, newChildren) : null });
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: React$c.isValidElement(newElement) ? React$c.cloneElement(newElement, void 0, newChildren) : null });
     }
     return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children });
   });
@@ -20579,27 +20624,27 @@ function createSlot$1(ownerName) {
 }
 // @__NO_SIDE_EFFECTS__
 function createSlotClone$1(ownerName) {
-  const SlotClone = React$e.forwardRef((props, forwardedRef) => {
+  const SlotClone = React$c.forwardRef((props, forwardedRef) => {
     let { children, ...slotProps } = props;
     if (isLazyComponent$1(children) && typeof use$1 === "function") {
       children = use$1(children._payload);
     }
-    if (React$e.isValidElement(children)) {
+    if (React$c.isValidElement(children)) {
       const childrenRef = getElementRef$1(children);
       const props2 = mergeProps$1(slotProps, children.props);
-      if (children.type !== React$e.Fragment) {
-        props2.ref = forwardedRef ? composeRefs$1(forwardedRef, childrenRef) : childrenRef;
+      if (children.type !== React$c.Fragment) {
+        props2.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
       }
-      return React$e.cloneElement(children, props2);
+      return React$c.cloneElement(children, props2);
     }
-    return React$e.Children.count(children) > 1 ? React$e.Children.only(null) : null;
+    return React$c.Children.count(children) > 1 ? React$c.Children.only(null) : null;
   });
   SlotClone.displayName = `${ownerName}.SlotClone`;
   return SlotClone;
 }
 var SLOTTABLE_IDENTIFIER$1 = Symbol("radix.slottable");
 function isSlottable$1(child) {
-  return React$e.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER$1;
+  return React$c.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER$1;
 }
 function mergeProps$1(slotProps, childProps) {
   const overrideProps = { ...childProps };
@@ -20640,7 +20685,7 @@ function getElementRef$1(element) {
 }
 
 // src/primitive.tsx
-const React$d = await importShared('react');
+const React$b = await importShared('react');
 
 await importShared('react-dom');
 var NODES$1 = [
@@ -20664,7 +20709,7 @@ var NODES$1 = [
 ];
 var Primitive$1 = NODES$1.reduce((primitive, node) => {
   const Slot = createSlot$1(`Primitive.${node}`);
-  const Node = React$d.forwardRef((props, forwardedRef) => {
+  const Node = React$b.forwardRef((props, forwardedRef) => {
     const { asChild, ...primitiveProps } = props;
     const Comp = asChild ? Slot : node;
     if (typeof window !== "undefined") {
@@ -20677,9 +20722,9 @@ var Primitive$1 = NODES$1.reduce((primitive, node) => {
 }, {});
 
 // src/label.tsx
-const React$c = await importShared('react');
+const React$a = await importShared('react');
 var NAME$1 = "Label";
-var Label$1 = React$c.forwardRef((props, forwardedRef) => {
+var Label$1 = React$a.forwardRef((props, forwardedRef) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Primitive$1.label,
     {
@@ -20697,11 +20742,11 @@ var Label$1 = React$c.forwardRef((props, forwardedRef) => {
 Label$1.displayName = NAME$1;
 var Root$1 = Label$1;
 
-const React$b = await importShared('react');
+const React$9 = await importShared('react');
 const labelVariants = cva(
   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 );
-const Label = React$b.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Root$1, { ref, className: cn(labelVariants(), className), ...props }));
+const Label = React$9.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Root$1, { ref, className: cn(labelVariants(), className), ...props }));
 Label.displayName = Root$1.displayName;
 
 function useRcdo() {
@@ -20713,8 +20758,8 @@ function useRcdo() {
   });
 }
 
-const React$a = await importShared('react');
-const {useState: useState$8,useMemo: useMemo$9} = React$a;
+const React$8 = await importShared('react');
+const {useState: useState$8,useMemo: useMemo$3} = React$8;
 const CHESS_PIECES$1 = ["KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"];
 const CHESS_DESCRIPTION$1 = {
   KING: "Critical — the week fails without this.",
@@ -20723,6 +20768,18 @@ const CHESS_DESCRIPTION$1 = {
   BISHOP: "Medium — meaningful progress.",
   KNIGHT: "Lower — good to have.",
   PAWN: "Lowest — small but valuable."
+};
+const POWER_MULTIPLIER = {
+  KING: "King Move: 20x Impact",
+  QUEEN: "Queen Move: 10x Impact",
+  ROOK: "Rook Move: 5x Impact",
+  BISHOP: "Bishop Move: 3x Impact",
+  KNIGHT: "Knight Move: 3x Impact",
+  PAWN: "Pawn Move: 1x Impact"
+};
+const STRATEGIC_GLOW = {
+  KING: { boxShadow: "0 0 0 1px rgba(212,175,55,0.5), 0 0 28px rgba(212,175,55,0.25)" },
+  QUEEN: { boxShadow: "0 0 0 1px rgba(124,58,237,0.4), 0 0 28px rgba(124,58,237,0.2)" }
 };
 function findDoIdForOutcome(rcdo, outcomeId) {
   if (!rcdo || !outcomeId) return "";
@@ -20744,12 +20801,12 @@ function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }) {
   const [error, setError] = useState$8(null);
   const rc = rcdo?.rallyCries?.[0];
   const definingObjectives = rc?.definingObjectives ?? [];
-  const selectedDo = useMemo$9(
+  const selectedDo = useMemo$3(
     () => definingObjectives.find((d) => d.id === selectedDoId) ?? null,
     [definingObjectives, selectedDoId]
   );
   const outcomes = selectedDo?.outcomes ?? [];
-  React$a.useEffect(() => {
+  React$8.useEffect(() => {
     if (open) {
       const initialOutcomeId = editItem?.outcomeId ?? "";
       setTitle(editItem?.title ?? "");
@@ -20788,9 +20845,10 @@ function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }) {
       setSubmitting(false);
     }
   };
+  const glowStyle = STRATEGIC_GLOW[chessPiece] ?? {};
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open, onOpenChange: (o) => {
     if (!o) onClose();
-  }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "sm:max-w-lg", children: [
+  }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "sm:max-w-lg transition-shadow duration-300", style: glowStyle, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { className: "text-lg font-black text-[#1e293b]", children: editItem ? "Edit Commit Item" : "Add Commit Item" }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
@@ -20889,7 +20947,22 @@ function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }) {
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: CHESS_ICON[piece] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: piece.charAt(0) + piece.slice(1).toLowerCase() })
           ] }) }, piece)) })
-        ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            className: "flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-bold transition-all duration-200",
+            style: chessPiece === "KING" ? { borderColor: "rgba(212,175,55,0.5)", backgroundColor: "rgba(212,175,55,0.07)", color: "#7a5c00" } : chessPiece === "QUEEN" ? { borderColor: "rgba(124,58,237,0.4)", backgroundColor: "rgba(124,58,237,0.06)", color: "#5b21b6" } : { borderColor: "#e2e8f0", backgroundColor: "#f8faff", color: "#64748b" },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: POWER_MULTIPLIER[chessPiece] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-black text-sm", style: { fontVariantNumeric: "tabular-nums" }, children: [
+                "×",
+                CHESS_WEIGHT[chessPiece]
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-400", children: CHESS_DESCRIPTION$1[chessPiece] })
       ] }),
       error && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-red-500 font-medium", children: error })
     ] }),
@@ -20908,8 +20981,8 @@ function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }) {
   ] }) });
 }
 
-const React$9 = await importShared('react');
-const {useState: useState$7,useMemo: useMemo$8} = React$9;
+const React$7 = await importShared('react');
+const {useState: useState$7,useMemo: useMemo$2} = React$7;
 const CHESS_PIECES = ["KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"];
 const CHESS_DESCRIPTION = {
   KING: "Critical — the week fails without this.",
@@ -20919,54 +20992,89 @@ const CHESS_DESCRIPTION = {
   KNIGHT: "Lower — good to have.",
   PAWN: "Lowest — small but valuable."
 };
+const KLO_CATEGORIES = Object.keys(KLO_CATEGORY_LABELS);
+const NO_BUMP = "__none__";
 function UnplannedItemModal({
   open,
   onClose,
   onSubmit,
-  bumpableItems
+  bumpableItems,
+  alreadyBumpedItems,
+  totalLockedWeight
 }) {
   const { data: rcdo } = useRcdo();
+  const [taskType, setTaskType] = useState$7("STRATEGIC");
   const [title, setTitle] = useState$7("");
   const [description, setDescription] = useState$7("");
   const [selectedDoId, setSelectedDoId] = useState$7("");
   const [outcomeId, setOutcomeId] = useState$7("");
+  const [kloCategory, setKloCategory] = useState$7("BUGFIX");
   const [chessPiece, setChessPiece] = useState$7("PAWN");
   const [bumpedItemId, setBumpedItemId] = useState$7("");
   const [submitting, setSubmitting] = useState$7(false);
+  const [submitted, setSubmitted] = useState$7(false);
   const [error, setError] = useState$7(null);
+  const wasOpen = React$7.useRef(false);
   const rc = rcdo?.rallyCries?.[0];
   const definingObjectives = rc?.definingObjectives ?? [];
-  const selectedDo = useMemo$8(
+  const selectedDo = useMemo$2(
     () => definingObjectives.find((d) => d.id === selectedDoId) ?? null,
     [definingObjectives, selectedDoId]
   );
   const outcomes = selectedDo?.outcomes ?? [];
-  React$9.useEffect(() => {
-    if (open) {
+  React$7.useEffect(() => {
+    if (open && !wasOpen.current) {
+      setTaskType("STRATEGIC");
       setTitle("");
       setDescription("");
       setSelectedDoId("");
       setOutcomeId("");
+      setKloCategory("BUGFIX");
       setChessPiece("PAWN");
       setBumpedItemId(bumpableItems.length > 0 ? bumpableItems[0]?.id ?? "" : "");
       setError(null);
+      setSubmitted(false);
     }
+    wasOpen.current = open;
   }, [open, bumpableItems]);
   const handleSelectDo = (doId) => {
     setSelectedDoId(doId);
     setOutcomeId("");
   };
+  const isKlo = taskType === "KLO";
+  const activeWeight = useMemo$2(
+    () => bumpableItems.reduce((sum, i) => sum + i.chessWeight, 0),
+    [bumpableItems]
+  );
+  const bumpedWeight = useMemo$2(
+    () => alreadyBumpedItems.reduce((sum, i) => sum + i.chessWeight, 0),
+    [alreadyBumpedItems]
+  );
+  const newTaskWeight = CHESS_WEIGHT[chessPiece];
+  const isStrategicDebt = activeWeight === 0 && bumpedWeight > 0;
+  const isOverCapacity = useMemo$2(() => {
+    if (!totalLockedWeight) return bumpableItems.length > 0;
+    return activeWeight + newTaskWeight > totalLockedWeight;
+  }, [activeWeight, newTaskWeight, totalLockedWeight, bumpableItems.length]);
+  const bumpRequired = isOverCapacity && bumpableItems.length > 0;
+  const projectedIntegrity = useMemo$2(() => {
+    if (!totalLockedWeight || totalLockedWeight === 0) return null;
+    return (activeWeight + newTaskWeight) / totalLockedWeight;
+  }, [activeWeight, newTaskWeight, totalLockedWeight]);
+  const showIntegrityWarning = !isKlo && projectedIntegrity !== null && projectedIntegrity < 0.5;
+  const effectiveBumpedItemId = bumpRequired && bumpedItemId !== NO_BUMP && bumpedItemId !== "" ? bumpedItemId : void 0;
+  const canConfirm = !submitting && title.trim() !== "" && (isKlo || outcomeId !== "") && (!bumpRequired || bumpedItemId !== "" && bumpedItemId !== NO_BUMP);
   const handleSubmit = async () => {
     if (!title.trim()) {
       setError("Title is required");
       return;
     }
-    if (!outcomeId) {
-      setError("Outcome is required");
+    if (!isKlo && !outcomeId) {
+      setError("Outcome is required for strategic items");
       return;
     }
-    if (!bumpedItemId) {
-      setError("You must select which Monday commit item you are bumping to make room.");
+    if (bumpRequired && (!bumpedItemId || bumpedItemId === NO_BUMP)) {
+      setError("You must select which Monday commit item you are displacing.");
       return;
     }
     setSubmitting(true);
@@ -20975,11 +21083,15 @@ function UnplannedItemModal({
       await onSubmit({
         title: title.trim(),
         description: description.trim() || void 0,
-        outcomeId,
+        outcomeId: isKlo ? void 0 : outcomeId,
         chessPiece,
-        bumpedItemId
+        bumpedItemId: effectiveBumpedItemId,
+        taskType,
+        kloCategory: isKlo ? kloCategory : void 0,
+        pivotReason: !bumpRequired ? "Added into existing strategic debt margin — no new displacement" : void 0
       });
-      onClose();
+      setSubmitted(true);
+      setTimeout(() => onClose(), 1200);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to add unplanned item");
     } finally {
@@ -20991,24 +21103,54 @@ function UnplannedItemModal({
   }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "sm:max-w-lg p-0 overflow-hidden rounded-2xl border-0 shadow-2xl", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { className: "px-6 pt-6 pb-0", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-3", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-lg font-black text-[#1e293b] leading-tight", children: "Mid-Week Pivot Detected" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-slate-500 mt-1", children: "Adding tasks mid-week requires resource recalibration." })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { className: "text-lg font-black text-[#1e293b] leading-tight", children: "Mid-Week Pivot Detected" }),
+        isStrategicDebt ? /* @__PURE__ */ jsxRuntimeExports.jsx(DialogDescription, { className: "text-sm font-semibold text-orange-600 mt-1", children: "Managing Strategic Debt: Adding a task to an empty active lane." }) : /* @__PURE__ */ jsxRuntimeExports.jsx(DialogDescription, { className: "text-sm text-slate-500 mt-1", children: "Adding tasks mid-week requires resource recalibration." })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-tighter rounded shrink-0", children: "Unplanned Entry" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `px-2.5 py-1 text-white text-xs font-semibold tracking-wide rounded shrink-0 ${isStrategicDebt ? "bg-amber-600" : "bg-orange-600"}`, children: isStrategicDebt ? "Strategic Debt" : "Unplanned Entry" })
     ] }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-6 py-4 space-y-5 max-h-[60vh] overflow-y-auto", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-6 py-4 space-y-5 max-h-[65vh] overflow-y-auto", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2", children: "Task Type" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded-lg border border-slate-200 overflow-hidden text-sm font-bold", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setTaskType("STRATEGIC"),
+              className: `flex-1 flex items-center justify-center gap-2 py-2.5 transition-colors ${!isKlo ? "bg-[#1152d4] text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`,
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Target, { className: "h-3.5 w-3.5" }),
+                "Strategic"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setTaskType("KLO"),
+              className: `flex-1 flex items-center justify-center gap-2 py-2.5 transition-colors border-l border-slate-200 ${isKlo ? "bg-slate-700 text-white" : "bg-white text-slate-500 hover:bg-slate-50"}`,
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Wrench, { className: "h-3.5 w-3.5" }),
+                "Operational (KLO)"
+              ]
+            }
+          )
+        ] }),
+        isKlo && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-400 mt-1.5 italic", children: "Keep-the-lights-on work. Counts toward capacity but not alignment score." })
+      ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3", children: "The New Commitment" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border border-amber-200 bg-amber-50/30 rounded-xl p-4 space-y-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `border rounded-xl p-4 space-y-3 ${isKlo ? "border-slate-200 bg-slate-50/50" : "border-amber-200 bg-amber-50/30"}`, children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-lg", children: CHESS_ICON[chessPiece] }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isKlo ? "bg-slate-200" : "bg-amber-100"}`, children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-lg", children: CHESS_ICON[chessPiece] }) }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 min-w-0", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 Input,
                 {
                   value: title,
                   onChange: (e) => setTitle(e.target.value),
-                  placeholder: "What unplanned item are you adding?",
+                  placeholder: isKlo ? "What operational task are you adding?" : "What unplanned item are you adding?",
                   className: "border-0 bg-transparent p-0 h-auto text-sm font-semibold text-[#1e293b] focus-visible:ring-0 placeholder:text-slate-400"
                 }
               ),
@@ -21021,7 +21163,10 @@ function UnplannedItemModal({
               ] })
             ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2 pt-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-2 py-0.5 bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase rounded flex items-center gap-1", children: "▌▌▌ Resource Impact: High" }) })
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 pt-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-2 py-0.5 bg-orange-600 text-white text-[10px] font-bold uppercase rounded flex items-center gap-1", children: "▌▌▌ Resource Impact: High" }),
+            isKlo && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-2 py-0.5 bg-slate-600 text-white text-[10px] font-bold uppercase rounded", children: "Whirlwind" })
+          ] })
         ] })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
@@ -21032,7 +21177,7 @@ function UnplannedItemModal({
             id: "unplanned-desc",
             value: description,
             onChange: (e) => setDescription(e.target.value),
-            placeholder: "Context for the mid-week pivot...",
+            placeholder: isKlo ? "Describe the operational issue..." : "Context for the mid-week pivot...",
             rows: 2,
             className: "resize-none text-sm"
           }
@@ -21048,7 +21193,7 @@ function UnplannedItemModal({
           ] }) }, piece)) })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
+      !isKlo && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "text-[10px] font-black uppercase tracking-widest text-slate-400", children: "Aligned Outcome (Mandatory)" }),
         definingObjectives.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid gap-1.5", children: definingObjectives.map((do_) => {
           const selected = selectedDoId === do_.id;
@@ -21083,52 +21228,163 @@ function UnplannedItemModal({
           );
         }) })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-widest text-rose-500 mb-1", children: "Which planned task is being displaced (bumped)?" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400 italic mb-3", children: "Mandatory selection to maintain velocity" }),
-        bumpableItems.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-slate-400", children: "No bumpable items in this commit." }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-2", children: bumpableItems.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "label",
+      isKlo && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "text-[10px] font-black uppercase tracking-widest text-slate-400", children: "KLO Category" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 gap-2", children: KLO_CATEGORIES.map((cat) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
           {
-            className: `flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${bumpedItemId === item.id ? "border-[#1152d4]/40 bg-[#1152d4]/5" : "border-slate-200 hover:bg-slate-50"}`,
+            type: "button",
+            onClick: () => setKloCategory(cat),
+            className: `px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors text-left ${kloCategory === cat ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`,
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "input",
-                {
-                  type: "radio",
-                  name: "bumped-item",
-                  value: item.id,
-                  checked: bumpedItemId === item.id,
-                  onChange: () => setBumpedItemId(item.id),
-                  className: "shrink-0 accent-[#1152d4]"
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold text-[#1e293b] truncate", children: item.title }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-400", children: [
-                  "Chess Move: ",
-                  CHESS_ICON[item.chessPiece],
-                  " ",
-                  item.chessPiece.charAt(0) + item.chessPiece.slice(1).toLowerCase()
-                ] })
-              ] })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "block text-xs font-black uppercase tracking-wider mb-0.5", style: { color: "#94a3b8" }, children: cat }),
+              KLO_CATEGORY_LABELS[cat]
             ]
           },
-          item.id
+          cat
         )) })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 mb-1", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: `text-[10px] font-black uppercase tracking-widest ${bumpRequired ? "text-rose-500" : "text-emerald-600"}`, children: bumpRequired ? "Which planned task is being displaced (bumped)?" : "Displacement" }),
+          !bumpRequired && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-wide", children: "Optional" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400 italic mb-3", children: isKlo ? "Even operational work displaces capacity — record what gets pushed." : bumpRequired ? "Mandatory selection to maintain velocity tracking." : "Ghost capacity available — no displacement required." }),
+        alreadyBumpedItems.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-4 rounded-xl border border-amber-200 bg-amber-50/40 p-3 space-y-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[10px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RotateCcw, { className: "h-3 w-3" }),
+            "Recently Bumped"
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-amber-700/80 italic -mt-1", children: isKlo ? "You've already displaced items — consider restoring your original plan." : "You've already displaced items this week. Should you restore one of these instead?" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1.5", children: alreadyBumpedItems.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              className: "flex items-center justify-between gap-3 rounded-lg bg-white border border-amber-200 px-3 py-2.5",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold text-[#1e293b] truncate", children: item.title }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-400", children: [
+                    CHESS_ICON[item.chessPiece],
+                    " ",
+                    item.chessPiece.charAt(0) + item.chessPiece.slice(1).toLowerCase(),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "ml-1.5 text-amber-600 font-medium", children: "· displaced" })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: onClose,
+                    className: "shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-200 transition-colors whitespace-nowrap",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(RotateCcw, { className: "h-3 w-3" }),
+                      "Restore instead?"
+                    ]
+                  }
+                )
+              ]
+            },
+            item.id
+          )) })
+        ] }),
+        bumpableItems.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/40 px-4 py-3.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Zap, { className: "h-4 w-4 text-emerald-600 shrink-0 mt-0.5" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-bold text-emerald-800", children: "Strategic Capacity Available" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-emerald-700/80 mt-0.5", children: "You have enough margin to add this task without further displacement. Your prior bumps created the room." })
+          ] })
+        ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+          !bumpRequired && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "label",
+            {
+              className: `flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${bumpedItemId === NO_BUMP || bumpedItemId === "" ? "border-emerald-400/50 bg-emerald-50/50" : "border-slate-200 hover:bg-slate-50"}`,
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    type: "radio",
+                    name: "bumped-item",
+                    value: NO_BUMP,
+                    checked: bumpedItemId === NO_BUMP || bumpedItemId === "",
+                    onChange: () => setBumpedItemId(NO_BUMP),
+                    className: "shrink-0 accent-emerald-600"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold text-emerald-800", children: "No displacement needed" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-emerald-600/80", children: "Using available ghost capacity from prior bumps." })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Zap, { className: "h-4 w-4 text-emerald-500 shrink-0" })
+              ]
+            }
+          ),
+          bumpableItems.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "label",
+            {
+              className: `flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${bumpedItemId === item.id ? "border-[#1152d4]/40 bg-[#1152d4]/5" : "border-slate-200 hover:bg-slate-50"}`,
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    type: "radio",
+                    name: "bumped-item",
+                    value: item.id,
+                    checked: bumpedItemId === item.id,
+                    onChange: () => setBumpedItemId(item.id),
+                    className: "shrink-0 accent-[#1152d4]"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold text-[#1e293b] truncate", children: item.title }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-400", children: [
+                    CHESS_ICON[item.chessPiece],
+                    " ",
+                    item.chessPiece.charAt(0) + item.chessPiece.slice(1).toLowerCase(),
+                    item.taskType === "KLO" && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "ml-1.5 px-1 py-0 bg-slate-100 text-slate-500 rounded text-[9px] font-bold uppercase", children: "KLO" })
+                  ] })
+                ] })
+              ]
+            },
+            item.id
+          ))
+        ] })
       ] }),
       error && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-red-500 font-medium", children: error })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-[#0f172a] px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-slate-400", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-4 w-4 shrink-0" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-[#0f172a] px-6 py-4 space-y-3", children: submitted ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-center gap-2 py-1 text-emerald-400 font-semibold text-sm", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-4 w-4" }),
+      "Task added — commit updated."
+    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      projectedIntegrity !== null && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-black uppercase tracking-widest text-slate-500", children: "Projected Integrity" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative group flex items-center gap-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "span",
+            {
+              className: `text-xs font-bold tabular-nums ${showIntegrityWarning ? "text-red-400" : "text-slate-300"}`,
+              children: [
+                Math.round(projectedIntegrity * 100),
+                "%"
+              ]
+            }
+          ),
+          showIntegrityWarning && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3.5 w-3.5 text-red-400 shrink-0" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute bottom-full right-0 mb-2 w-64 p-2.5 bg-slate-800 border border-red-900/40 text-red-300 text-[11px] leading-snug rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50", children: "Warning: Your Friday Integrity Score is currently projected to be failing due to strategic displacement." })
+          ] }),
+          isKlo && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 italic", children: "(KLO — intent not penalised)" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-slate-500", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-3.5 w-3.5 shrink-0" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs italic", children: "“A promise made is a debt unpaid.”" })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-3 w-full sm:w-auto", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-3", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(
           "button",
           {
             onClick: onClose,
-            className: "flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-300 transition-colors",
+            className: "px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-300 transition-colors",
             children: "Cancel"
           }
         ),
@@ -21136,13 +21392,13 @@ function UnplannedItemModal({
           "button",
           {
             onClick: () => void handleSubmit(),
-            disabled: submitting || bumpableItems.length === 0 || !outcomeId || !title.trim(),
-            className: "flex-1 sm:flex-none px-6 py-2.5 bg-[#1152d4] hover:bg-[#1152d4]/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-[#1152d4]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+            disabled: !canConfirm,
+            className: "flex-1 py-2.5 bg-[#1152d4] hover:bg-[#1152d4]/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-[#1152d4]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
             children: submitting ? "Adding..." : "Confirm Commitment & Lock"
           }
         )
       ] })
-    ] })
+    ] }) })
   ] }) });
 }
 
@@ -21171,11 +21427,17 @@ function isDataStale(lastUpdated) {
   if (!lastUpdated) return false;
   return Date.now() - new Date(lastUpdated).getTime() > 7 * 24 * 60 * 60 * 1e3;
 }
+function formatDelta(delta, suffix) {
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${delta} ${suffix}`;
+}
 function SuccessGauge({
   startValue,
   targetValue,
   currentValue,
   unit,
+  unitLabel,
+  unitType,
   teamChessWeight,
   lastUpdated,
   compact = false
@@ -21183,6 +21445,11 @@ function SuccessGauge({
   const { pct, color, isStuck } = computeGauge(startValue, targetValue, currentValue);
   const stale = isDataStale(lastUpdated);
   const energyLeft = Math.max(4, Math.min(96, pct));
+  const suffix = unitLabel ?? unit;
+  const isNumeric = unitType === "NUMERIC";
+  const delta = Math.round((currentValue - startValue) * 100) / 100;
+  const currentDisplay = isNumeric ? formatDelta(delta, suffix) : `${currentValue}${suffix}`;
+  const isOptimization = targetValue < startValue;
   if (isStuck) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-400 italic", children: "Target equals baseline — update target value." });
   }
@@ -21208,8 +21475,7 @@ function SuccessGauge({
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-[9px]", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: stale ? "text-amber-500 font-bold" : "text-slate-400", children: [
-          currentValue,
-          unit,
+          currentDisplay,
           stale ? " ⚠" : ""
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-bold", style: { color }, children: [
@@ -21223,15 +21489,16 @@ function SuccessGauge({
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-[10px] text-slate-500", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
         startValue,
-        unit
+        suffix
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-bold", style: { color }, children: [
         Math.round(pct),
-        "% achieved"
+        "% ",
+        isOptimization ? "optimized" : "achieved"
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
         targetValue,
-        unit
+        suffix
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative w-full h-3 bg-slate-200 rounded-full overflow-visible", children: [
@@ -21254,9 +21521,9 @@ function SuccessGauge({
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-[10px]", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: `font-medium ${stale ? "text-amber-500" : "text-slate-400"}`, children: [
-        "Current: ",
-        currentValue,
-        unit,
+        isNumeric ? "Change" : "Current",
+        ": ",
+        currentDisplay,
         stale && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "ml-1 font-bold", children: "⚠ stale" })
       ] }),
       teamChessWeight != null && teamChessWeight > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[9px] text-slate-400", children: [
@@ -21290,6 +21557,14 @@ function TeamOutcomesSidebar({
   mobileOpen,
   onMobileClose
 }) {
+  const kloItems = commitItems.filter((i) => i.taskType === "KLO");
+  const kloTotalWeight = kloItems.reduce((sum, i) => sum + i.chessWeight, 0);
+  const kloByCat = kloItems.reduce((acc, i) => {
+    if (i.kloCategory) {
+      acc[i.kloCategory] = (acc[i.kloCategory] ?? 0) + i.chessWeight;
+    }
+    return acc;
+  }, {});
   const outcomeRows = rallyCries.flatMap(
     (rc) => rc.definingObjectives.flatMap(
       (doObj) => doObj.outcomes.map((outcome) => {
@@ -21307,6 +21582,8 @@ function TeamOutcomesSidebar({
           targetValue: outcome.targetValue ?? null,
           currentValue: outcome.currentValue ?? null,
           unit: outcome.unit ?? null,
+          unitLabel: outcome.unitLabel ?? null,
+          unitType: outcome.unitType ?? null,
           lastUpdated: outcome.lastUpdated ?? null
         };
       })
@@ -21407,6 +21684,8 @@ function TeamOutcomesSidebar({
                   targetValue: row.targetValue,
                   currentValue: row.currentValue,
                   unit: row.unit,
+                  unitLabel: row.unitLabel,
+                  unitType: row.unitType,
                   teamChessWeight: row.teamWeight > 0 ? row.teamWeight : void 0,
                   lastUpdated: row.lastUpdated,
                   compact: true
@@ -21417,6 +21696,44 @@ function TeamOutcomesSidebar({
           row.outcomeId
         );
       })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border-t border-white/10", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-2.5 flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Wrench, { className: "h-3 w-3 text-slate-500 shrink-0" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] font-black uppercase tracking-[0.15em] text-slate-500", children: "Whirlwind / KLO" }),
+        kloTotalWeight > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "span",
+          {
+            className: "ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded",
+            style: { backgroundColor: "rgba(100,116,139,0.3)", color: "#94a3b8" },
+            children: [
+              kloTotalWeight,
+              " wt"
+            ]
+          }
+        )
+      ] }),
+      kloTotalWeight === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "px-4 pb-3 text-[10px] text-slate-600 italic", children: "No KLO work this week." }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 pb-3 space-y-1.5", children: [
+        Object.keys(kloByCat).map((cat) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-400", children: KLO_CATEGORY_LABELS[cat] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-bold text-slate-500", children: [
+            kloByCat[cat],
+            " wt"
+          ] })
+        ] }, cat)),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 pt-2 border-t border-white/5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-1.5 bg-slate-700 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              className: "h-full rounded-full bg-slate-500 transition-all duration-500",
+              style: {
+                width: `${Math.min(100, kloTotalWeight / Math.max(1, kloTotalWeight + outcomeRows.reduce((s, r) => s + r.teamWeight, 0)) * 100)}%`
+              }
+            }
+          ) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[9px] text-slate-600 mt-1", children: "Excluded from alignment score · counts toward capacity" })
+        ] })
+      ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "px-4 py-2.5 border-t border-white/5", style: { backgroundColor: "rgba(0,0,0,0.2)" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base leading-none select-none", style: { color: "#d4af37", opacity: 0.35 }, children: "♙" }),
@@ -21564,9 +21881,12 @@ function useCompleteReconciliation() {
 }
 
 function useRcdoAdmin() {
+  const user = useAuthStore((s) => s.user);
+  const isManager = user?.roles.some((r) => r === "MANAGER" || r === "DUAL_ROLE") ?? false;
   return useQuery({
     queryKey: ["manager", "rcdo"],
-    queryFn: () => manager.rcdo.getAdminHierarchy()
+    queryFn: () => manager.rcdo.getAdminHierarchy(),
+    enabled: isManager
   });
 }
 function useOrgMembers() {
@@ -21669,9 +21989,18 @@ function useUpdateOutcomeCurrentValue() {
   const q = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }) => manager.rcdo.updateOutcomeCurrentValue(id, body),
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
       q.invalidateQueries({ queryKey: ["manager", "rcdo"] });
+      q.invalidateQueries({ queryKey: ["rcdo"] });
+      q.invalidateQueries({ queryKey: ["manager", "rcdo", "outcomes", id, "history"] });
     }
+  });
+}
+function useOutcomeHistory(outcomeId) {
+  return useQuery({
+    queryKey: ["manager", "rcdo", "outcomes", outcomeId, "history"],
+    queryFn: () => manager.rcdo.getOutcomeHistory(outcomeId),
+    enabled: outcomeId != null
   });
 }
 
@@ -21691,8 +22020,8 @@ function formatDateTime(iso) {
   });
 }
 
-const React$1 = await importShared('react');
-const {useState: useState$5,useContext} = React$1;
+const React$6 = await importShared('react');
+const {useState: useState$6,useContext} = React$6;
 const CHESS_PIECE_ORDER$2 = ["KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"];
 const CHESS_LAYERS = [
   {
@@ -21786,7 +22115,7 @@ function CommitPage() {
   const completeReconciliation = useCompleteReconciliation();
   const { data: teamOutcomeWeightData } = useTeamOutcomeWeights();
   const { data: rcdoAdminData } = useRcdoAdmin();
-  const ownerNameMap = React$1.useMemo(() => {
+  const ownerNameMap = React$6.useMemo(() => {
     const map = {};
     rcdoAdminData?.rallyCries.forEach(
       (rc) => rc.definingObjectives.forEach(
@@ -21797,13 +22126,15 @@ function CommitPage() {
     );
     return map;
   }, [rcdoAdminData]);
-  const [addModalOpen, setAddModalOpen] = useState$5(false);
-  const [unplannedModalOpen, setUnplannedModalOpen] = useState$5(false);
-  const [editingItem, setEditingItem] = useState$5(null);
-  const [hoveredOutcomeId, setHoveredOutcomeId] = useState$5(null);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState$5(false);
-  const [reconcileData, setReconcileData] = useState$5({});
-  const [reconcileTab, setReconcileTab] = useState$5("planned");
+  const [addModalOpen, setAddModalOpen] = useState$6(false);
+  const [unplannedModalOpen, setUnplannedModalOpen] = useState$6(false);
+  const [editingItem, setEditingItem] = useState$6(null);
+  const [hoveredOutcomeId, setHoveredOutcomeId] = useState$6(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState$6(false);
+  const [reconcileData, setReconcileData] = useState$6({});
+  const [reconcileTab, setReconcileTab] = useState$6("planned");
+  const [showStrategicNudge, setShowStrategicNudge] = useState$6(false);
+  const [confirmLockOpen, setConfirmLockOpen] = useState$6(false);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -21821,10 +22152,11 @@ function CommitPage() {
   const hasKingOrQueen = commit.items.some(
     (i) => i.chessPiece === "KING" || i.chessPiece === "QUEEN"
   );
-  const filledLayers = CHESS_LAYERS.filter(
-    (layer) => layer.pieces.some((p) => itemsByPiece[p]?.length > 0)
-  ).length;
-  const progressPct = Math.round(filledLayers / CHESS_LAYERS.length * 100);
+  const intentProgressPct = commit.status === "DRAFT" ? Math.min(100, Math.round(commit.items.length / 3 * 100)) : commit.status === "LOCKED" ? 100 : commit.totalLockedWeight ? Math.min(100, Math.round(commit.totalDoneWeight / commit.totalLockedWeight * 100)) : 0;
+  const progressLabel = commit.status === "DRAFT" ? "Planning Your Week" : commit.status === "LOCKED" ? "Commitment Active" : "Execution Integrity";
+  const progressColor = commit.status === "RECONCILING" || commit.status === "RECONCILED" ? intentProgressPct >= 80 ? "#16a34a" : intentProgressPct >= 50 ? "#f59e0b" : "#ef4444" : "#1152d4";
+  const integrityPct = commit.totalLockedWeight ? Math.min(100, Math.round(commit.totalDoneWeight / commit.totalLockedWeight * 100)) : 0;
+  const integrityColor = integrityPct >= 80 ? "#16a34a" : integrityPct >= 50 ? "#f59e0b" : "#ef4444";
   const handleDragEnd = (event, piece) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -21841,7 +22173,18 @@ function CommitPage() {
     reorderItems.mutate({ commitId: commit.id, items: reorderPayload });
   };
   const handleSubmitWeek = () => {
+    setConfirmLockOpen(false);
+    setShowStrategicNudge(false);
     updateStatus.mutate({ id: commit.id, body: { status: "LOCKED" } });
+  };
+  const handleLockAttempt = () => {
+    const pawnCount = commit.items.filter((i) => i.chessPiece === "PAWN").length;
+    const kqCount = commit.items.filter((i) => i.chessPiece === "KING" || i.chessPiece === "QUEEN").length;
+    if (kqCount === 0 && pawnCount > 5) {
+      setShowStrategicNudge(true);
+    } else {
+      setConfirmLockOpen(true);
+    }
   };
   const handleRetract = () => {
     updateStatus.mutate({ id: commit.id, body: { status: "DRAFT" } });
@@ -21877,16 +22220,12 @@ function CommitPage() {
   };
   const plannedItems = commit.items.filter((i) => !i.unplanned);
   const unplannedItems = commit.items.filter((i) => i.unplanned);
-  const completedCount = commit.items.filter((i) => i.completionStatus === "COMPLETED").length;
-  const achievedPct = commit.items.length > 0 ? Math.round(completedCount / commit.items.length * 100) : 0;
   const hudWeekEnd = new Date(commit.weekEndDate);
   const hudDaysLeft = Math.max(0, Math.ceil((hudWeekEnd.getTime() - Date.now()) / (1e3 * 60 * 60 * 24)));
   const hudWeekStart = new Date(commit.weekStartDate);
   const hudWeekNum = Math.ceil(
     (hudWeekStart.getTime() - new Date(hudWeekStart.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1e3)
   );
-  const hudDoneCount = completedCount;
-  const hudDonePct = commit.items.length > 0 ? Math.round(hudDoneCount / commit.items.length * 100) : 0;
   const committedOutcomeIds = new Set(commit.items.map((i) => i.outcomeId));
   const sidebarGapCount = (rcdoData?.rallyCries ?? []).flatMap((rc) => rc.definingObjectives.flatMap((doObj) => doObj.outcomes)).filter(
     (o) => teamOutcomeWeightData ? (teamOutcomeWeightData.weights[o.id] ?? 0) === 0 : !committedOutcomeIds.has(o.id)
@@ -21900,14 +22239,20 @@ function CommitPage() {
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full md:w-64 bg-white p-4 rounded-xl border border-slate-200 shadow-sm shrink-0", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-center mb-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-semibold text-slate-700", children: "Alignment Ratio" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm font-bold text-[#1152d4]", children: [
-            progressPct,
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-semibold text-slate-700", children: progressLabel }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm font-bold", style: { color: progressColor }, children: [
+            intentProgressPct,
             "%"
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-2 w-full bg-slate-100 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full bg-[#1152d4] rounded-full transition-all duration-500", style: { width: `${progressPct}%` } }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] mt-2 text-slate-400 uppercase tracking-wider font-bold", children: "Strategic vs Routine" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-2 w-full bg-slate-100 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "div",
+          {
+            className: "h-full rounded-full transition-all duration-500",
+            style: { width: `${intentProgressPct}%`, backgroundColor: progressColor }
+          }
+        ) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] mt-2 text-slate-400 uppercase tracking-wider font-bold", children: commit.status === "DRAFT" ? "Add 3+ items to unlock" : commit.status === "LOCKED" ? "Monday Promise locked in" : "Weight-based integrity score" })
       ] })
     ] }),
     commit.status === "DRAFT" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-6 items-start", children: [
@@ -21944,11 +22289,11 @@ function CommitPage() {
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-end", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold text-slate-900", children: "Check-in Progress" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold text-slate-900", children: "Planning Your Week" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-slate-500 mt-0.5", children: formatWeekRange(commit.weekStartDate, commit.weekEndDate) })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-2xl font-black", style: { color: "#1152d4" }, children: [
-                  progressPct,
+                  intentProgressPct,
                   "%"
                 ] })
               ] }),
@@ -21956,9 +22301,15 @@ function CommitPage() {
                 "div",
                 {
                   className: "h-full rounded-full transition-all duration-500",
-                  style: { width: `${progressPct}%`, backgroundColor: "#1152d4" }
+                  style: { width: `${intentProgressPct}%`, backgroundColor: "#1152d4" }
                 }
               ) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-500", children: [
+                commit.items.length,
+                " item",
+                commit.items.length !== 1 ? "s" : "",
+                " — add at least 3 to publish"
+              ] }),
               commit.items.length > 0 && !hasKingOrQueen && /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "div",
                 {
@@ -22087,30 +22438,52 @@ function CommitPage() {
             )
           ] }, piece);
         }),
-        commit.items.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center pt-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialog, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "button",
-            {
-              disabled: updateStatus.isPending,
-              className: "flex items-center gap-2 px-10 py-4 text-white rounded-xl font-bold text-base shadow-xl transition-all hover:opacity-90 disabled:opacity-50",
-              style: { backgroundColor: "#1e293b" },
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-5 w-5" }),
-                "Finalize & Lock Week"
-              ]
-            }
-          ) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogContent, { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogHeader, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTitle, { children: "Submit your weekly commit?" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogDescription, { children: "This will lock your commit and notify your manager. You can retract it until your manager views it." })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialog, { open: showStrategicNudge, onOpenChange: setShowStrategicNudge, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogContent, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogHeader, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogTitle, { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "#d4af37" }, children: "♔" }),
+              " Strategic Opportunity"
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { children: "Cancel" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogAction, { onClick: handleSubmitWeek, children: "Submit" })
-            ] })
+            /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogDescription, { children: 'Your week is heavy on routine tasks. Is there one "King Move" you can prioritize instead to drive the Team Outcome? A single King (20x) outweighs five Pawns combined.' })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { onClick: () => setShowStrategicNudge(false), children: "Go Back & Reconsider" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              AlertDialogAction,
+              {
+                onClick: () => {
+                  setShowStrategicNudge(false);
+                  setConfirmLockOpen(true);
+                },
+                className: "bg-slate-700 hover:bg-slate-800 text-white",
+                children: "Continue Anyway"
+              }
+            )
           ] })
-        ] }) })
+        ] }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialog, { open: confirmLockOpen, onOpenChange: setConfirmLockOpen, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogContent, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogHeader, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogTitle, { children: "Submit your weekly commit?" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogDescription, { children: "This will lock your commit and notify your manager. You can retract it until your manager views it." })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDialogFooter, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogCancel, { children: "Cancel" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDialogAction, { onClick: handleSubmitWeek, children: "Submit" })
+          ] })
+        ] }) }),
+        commit.items.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center pt-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            onClick: handleLockAttempt,
+            disabled: updateStatus.isPending,
+            className: "flex items-center gap-2 px-10 py-4 text-white rounded-xl font-bold text-base shadow-xl transition-all hover:opacity-90 disabled:opacity-50",
+            style: { backgroundColor: "#1e293b" },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-5 w-5" }),
+              "Finalize & Lock Week"
+            ]
+          }
+        ) })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         TeamOutcomesSidebar,
@@ -22166,28 +22539,19 @@ function CommitPage() {
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-center", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-bold text-slate-400 uppercase tracking-widest", children: "Commitment Progress" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-bold text-[#1152d4] uppercase tracking-widest", children: "Commitment Active" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs font-bold text-white", children: [
-                    hudDoneCount,
-                    "/",
                     commit.items.length,
+                    " item",
+                    commit.items.length !== 1 ? "s" : "",
+                    " locked",
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-500 font-normal", children: [
-                      " · ",
-                      hudDonePct,
-                      "%"
+                      " · wt ",
+                      commit.totalLockedWeight ?? commit.totalWeight
                     ] })
                   ] })
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-2 bg-white/10 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "div",
-                  {
-                    className: "h-full rounded-full transition-all duration-700",
-                    style: {
-                      width: `${hudDonePct}%`,
-                      backgroundColor: hudDonePct === 100 ? "#22c55e" : "#1152d4"
-                    }
-                  }
-                ) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-2 bg-white/10 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full rounded-full bg-[#1152d4]", style: { width: "100%" } }) }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-500", children: formatWeekRange(commit.weekStartDate, commit.weekEndDate) })
               ] })
             ] })
@@ -22260,29 +22624,31 @@ function CommitPage() {
                             children: item.title
                           }
                         ),
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 mt-1.5", children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(
-                            ArrowRight,
+                        item.outcomeBreadcrumb && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 mt-1.5", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              ArrowRight,
+                              {
+                                className: `h-3 w-3 shrink-0 transition-colors duration-300 ${isDone ? "text-slate-300" : "text-[#1152d4]"}`
+                              }
+                            ),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              "span",
+                              {
+                                className: `text-[11px] font-semibold truncate transition-colors duration-300 ${isDone ? "text-slate-300" : "text-[#1152d4]"}`,
+                                title: `${item.outcomeBreadcrumb.definingObjective} → ${item.outcomeBreadcrumb.outcome}`,
+                                children: item.outcomeBreadcrumb.outcome
+                              }
+                            )
+                          ] }),
+                          item.outcomeBreadcrumb.definingObjective && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "p",
                             {
-                              className: `h-3 w-3 shrink-0 transition-colors duration-300 ${isDone ? "text-slate-300" : "text-[#1152d4]"}`
-                            }
-                          ),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(
-                            "span",
-                            {
-                              className: `text-[11px] font-semibold truncate transition-colors duration-300 ${isDone ? "text-slate-300" : "text-[#1152d4]"}`,
-                              title: `${item.outcomeBreadcrumb.definingObjective} → ${item.outcomeBreadcrumb.outcome}`,
-                              children: item.outcomeBreadcrumb.outcome
+                              className: `text-[10px] mt-0.5 truncate transition-colors duration-300 ${isDone ? "text-slate-300" : "text-slate-400"}`,
+                              children: item.outcomeBreadcrumb.definingObjective
                             }
                           )
                         ] }),
-                        item.outcomeBreadcrumb.definingObjective && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "p",
-                          {
-                            className: `text-[10px] mt-0.5 truncate transition-colors duration-300 ${isDone ? "text-slate-300" : "text-slate-400"}`,
-                            children: item.outcomeBreadcrumb.definingObjective
-                          }
-                        ),
                         item.unplanned && /* @__PURE__ */ jsxRuntimeExports.jsxs(
                           "span",
                           {
@@ -22415,45 +22781,75 @@ function CommitPage() {
           }
         ) })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-3 gap-4", children: [
-        { label: "Committed", value: plannedItems.length, unit: "Tasks", barColor: "#1152d4", barWidth: "100%" },
-        {
-          label: "Achieved",
-          value: commit.items.filter((i) => i.completionStatus === "COMPLETED").length,
-          unit: "Tasks",
-          barColor: "#16a34a",
-          barWidth: `${commit.items.length > 0 ? Math.round(commit.items.filter((i) => i.completionStatus === "COMPLETED").length / commit.items.length * 100) : 0}%`
-        },
-        {
-          label: "Efficiency",
-          value: `${achievedPct}%`,
-          unit: "",
-          barColor: achievedPct >= 75 ? "#1152d4" : "#f97316",
-          barWidth: `${achievedPct}%`,
-          extra: achievedPct < 75 ? "-vs target" : ""
-        }
-      ].map(({ label, value, unit, barColor, barWidth }) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "div",
-        {
-          className: "bg-white p-5 rounded-xl border",
-          style: { borderColor: "rgba(30,58,95,0.06)", boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.04)" },
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-bold uppercase tracking-wider text-slate-400", children: label }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-baseline gap-2 mt-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-2xl font-extrabold text-slate-900", children: value }),
-              unit && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-400 font-semibold text-sm", children: unit })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
-              {
-                className: "h-full rounded-full transition-all",
-                style: { width: barWidth, backgroundColor: barColor }
-              }
-            ) })
-          ]
-        },
-        label
-      )) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 gap-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            className: "bg-white p-5 rounded-xl border",
+            style: { borderColor: "rgba(30,58,95,0.06)", boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.04)" },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-bold uppercase tracking-wider text-slate-400", children: "Committed" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-baseline gap-2 mt-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-2xl font-extrabold text-slate-900", children: plannedItems.length }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-400 font-semibold text-sm", children: "Tasks" })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full rounded-full", style: { width: "100%", backgroundColor: "#1152d4" } }) })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            className: "bg-white p-5 rounded-xl border",
+            style: { borderColor: "rgba(30,58,95,0.06)", boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.04)" },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-bold uppercase tracking-wider text-slate-400", children: "Weight Done" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-baseline gap-2 mt-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-2xl font-extrabold text-slate-900", children: commit.totalDoneWeight }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 font-semibold text-sm", children: [
+                  "/ ",
+                  commit.totalLockedWeight ?? commit.totalWeight
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "div",
+                {
+                  className: "h-full rounded-full transition-all",
+                  style: {
+                    width: `${commit.items.length > 0 ? Math.round(commit.items.filter((i) => i.completionStatus === "COMPLETED").length / commit.items.length * 100) : 0}%`,
+                    backgroundColor: "#16a34a"
+                  }
+                }
+              ) })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            className: "bg-white p-5 rounded-xl border",
+            style: {
+              borderColor: `${integrityColor}33`,
+              boxShadow: `0 1px 3px 0 rgb(0 0 0 / 0.04), inset 0 0 0 1px ${integrityColor}22`
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-bold uppercase tracking-wider text-slate-400", children: "Execution Integrity" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-baseline gap-2 mt-1", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-2xl font-extrabold", style: { color: integrityColor }, children: [
+                integrityPct,
+                "%"
+              ] }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "div",
+                {
+                  className: "h-full rounded-full transition-all",
+                  style: { width: `${integrityPct}%`, backgroundColor: integrityColor }
+                }
+              ) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] mt-1.5 font-semibold", style: { color: integrityColor }, children: integrityPct >= 80 ? "High Success" : integrityPct >= 50 ? "Partial Delivery" : "Strategic Shortfall" })
+            ]
+          }
+        )
+      ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { borderBottom: "1px solid rgba(30,58,95,0.08)" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-8", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(
           "button",
@@ -22888,16 +23284,25 @@ function CommitPage() {
         open: unplannedModalOpen,
         onClose: () => setUnplannedModalOpen(false),
         onSubmit: (item) => createUnplannedItem.mutateAsync({ commitId: commit.id, item }),
-        bumpableItems: commit.items.filter((i) => !i.unplanned)
+        bumpableItems: commit.items.filter((i) => {
+          if (i.unplanned) return false;
+          const alreadyBumped = commit.items.some((u) => u.unplanned && u.bumpedItemId === i.id);
+          return !alreadyBumped;
+        }),
+        alreadyBumpedItems: commit.items.filter((i) => {
+          if (i.unplanned) return false;
+          return commit.items.some((u) => u.unplanned && u.bumpedItemId === i.id);
+        }),
+        totalLockedWeight: commit.totalLockedWeight
       }
     )
   ] });
 }
 
 // src/slot.tsx
-const React$8 = await importShared('react');
+const React$5 = await importShared('react');
 var REACT_LAZY_TYPE = Symbol.for("react.lazy");
-var use = React$8[" use ".trim().toString()];
+var use = React$5[" use ".trim().toString()];
 function isPromiseLike(value) {
   return typeof value === "object" && value !== null && "then" in value;
 }
@@ -22907,24 +23312,24 @@ function isLazyComponent(element) {
 // @__NO_SIDE_EFFECTS__
 function createSlot(ownerName) {
   const SlotClone = /* @__PURE__ */ createSlotClone(ownerName);
-  const Slot2 = React$8.forwardRef((props, forwardedRef) => {
+  const Slot2 = React$5.forwardRef((props, forwardedRef) => {
     let { children, ...slotProps } = props;
     if (isLazyComponent(children) && typeof use === "function") {
       children = use(children._payload);
     }
-    const childrenArray = React$8.Children.toArray(children);
+    const childrenArray = React$5.Children.toArray(children);
     const slottable = childrenArray.find(isSlottable);
     if (slottable) {
       const newElement = slottable.props.children;
       const newChildren = childrenArray.map((child) => {
         if (child === slottable) {
-          if (React$8.Children.count(newElement) > 1) return React$8.Children.only(null);
-          return React$8.isValidElement(newElement) ? newElement.props.children : null;
+          if (React$5.Children.count(newElement) > 1) return React$5.Children.only(null);
+          return React$5.isValidElement(newElement) ? newElement.props.children : null;
         } else {
           return child;
         }
       });
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: React$8.isValidElement(newElement) ? React$8.cloneElement(newElement, void 0, newChildren) : null });
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children: React$5.isValidElement(newElement) ? React$5.cloneElement(newElement, void 0, newChildren) : null });
     }
     return /* @__PURE__ */ jsxRuntimeExports.jsx(SlotClone, { ...slotProps, ref: forwardedRef, children });
   });
@@ -22933,27 +23338,27 @@ function createSlot(ownerName) {
 }
 // @__NO_SIDE_EFFECTS__
 function createSlotClone(ownerName) {
-  const SlotClone = React$8.forwardRef((props, forwardedRef) => {
+  const SlotClone = React$5.forwardRef((props, forwardedRef) => {
     let { children, ...slotProps } = props;
     if (isLazyComponent(children) && typeof use === "function") {
       children = use(children._payload);
     }
-    if (React$8.isValidElement(children)) {
+    if (React$5.isValidElement(children)) {
       const childrenRef = getElementRef(children);
       const props2 = mergeProps(slotProps, children.props);
-      if (children.type !== React$8.Fragment) {
-        props2.ref = forwardedRef ? composeRefs$1(forwardedRef, childrenRef) : childrenRef;
+      if (children.type !== React$5.Fragment) {
+        props2.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef;
       }
-      return React$8.cloneElement(children, props2);
+      return React$5.cloneElement(children, props2);
     }
-    return React$8.Children.count(children) > 1 ? React$8.Children.only(null) : null;
+    return React$5.Children.count(children) > 1 ? React$5.Children.only(null) : null;
   });
   SlotClone.displayName = `${ownerName}.SlotClone`;
   return SlotClone;
 }
 var SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
 function isSlottable(child) {
-  return React$8.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
+  return React$5.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
 }
 function mergeProps(slotProps, childProps) {
   const overrideProps = { ...childProps };
@@ -22994,7 +23399,7 @@ function getElementRef(element) {
 }
 
 // src/primitive.tsx
-const React$7 = await importShared('react');
+const React$4 = await importShared('react');
 
 await importShared('react-dom');
 var NODES = [
@@ -23018,7 +23423,7 @@ var NODES = [
 ];
 var Primitive = NODES.reduce((primitive, node) => {
   const Slot = createSlot(`Primitive.${node}`);
-  const Node = React$7.forwardRef((props, forwardedRef) => {
+  const Node = React$4.forwardRef((props, forwardedRef) => {
     const { asChild, ...primitiveProps } = props;
     const Comp = asChild ? Slot : node;
     if (typeof window !== "undefined") {
@@ -23031,11 +23436,11 @@ var Primitive = NODES.reduce((primitive, node) => {
 }, {});
 
 // src/separator.tsx
-const React$6 = await importShared('react');
+const React$3 = await importShared('react');
 var NAME = "Separator";
 var DEFAULT_ORIENTATION = "horizontal";
 var ORIENTATIONS = ["horizontal", "vertical"];
-var Separator$1 = React$6.forwardRef((props, forwardedRef) => {
+var Separator$1 = React$3.forwardRef((props, forwardedRef) => {
   const { decorative, orientation: orientationProp = DEFAULT_ORIENTATION, ...domProps } = props;
   const orientation = isValidOrientation(orientationProp) ? orientationProp : DEFAULT_ORIENTATION;
   const ariaOrientation = orientation === "vertical" ? orientation : void 0;
@@ -23056,8 +23461,8 @@ function isValidOrientation(orientation) {
 }
 var Root = Separator$1;
 
-const React$4 = await importShared('react');
-const Separator = React$4.forwardRef(({ className, orientation = "horizontal", decorative = true, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const React$2 = await importShared('react');
+const Separator = React$2.forwardRef(({ className, orientation = "horizontal", decorative = true, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Root,
   {
     ref,
@@ -23195,7 +23600,228 @@ function useTeamItemsForBoard() {
   return { commits, loading };
 }
 
-const {useState: useState$4,useMemo: useMemo$1,useEffect} = await importShared('react');
+const {useState: useState$5,useEffect: useEffect$2} = await importShared('react');
+const MIN_ACTION_LENGTH = 20;
+function ProofModal({
+  open,
+  onClose,
+  outcomeTitle,
+  oldValue,
+  newValue,
+  unit,
+  onConfirm,
+  isPending
+}) {
+  const [actionTaken, setActionTaken] = useState$5("");
+  const [verificationType, setVerificationType] = useState$5("DASHBOARD");
+  useEffect$2(() => {
+    if (open) {
+      setActionTaken("");
+      setVerificationType("DASHBOARD");
+    }
+  }, [open]);
+  const charCount = actionTaken.trim().length;
+  const isValid = charCount >= MIN_ACTION_LENGTH;
+  const handleConfirm = async () => {
+    if (!isValid || isPending) return;
+    await onConfirm(actionTaken.trim(), verificationType);
+  };
+  const delta = oldValue != null ? newValue - oldValue : null;
+  const deltaStr = delta != null ? `${delta >= 0 ? "+" : ""}${delta}${unit}` : null;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open, onOpenChange: (o) => !o && !isPending && onClose(), children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "max-w-md", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogHeader, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogTitle, { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base", children: "🔬" }),
+        "Proof of Progress"
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-0.5 pt-1", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold text-slate-700 truncate", children: outcomeTitle }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-400", children: [
+          oldValue != null ? `${oldValue}${unit}` : "—",
+          " → ",
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-bold text-slate-700", children: [
+            newValue,
+            unit
+          ] }),
+          deltaStr && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: `ml-1.5 font-bold ${delta >= 0 ? "text-green-600" : "text-red-500"}`, children: [
+            "(",
+            deltaStr,
+            ")"
+          ] })
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4 py-1", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(Label, { htmlFor: "action-taken", className: "font-semibold", children: [
+            "The Method ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-red-500", children: "*" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "span",
+            {
+              className: `text-[11px] font-bold tabular-nums transition-colors ${charCount === 0 ? "text-slate-400" : charCount < MIN_ACTION_LENGTH ? "text-red-500" : "text-green-600"}`,
+              children: [
+                charCount,
+                " / ",
+                MIN_ACTION_LENGTH,
+                charCount >= MIN_ACTION_LENGTH && " ✓"
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Textarea,
+          {
+            id: "action-taken",
+            value: actionTaken,
+            onChange: (e) => setActionTaken(e.target.value),
+            rows: 3,
+            placeholder: "Describe what was actually done — e.g. 'Rewrote the query planner to use a covering index, eliminating 3 sequential scans per request.'",
+            className: `resize-none transition-colors ${actionTaken.length > 0 && !isValid ? "border-red-300 focus-visible:ring-red-400/40" : isValid ? "border-green-300 focus-visible:ring-green-400/40" : ""}`
+          }
+        ),
+        actionTaken.length > 0 && !isValid && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[11px] text-red-500 mt-1", children: [
+          "Needs ",
+          MIN_ACTION_LENGTH - charCount,
+          " more character",
+          MIN_ACTION_LENGTH - charCount !== 1 ? "s" : "",
+          ` — "done" isn't a method.`
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(Label, { htmlFor: "verification-type", className: "font-semibold mb-1.5 block", children: [
+          "The Proof ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-red-500", children: "*" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(Select, { value: verificationType, onValueChange: (v) => setVerificationType(v), children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { id: "verification-type", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, {}) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContent, { children: Object.entries(VERIFICATION_LABELS).map(([val, label]) => /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: val, children: label }, val)) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-slate-400 mt-1", children: 'Engineering success must be backed by data, not "feeling" faster.' })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogFooter, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: onClose, disabled: isPending, children: "Cancel" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Button,
+        {
+          onClick: () => void handleConfirm(),
+          disabled: !isValid || isPending,
+          className: "bg-[#1152d4] hover:bg-[#1152d4]/90 text-white font-bold",
+          children: isPending ? "Saving…" : "Confirm Update"
+        }
+      )
+    ] })
+  ] }) });
+}
+
+const VERIFICATION_ICONS = {
+  LOAD_TEST: "⚡",
+  QA: "✅",
+  PEER_REVIEW: "👥",
+  DASHBOARD: "📊"
+};
+function formatTs(ts) {
+  return new Date(ts).toLocaleString(void 0, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+function OutcomeHistoryDrawer({
+  open,
+  onClose,
+  outcomeId,
+  outcomeTitle,
+  unit
+}) {
+  const { data: history, isLoading } = useOutcomeHistory(open ? outcomeId : null);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "max-w-lg max-h-[80vh] flex flex-col", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogHeader, { className: "shrink-0", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogTitle, { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base", children: "📜" }),
+        "Ledger of Execution"
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-slate-500 truncate", children: outcomeTitle })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 overflow-y-auto min-h-0 pr-1", children: [
+      isLoading && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-slate-400 text-center py-8", children: "Loading history…" }),
+      !isLoading && (!history || history.length === 0) && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center py-10", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-3xl mb-2", children: "📋" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-semibold text-slate-600", children: "No updates yet" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400 mt-1", children: "The history will appear here once the first value update is recorded." })
+      ] }),
+      history && history.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("ol", { className: "relative border-l-2 border-slate-100 ml-3 space-y-0", children: history.map((entry, idx) => {
+        const isFirst = idx === 0;
+        const delta = entry.oldValue != null ? entry.newValue - entry.oldValue : null;
+        const isProgress = delta != null && delta !== 0;
+        const vType = entry.verificationType;
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs("li", { className: "ml-4 pb-6 last:pb-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              className: `absolute -left-[9px] flex size-4 items-center justify-center rounded-full ring-2 ring-white text-[8px] ${isFirst ? "bg-[#1152d4]" : "bg-slate-200"}`,
+              children: isFirst ? "●" : "○"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-slate-100 bg-white p-3 shadow-sm space-y-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-0.5 min-w-0", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 flex-wrap", children: [
+                  entry.oldValue != null && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-slate-400 line-through", children: [
+                    entry.oldValue,
+                    unit
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs font-black text-slate-800", children: [
+                    entry.newValue,
+                    unit
+                  ] }),
+                  isProgress && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "span",
+                    {
+                      className: `text-[10px] font-bold px-1.5 py-0.5 rounded ${delta > 0 ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`,
+                      children: [
+                        delta > 0 ? "+" : "",
+                        delta,
+                        unit
+                      ]
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[10px] text-slate-400", children: [
+                  entry.updatedByName ?? "Unknown",
+                  " · ",
+                  formatTs(entry.timestamp)
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "span",
+                {
+                  className: "shrink-0 text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600",
+                  title: VERIFICATION_LABELS[vType] ?? vType,
+                  children: [
+                    VERIFICATION_ICONS[vType] ?? "🔍",
+                    VERIFICATION_LABELS[vType] ?? vType
+                  ]
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("blockquote", { className: "text-xs text-slate-600 italic border-l-2 border-[#1152d4]/30 pl-2.5 leading-relaxed", children: [
+              '"',
+              entry.actionTaken,
+              '"'
+            ] })
+          ] })
+        ] }, entry.id);
+      }) })
+    ] })
+  ] }) });
+}
+
+const {useState: useState$4,useMemo: useMemo$1,useEffect: useEffect$1} = await importShared('react');
 function AlignmentTrend({ trend }) {
   const t = trend ?? [];
   if (t.length < 2) return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-slate-400", children: "—" });
@@ -23326,6 +23952,9 @@ function ManagerDashboard() {
   const updateCurrentValue = useUpdateOutcomeCurrentValue();
   const [sortBy, setSortBy] = useState$4("name");
   const [pulseEdits, setPulseEdits] = useState$4({});
+  const [proofModal, setProofModal] = useState$4({ open: false, outcomeId: "", outcomeTitle: "", oldValue: null, newValue: 0, unit: "" });
+  const [historyDrawer, setHistoryDrawer] = useState$4({ open: false, outcomeId: null, outcomeTitle: "", unit: "" });
+  const [successToast, setSuccessToast] = useState$4(null);
   const teamMembers = team?.teamMembers ?? [];
   const northStarData = useMemo$1(() => {
     if (!rcdo) return [];
@@ -23359,7 +23988,7 @@ function ManagerDashboard() {
       )
     );
   }, [rcdo]);
-  useEffect(() => {
+  useEffect$1(() => {
     if (alignment?.teamIntegrityScore == null) return;
     const integrityLabel = alignment.teamIntegrityScore >= 80 ? "MAX POWER" : alignment.teamIntegrityScore >= 50 ? "GRINDING" : "DRIFTING";
     window.dispatchEvent(
@@ -23422,6 +24051,46 @@ function ManagerDashboard() {
   ).length;
   const reconciliationPct = totalMembers > 0 ? Math.round(reconciledMembers / totalMembers * 100) : 0;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8", children: [
+    successToast && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-600 text-white text-sm font-bold px-4 py-3 rounded-xl shadow-2xl animate-in slide-in-from-bottom-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "h-4 w-4 shrink-0" }),
+      successToast
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      ProofModal,
+      {
+        open: proofModal.open,
+        onClose: () => setProofModal((s) => ({ ...s, open: false })),
+        outcomeTitle: proofModal.outcomeTitle,
+        oldValue: proofModal.oldValue,
+        newValue: proofModal.newValue,
+        unit: proofModal.unit,
+        isPending: updateCurrentValue.isPending,
+        onConfirm: async (actionTaken, verificationType) => {
+          await updateCurrentValue.mutateAsync({
+            id: proofModal.outcomeId,
+            body: { currentValue: proofModal.newValue, actionTaken, verificationType }
+          });
+          setPulseEdits((prev) => {
+            const next = { ...prev };
+            delete next[proofModal.outcomeId];
+            return next;
+          });
+          setProofModal((s) => ({ ...s, open: false }));
+          setSuccessToast(`${proofModal.outcomeTitle} updated to ${proofModal.newValue}${proofModal.unit}`);
+          setTimeout(() => setSuccessToast(null), 3500);
+        }
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      OutcomeHistoryDrawer,
+      {
+        open: historyDrawer.open,
+        onClose: () => setHistoryDrawer((s) => ({ ...s, open: false })),
+        outcomeId: historyDrawer.outcomeId,
+        outcomeTitle: historyDrawer.outcomeTitle,
+        unit: historyDrawer.unit
+      }
+    ),
     activeRallyCry && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-3 gap-8", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "lg:col-span-2 relative overflow-hidden rounded-2xl bg-[#1e293b] text-white p-8 shadow-2xl shadow-[#1e293b]/20 flex flex-col justify-center", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute top-0 right-0 -mt-12 -mr-12 size-64 bg-[#1152d4]/20 rounded-full blur-3xl pointer-events-none" }),
@@ -23464,10 +24133,10 @@ function ManagerDashboard() {
       /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-6", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-black uppercase tracking-widest text-slate-400", children: "Alignment Gauge" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(BarChart3$1, { className: "h-4 w-4 text-[#1152d4]" })
+          /* @__PURE__ */ jsxRuntimeExports.jsx(BarChart3, { className: "h-4 w-4 text-[#1152d4]" })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 flex flex-col justify-center items-center gap-6", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative size-32", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative size-32 group cursor-help", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { className: "size-full", viewBox: "0 0 100 100", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: "50", cy: "50", fill: "none", r: "45", strokeWidth: "8", className: "stroke-slate-100" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -23491,6 +24160,87 @@ function ManagerDashboard() {
                 "%"
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-bold text-slate-400 uppercase", children: "Strategic" })
+            ] }),
+            alignment && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+10px)] z-30 w-56 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col items-center", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-[#1e293b]" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-[#1e293b] text-white rounded-xl shadow-2xl p-3 space-y-2.5 text-[11px] w-full", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-black uppercase tracking-widest text-slate-400 text-[9px]", children: "Weight Breakdown" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5 font-bold text-white", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-amber-400", children: "♔♕♖" }),
+                      " Strategic"
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-black text-[#60a5fa]", children: [
+                      alignment.strategicWeight,
+                      " pts"
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-1 bg-white/10 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "div",
+                    {
+                      className: "h-full rounded-full bg-[#1152d4]",
+                      style: { width: `${alignment.strategicPercentage}%` }
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between text-slate-400 text-[9px]", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "King ×20 · Queen ×10 · Rook ×5" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                      alignment.strategicPercentage,
+                      "%"
+                    ] })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5 font-bold text-slate-300", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "♗♘♙" }),
+                      " Tactical"
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-black text-slate-300", children: [
+                      alignment.tacticalWeight,
+                      " pts"
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-1 bg-white/10 rounded-full overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "div",
+                    {
+                      className: "h-full rounded-full bg-slate-500",
+                      style: { width: `${100 - alignment.strategicPercentage}%` }
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between text-slate-400 text-[9px]", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Bishop ×3 · Knight ×3 · Pawn ×1" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                      100 - alignment.strategicPercentage,
+                      "%"
+                    ] })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "border-t border-white/10 pt-2 space-y-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between text-slate-300", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Aligned weight" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-bold", children: [
+                      alignment.alignedWeight,
+                      " pts"
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between text-slate-300", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Total committed" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-bold", children: [
+                      alignment.totalWeight,
+                      " pts"
+                    ] })
+                  ] }),
+                  alignment.lockedOnMondayWeight > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between text-slate-400 text-[9px]", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Locked Monday" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                      alignment.lockedOnMondayWeight,
+                      " pts"
+                    ] })
+                  ] })
+                ] })
+              ] })
             ] })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full space-y-3", children: [
@@ -23500,6 +24250,7 @@ function ManagerDashboard() {
                 /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold", children: "Strategic (King/Queen/Rook)" })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs font-bold", children: [
+                alignment ? `${alignment.strategicWeight} pts · ` : "",
                 alignment?.strategicPercentage ?? 70,
                 "%"
               ] })
@@ -23511,6 +24262,7 @@ function ManagerDashboard() {
                 /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold text-slate-500", children: "Tactical (Bishop/Knight/Pawn)" })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs font-bold text-slate-500", children: [
+                alignment ? `${alignment.tacticalWeight} pts · ` : "",
                 100 - (alignment?.strategicPercentage ?? 70),
                 "%"
               ] })
@@ -23592,6 +24344,29 @@ function ManagerDashboard() {
                       /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3 w-3 shrink-0" }),
                       "Low Velocity"
                     ] }),
+                    rcdo && (() => {
+                      const doOutcomes = rcdo.rallyCries.flatMap((rc2) => rc2.definingObjectives).find((d) => d.id === obj.definingObjectiveId)?.outcomes ?? [];
+                      const measurableOutcomes = doOutcomes.filter((o) => o.targetValue != null);
+                      if (measurableOutcomes.length === 0) return null;
+                      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1", children: measurableOutcomes.map((o) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "button",
+                        {
+                          onClick: () => setHistoryDrawer({
+                            open: true,
+                            outcomeId: o.id,
+                            outcomeTitle: o.title,
+                            unit: o.unit ?? ""
+                          }),
+                          className: "flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-[#1152d4] hover:bg-[#1152d4]/10 px-1.5 py-0.5 rounded transition-colors",
+                          title: `View history: ${o.title}`,
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(History, { className: "h-2.5 w-2.5" }),
+                            o.title.length > 20 ? o.title.slice(0, 18) + "…" : o.title
+                          ]
+                        },
+                        o.id
+                      )) });
+                    })(),
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-center", children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "relative group cursor-help", children: [
                         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-bold text-slate-400 uppercase tracking-wide border-b border-dotted border-slate-300", children: "Effort Share" }),
@@ -23680,11 +24455,27 @@ function ManagerDashboard() {
                       },
                       children: [
                         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start justify-between gap-2", children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
                             /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[9px] font-bold uppercase tracking-widest text-slate-400 truncate", children: outcome.doTitle }),
                             /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-bold text-slate-800 leading-snug mt-0.5", children: outcome.title })
                           ] }),
-                          isStale && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-black uppercase shrink-0 px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200", children: "STALE" })
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1 shrink-0", children: [
+                            isStale && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200", children: "STALE" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              "button",
+                              {
+                                onClick: () => setHistoryDrawer({
+                                  open: true,
+                                  outcomeId: outcome.id,
+                                  outcomeTitle: outcome.title,
+                                  unit: outcome.unit ?? ""
+                                }),
+                                className: "w-6 h-6 rounded flex items-center justify-center text-slate-300 hover:text-[#1152d4] hover:bg-[#1152d4]/10 transition-colors",
+                                title: "View update history",
+                                children: /* @__PURE__ */ jsxRuntimeExports.jsx(History, { className: "h-3.5 w-3.5" })
+                              }
+                            )
+                          ] })
                         ] }),
                         outcome.startValue != null && outcome.targetValue != null && /* @__PURE__ */ jsxRuntimeExports.jsx(
                           SuccessGauge,
@@ -23715,12 +24506,13 @@ function ManagerDashboard() {
                               disabled: !isDirty || updateCurrentValue.isPending,
                               onClick: () => {
                                 if (isDirty && editVal != null) {
-                                  void updateCurrentValue.mutateAsync({ id: outcome.id, body: { currentValue: Number(editVal) } }).then(() => {
-                                    setPulseEdits((prev) => {
-                                      const next = { ...prev };
-                                      delete next[outcome.id];
-                                      return next;
-                                    });
+                                  setProofModal({
+                                    open: true,
+                                    outcomeId: outcome.id,
+                                    outcomeTitle: outcome.title,
+                                    oldValue: outcome.currentValue ?? outcome.startValue ?? null,
+                                    newValue: Number(editVal),
+                                    unit: outcome.unit ?? ""
                                   });
                                 }
                               },
@@ -24222,8 +25014,8 @@ function ManagerDashboard() {
   ] });
 }
 
-const React = await importShared('react');
-const {useState: useState$3} = React;
+const React$1 = await importShared('react');
+const {useState: useState$3} = React$1;
 function RallyCryModal({
   open,
   onClose,
@@ -24235,7 +25027,7 @@ function RallyCryModal({
 }) {
   const [title, setTitle] = useState$3(edit?.title ?? "");
   const [description, setDescription] = useState$3(edit?.description ?? "");
-  React.useEffect(() => {
+  React$1.useEffect(() => {
     if (open) {
       setTitle(edit?.title ?? "");
       setDescription(edit?.description ?? "");
@@ -24278,7 +25070,7 @@ function DefiningObjectiveModal({
 }) {
   const [title, setTitle] = useState$3(edit?.title ?? "");
   const [description, setDescription] = useState$3(edit?.description ?? "");
-  React.useEffect(() => {
+  React$1.useEffect(() => {
     if (open) {
       setTitle(edit?.title ?? "");
       setDescription(edit?.description ?? "");
@@ -24315,6 +25107,12 @@ function DefiningObjectiveModal({
   ] }) });
 }
 const UNIT_SUGGESTIONS = ["ms", "USD", "Percentage", "Tickets", "NPS", "Users", "Days", "Points"];
+const UNIT_TYPE_OPTIONS = [
+  { value: "NUMERIC", label: "Numeric (count, quantity)" },
+  { value: "PERCENT", label: "Percent (%)" },
+  { value: "CURRENCY", label: "Currency ($, £, €)" },
+  { value: "TIME", label: "Time (ms, s, days)" }
+];
 function OutcomeModal({
   open,
   onClose,
@@ -24333,7 +25131,9 @@ function OutcomeModal({
   const [startValue, setStartValue] = useState$3(edit?.startValue != null ? String(edit.startValue) : "0");
   const [targetValue, setTargetValue] = useState$3(edit?.targetValue != null ? String(edit.targetValue) : "");
   const [unit, setUnit] = useState$3(edit?.unit ?? "");
-  React.useEffect(() => {
+  const [unitLabel, setUnitLabel] = useState$3(edit?.unitLabel ?? "");
+  const [unitType, setUnitType] = useState$3(edit?.unitType ?? "NUMERIC");
+  React$1.useEffect(() => {
     if (open) {
       setTitle(edit?.title ?? "");
       setDescription(edit?.description ?? "");
@@ -24341,13 +25141,19 @@ function OutcomeModal({
       setStartValue(edit?.startValue != null ? String(edit.startValue) : "0");
       setTargetValue(edit?.targetValue != null ? String(edit.targetValue) : "");
       setUnit(edit?.unit ?? "");
+      setUnitLabel(edit?.unitLabel ?? "");
+      setUnitType(edit?.unitType ?? "NUMERIC");
     }
   }, [open, edit, orgMembers]);
   const parsedStart = parseFloat(startValue) || 0;
   const parsedTarget = parseFloat(targetValue);
-  const isTargetInvalid = isNaN(parsedTarget) || parsedTarget === parsedStart;
+  const isTargetMissing = isNaN(parsedTarget);
+  const isTargetSameAsStart = !isTargetMissing && parsedTarget === parsedStart;
+  const isOptimizationGoal = !isTargetMissing && !isTargetSameAsStart && parsedTarget < parsedStart;
+  const isTargetInvalid = isTargetMissing || isTargetSameAsStart;
   const isDescriptionVague = description.trim() !== "" && !/\d/.test(description);
   const canSubmit = title.trim() && ownerId && !isTargetInvalid && unit.trim();
+  const displaySuffix = unitLabel.trim() || unit.trim();
   const handleSubmit = async () => {
     if (!canSubmit) return;
     if (edit && onUpdate) {
@@ -24357,7 +25163,9 @@ function OutcomeModal({
         ownerId,
         startValue: parsedStart,
         targetValue: parsedTarget,
-        unit: unit.trim()
+        unit: unit.trim(),
+        unitLabel: unitLabel.trim() || void 0,
+        unitType
       });
     } else if (onCreate) {
       await onCreate({
@@ -24367,7 +25175,9 @@ function OutcomeModal({
         description: description.trim() || void 0,
         startValue: parsedStart,
         targetValue: parsedTarget,
-        unit: unit.trim()
+        unit: unit.trim(),
+        unitLabel: unitLabel.trim() || void 0,
+        unitType
       });
     }
     onClose();
@@ -24402,9 +25212,19 @@ function OutcomeModal({
           "Measurable Target ",
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-normal text-slate-400 normal-case tracking-normal", children: "(Advantage Rule)" })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "out-unit-type", className: "text-xs", children: "Measurement Type" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(Select, { value: unitType, onValueChange: (v) => setUnitType(v), children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { id: "out-unit-type", className: "h-8 text-xs", children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, {}) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContent, { children: UNIT_TYPE_OPTIONS.map((opt) => /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: opt.value, className: "text-xs", children: opt.label }, opt.value)) })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-2", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "out-unit", className: "text-xs", children: "Unit" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(Label, { htmlFor: "out-unit", className: "text-xs", children: [
+              "Unit ",
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-red-500", children: "*" })
+            ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               Input,
               {
@@ -24412,11 +25232,30 @@ function OutcomeModal({
                 value: unit,
                 onChange: (e) => setUnit(e.target.value),
                 placeholder: "ms, USD, %…",
-                list: "unit-suggestions"
+                list: "unit-suggestions",
+                className: "h-8 text-xs"
               }
             ),
             /* @__PURE__ */ jsxRuntimeExports.jsx("datalist", { id: "unit-suggestions", children: UNIT_SUGGESTIONS.map((u) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: u }, u)) })
           ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(Label, { htmlFor: "out-unit-label", className: "text-xs", children: [
+              "Label ",
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-400", children: "(optional)" })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
+              {
+                id: "out-unit-label",
+                value: unitLabel,
+                onChange: (e) => setUnitLabel(e.target.value),
+                placeholder: "Questions, Bugs, Steps…",
+                className: "h-8 text-xs"
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-2", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "out-start", className: "text-xs", children: "Baseline" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -24426,7 +25265,8 @@ function OutcomeModal({
                 type: "number",
                 value: startValue,
                 onChange: (e) => setStartValue(e.target.value),
-                placeholder: "0"
+                placeholder: "0",
+                className: "h-8 text-xs"
               }
             )
           ] }),
@@ -24443,23 +25283,33 @@ function OutcomeModal({
                 value: targetValue,
                 onChange: (e) => setTargetValue(e.target.value),
                 placeholder: "e.g. 180",
-                className: isTargetInvalid && targetValue !== "" ? "border-red-400" : ""
+                className: `h-8 text-xs${isTargetSameAsStart && targetValue !== "" ? " border-red-400" : ""}`
               }
             ),
-            isTargetInvalid && targetValue !== "" && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-red-500 mt-1", children: "Target must differ from baseline." })
+            isTargetSameAsStart && targetValue !== "" && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-red-500 mt-1", children: "Target must differ from baseline." })
           ] })
         ] }),
-        !isTargetInvalid && unit.trim() && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[10px] text-slate-500", children: [
-          "Goal: move from ",
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("strong", { children: [
-            parsedStart,
-            unit
+        !isTargetInvalid && unit.trim() && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-[10px] text-slate-500 flex-1", children: [
+            "Goal: move from ",
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("strong", { children: [
+              parsedStart,
+              displaySuffix
+            ] }),
+            " → ",
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("strong", { children: [
+              parsedTarget,
+              displaySuffix
+            ] })
           ] }),
-          " → ",
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("strong", { children: [
-            parsedTarget,
-            unit
-          ] })
+          isOptimizationGoal && /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              className: "shrink-0 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded",
+              title: "Target is lower than baseline — this is a reduction/optimization goal. The gauge fills as the value decreases.",
+              children: "↓ Optimization Goal"
+            }
+          )
         ] })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -24497,7 +25347,7 @@ const DO_ICON_PALETTE = [
   { bg: "bg-indigo-100", text: "text-indigo-600", Icon: FileText },
   { bg: "bg-[#1152d4]/10", text: "text-[#1152d4]", Icon: Wifi },
   { bg: "bg-slate-100", text: "text-slate-600", Icon: CreditCard },
-  { bg: "bg-cyan-100", text: "text-cyan-600", Icon: BarChart3$1 },
+  { bg: "bg-cyan-100", text: "text-cyan-600", Icon: BarChart3 },
   { bg: "bg-purple-100", text: "text-purple-600", Icon: Radio }
 ];
 function RallyCryCard({
@@ -24790,8 +25640,8 @@ function StrategyPage() {
   ] });
 }
 
-const React$5 = await importShared('react');
-const Card = React$5.forwardRef(
+const React = await importShared('react');
+const Card = React.forwardRef(
   ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
     {
@@ -24802,11 +25652,11 @@ const Card = React$5.forwardRef(
   )
 );
 Card.displayName = "Card";
-const CardHeader = React$5.forwardRef(
+const CardHeader = React.forwardRef(
   ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { ref, className: cn("flex flex-col space-y-1.5 p-6", className), ...props })
 );
 CardHeader.displayName = "CardHeader";
-const CardTitle = React$5.forwardRef(
+const CardTitle = React.forwardRef(
   ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
     "h3",
     {
@@ -24817,15 +25667,15 @@ const CardTitle = React$5.forwardRef(
   )
 );
 CardTitle.displayName = "CardTitle";
-const CardDescription = React$5.forwardRef(
+const CardDescription = React.forwardRef(
   ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx("p", { ref, className: cn("text-sm text-muted-foreground", className), ...props })
 );
 CardDescription.displayName = "CardDescription";
-const CardContent = React$5.forwardRef(
+const CardContent = React.forwardRef(
   ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { ref, className: cn("p-6 pt-0", className), ...props })
 );
 CardContent.displayName = "CardContent";
-const CardFooter = React$5.forwardRef(
+const CardFooter = React.forwardRef(
   ({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { ref, className: cn("flex items-center p-6 pt-0", className), ...props })
 );
 CardFooter.displayName = "CardFooter";
@@ -24973,9 +25823,9 @@ function CommitDetailPage() {
   ] });
 }
 
-const {useState} = await importShared('react');
+const {useState: useState$1} = await importShared('react');
 function CommitHistoryPage() {
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState$1(0);
   const navigate = useNavigate();
   const { data, isLoading, error } = useCommitHistory(page);
   if (isLoading) {
@@ -25165,7 +26015,7 @@ function ResourcesPage() {
   ] });
 }
 
-const {useState: useState$1,useMemo,useEffect: useEffect$1} = await importShared('react');
+const {useState,useMemo,useEffect} = await importShared('react');
 
 const DEMO_COMMITS = [
   { id: 1, taskName: "Refactor auth pipeline", chessPiece: "King", status: "Done", definingObjective: "Platform Stability", contributor: "Alex Chen" },
@@ -25205,7 +26055,7 @@ const GLOBAL_CSS = `
 }
 `;
 function useGlobalStyles() {
-  useEffect$1(() => {
+  useEffect(() => {
     if (document.getElementById("sb-styles")) return;
     const style = document.createElement("style");
     style.id = "sb-styles";
@@ -25293,7 +26143,7 @@ const PIECE_MAP = {
   Pawn: PawnIcon
 };
 function ChessPiece({ commit, index }) {
-  const [hovered, setHovered] = useState$1(false);
+  const [hovered, setHovered] = useState(false);
   const PieceIcon = PIECE_MAP[commit.chessPiece];
   const isDone = commit.status === "Done";
   const isPending = commit.status === "Pending";

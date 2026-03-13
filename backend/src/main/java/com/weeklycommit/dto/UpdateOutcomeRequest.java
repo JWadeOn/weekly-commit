@@ -1,5 +1,6 @@
 package com.weeklycommit.dto;
 
+import com.weeklycommit.model.UnitType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,4 +23,6 @@ public class UpdateOutcomeRequest {
     private Double targetValue;
     private Double currentValue;
     private String unit;
+    private String unitLabel;
+    private UnitType unitType;
 }

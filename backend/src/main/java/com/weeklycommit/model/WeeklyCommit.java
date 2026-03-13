@@ -51,4 +51,7 @@ public class WeeklyCommit {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "total_locked_weight")
+    private Integer totalLockedWeight;
 }

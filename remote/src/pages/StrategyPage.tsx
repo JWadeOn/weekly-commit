@@ -37,6 +37,7 @@ import type {
   AdminDefiningObjectiveDto,
   AdminOutcomeDto,
   OrgMemberDto,
+  UnitType,
 } from '@/types'
 
 // ─── Rally Cry modal ───────────────────────────────────────────────────────
@@ -141,6 +142,13 @@ function DefiningObjectiveModal({
 // ─── Outcome modal ─────────────────────────────────────────────────────────
 const UNIT_SUGGESTIONS = ['ms', 'USD', 'Percentage', 'Tickets', 'NPS', 'Users', 'Days', 'Points']
 
+const UNIT_TYPE_OPTIONS: { value: UnitType; label: string }[] = [
+  { value: 'NUMERIC', label: 'Numeric (count, quantity)' },
+  { value: 'PERCENT', label: 'Percent (%)' },
+  { value: 'CURRENCY', label: 'Currency ($, £, €)' },
+  { value: 'TIME', label: 'Time (ms, s, days)' },
+]
+
 function OutcomeModal({
   open, onClose, definingObjectiveId, definingObjectiveTitle, orgMembers, edit, onCreate, onUpdate, creating, updating,
 }: {
@@ -150,8 +158,8 @@ function OutcomeModal({
   definingObjectiveTitle: string
   orgMembers: OrgMemberDto[]
   edit?: AdminOutcomeDto | null
-  onCreate?: (body: { definingObjectiveId: string; ownerId: string; title: string; description?: string; startValue?: number; targetValue: number; unit: string }) => Promise<unknown>
-  onUpdate?: (id: string, body: { title: string; description?: string; ownerId?: string; active?: boolean; startValue?: number; targetValue?: number; unit?: string }) => Promise<unknown>
+  onCreate?: (body: { definingObjectiveId: string; ownerId: string; title: string; description?: string; startValue?: number; targetValue: number; unit: string; unitLabel?: string; unitType?: UnitType }) => Promise<unknown>
+  onUpdate?: (id: string, body: { title: string; description?: string; ownerId?: string; active?: boolean; startValue?: number; targetValue?: number; unit?: string; unitLabel?: string; unitType?: UnitType }) => Promise<unknown>
   creating?: boolean
   updating?: boolean
 }): React.ReactElement {
@@ -161,6 +169,8 @@ function OutcomeModal({
   const [startValue, setStartValue] = useState(edit?.startValue != null ? String(edit.startValue) : '0')
   const [targetValue, setTargetValue] = useState(edit?.targetValue != null ? String(edit.targetValue) : '')
   const [unit, setUnit] = useState(edit?.unit ?? '')
+  const [unitLabel, setUnitLabel] = useState(edit?.unitLabel ?? '')
+  const [unitType, setUnitType] = useState<UnitType>(edit?.unitType ?? 'NUMERIC')
 
   React.useEffect(() => {
     if (open) {
@@ -170,14 +180,21 @@ function OutcomeModal({
       setStartValue(edit?.startValue != null ? String(edit.startValue) : '0')
       setTargetValue(edit?.targetValue != null ? String(edit.targetValue) : '')
       setUnit(edit?.unit ?? '')
+      setUnitLabel(edit?.unitLabel ?? '')
+      setUnitType(edit?.unitType ?? 'NUMERIC')
     }
   }, [open, edit, orgMembers])
 
   const parsedStart = parseFloat(startValue) || 0
   const parsedTarget = parseFloat(targetValue)
-  const isTargetInvalid = isNaN(parsedTarget) || parsedTarget === parsedStart
+  const isTargetMissing = isNaN(parsedTarget)
+  const isTargetSameAsStart = !isTargetMissing && parsedTarget === parsedStart
+  const isOptimizationGoal = !isTargetMissing && !isTargetSameAsStart && parsedTarget < parsedStart
+  const isTargetInvalid = isTargetMissing || isTargetSameAsStart
   const isDescriptionVague = description.trim() !== '' && !/\d/.test(description)
   const canSubmit = title.trim() && ownerId && !isTargetInvalid && unit.trim()
+
+  const displaySuffix = unitLabel.trim() || unit.trim()
 
   const handleSubmit = async () => {
     if (!canSubmit) return
@@ -189,6 +206,8 @@ function OutcomeModal({
         startValue: parsedStart,
         targetValue: parsedTarget,
         unit: unit.trim(),
+        unitLabel: unitLabel.trim() || undefined,
+        unitType,
       })
     } else if (onCreate) {
       await onCreate({
@@ -199,6 +218,8 @@ function OutcomeModal({
         startValue: parsedStart,
         targetValue: parsedTarget,
         unit: unit.trim(),
+        unitLabel: unitLabel.trim() || undefined,
+        unitType,
       })
     }
     onClose()
@@ -233,20 +254,50 @@ function OutcomeModal({
             <p className="text-[10px] font-black uppercase tracking-widest text-[#1152d4]">
               Measurable Target <span className="font-normal text-slate-400 normal-case tracking-normal">(Advantage Rule)</span>
             </p>
-            <div className="grid grid-cols-3 gap-2">
+
+            {/* Unit type selector */}
+            <div>
+              <Label htmlFor="out-unit-type" className="text-xs">Measurement Type</Label>
+              <Select value={unitType} onValueChange={(v) => setUnitType(v as UnitType)}>
+                <SelectTrigger id="out-unit-type" className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIT_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="out-unit" className="text-xs">Unit</Label>
+                <Label htmlFor="out-unit" className="text-xs">Unit <span className="text-red-500">*</span></Label>
                 <Input
                   id="out-unit"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
                   placeholder="ms, USD, %…"
                   list="unit-suggestions"
+                  className="h-8 text-xs"
                 />
                 <datalist id="unit-suggestions">
                   {UNIT_SUGGESTIONS.map((u) => <option key={u} value={u} />)}
                 </datalist>
               </div>
+              <div>
+                <Label htmlFor="out-unit-label" className="text-xs">Label <span className="text-slate-400">(optional)</span></Label>
+                <Input
+                  id="out-unit-label"
+                  value={unitLabel}
+                  onChange={(e) => setUnitLabel(e.target.value)}
+                  placeholder="Questions, Bugs, Steps…"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label htmlFor="out-start" className="text-xs">Baseline</Label>
                 <Input
@@ -255,6 +306,7 @@ function OutcomeModal({
                   value={startValue}
                   onChange={(e) => setStartValue(e.target.value)}
                   placeholder="0"
+                  className="h-8 text-xs"
                 />
               </div>
               <div>
@@ -265,18 +317,29 @@ function OutcomeModal({
                   value={targetValue}
                   onChange={(e) => setTargetValue(e.target.value)}
                   placeholder="e.g. 180"
-                  className={isTargetInvalid && targetValue !== '' ? 'border-red-400' : ''}
+                  className={`h-8 text-xs${isTargetSameAsStart && targetValue !== '' ? ' border-red-400' : ''}`}
                 />
-                {isTargetInvalid && targetValue !== '' && (
+                {isTargetSameAsStart && targetValue !== '' && (
                   <p className="text-[10px] text-red-500 mt-1">Target must differ from baseline.</p>
                 )}
               </div>
             </div>
-            {/* Preview */}
+
+            {/* Preview / Optimization Goal badge */}
             {!isTargetInvalid && unit.trim() && (
-              <p className="text-[10px] text-slate-500">
-                Goal: move from <strong>{parsedStart}{unit}</strong> → <strong>{parsedTarget}{unit}</strong>
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] text-slate-500 flex-1">
+                  Goal: move from <strong>{parsedStart}{displaySuffix}</strong> → <strong>{parsedTarget}{displaySuffix}</strong>
+                </p>
+                {isOptimizationGoal && (
+                  <span
+                    className="shrink-0 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded"
+                    title="Target is lower than baseline — this is a reduction/optimization goal. The gauge fills as the value decreases."
+                  >
+                    ↓ Optimization Goal
+                  </span>
+                )}
+              </div>
             )}
           </div>
 

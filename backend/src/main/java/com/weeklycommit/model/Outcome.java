@@ -51,6 +51,13 @@ public class Outcome {
     @Column(name = "unit", length = 50)
     private String unit;
 
+    @Column(name = "unit_label", length = 100)
+    private String unitLabel;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit_type", length = 20)
+    private UnitType unitType;
+
     @Column(name = "last_updated")
     private LocalDateTime lastUpdated;
 }

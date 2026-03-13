@@ -206,6 +206,8 @@ export function CommitPage(): React.ReactElement {
     Record<string, { actualOutcome: string; completionStatus: CompletionStatus | ''; carryForward: boolean }>
   >({})
   const [reconcileTab, setReconcileTab] = useState<'planned' | 'unplanned'>('planned')
+  const [showStrategicNudge, setShowStrategicNudge] = useState(false)
+  const [confirmLockOpen, setConfirmLockOpen] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -230,11 +232,38 @@ export function CommitPage(): React.ReactElement {
     (i) => i.chessPiece === 'KING' || i.chessPiece === 'QUEEN'
   )
 
-  // Progress calculation — count how many of the 4 visual layers have at least 1 item
-  const filledLayers = CHESS_LAYERS.filter((layer) =>
-    layer.pieces.some((p) => itemsByPiece[p]?.length > 0)
-  ).length
-  const progressPct = Math.round((filledLayers / CHESS_LAYERS.length) * 100)
+  // Intent-based 3-phase Tension Loop progress
+  const intentProgressPct =
+    commit.status === 'DRAFT'
+      ? Math.min(100, Math.round((commit.items.length / 3) * 100))
+      : commit.status === 'LOCKED'
+      ? 100
+      : commit.totalLockedWeight
+      ? Math.min(100, Math.round((commit.totalDoneWeight / commit.totalLockedWeight) * 100))
+      : 0
+
+  const progressLabel =
+    commit.status === 'DRAFT'
+      ? 'Planning Your Week'
+      : commit.status === 'LOCKED'
+      ? 'Commitment Active'
+      : 'Execution Integrity'
+
+  const progressColor =
+    commit.status === 'RECONCILING' || commit.status === 'RECONCILED'
+      ? intentProgressPct >= 80
+        ? '#16a34a'
+        : intentProgressPct >= 50
+        ? '#f59e0b'
+        : '#ef4444'
+      : '#1152d4'
+
+  // Integrity pct for RECONCILING/RECONCILED (weight-based)
+  const integrityPct = commit.totalLockedWeight
+    ? Math.min(100, Math.round((commit.totalDoneWeight / commit.totalLockedWeight) * 100))
+    : 0
+  const integrityColor =
+    integrityPct >= 80 ? '#16a34a' : integrityPct >= 50 ? '#f59e0b' : '#ef4444'
 
   const handleDragEnd = (event: DragEndEvent, piece: ChessPiece): void => {
     const { active, over } = event
@@ -256,7 +285,19 @@ export function CommitPage(): React.ReactElement {
   }
 
   const handleSubmitWeek = (): void => {
+    setConfirmLockOpen(false)
+    setShowStrategicNudge(false)
     updateStatus.mutate({ id: commit.id, body: { status: 'LOCKED' } })
+  }
+
+  const handleLockAttempt = (): void => {
+    const pawnCount = commit.items.filter((i) => i.chessPiece === 'PAWN').length
+    const kqCount = commit.items.filter((i) => i.chessPiece === 'KING' || i.chessPiece === 'QUEEN').length
+    if (kqCount === 0 && pawnCount > 5) {
+      setShowStrategicNudge(true)
+    } else {
+      setConfirmLockOpen(true)
+    }
   }
 
   const handleRetract = (): void => {
@@ -301,10 +342,6 @@ export function CommitPage(): React.ReactElement {
   const plannedItems = commit.items.filter((i) => !i.unplanned)
   const unplannedItems = commit.items.filter((i) => i.unplanned)
 
-  const completedCount = commit.items.filter((i) => i.completionStatus === 'COMPLETED').length
-  const achievedPct =
-    commit.items.length > 0 ? Math.round((completedCount / commit.items.length) * 100) : 0
-
   // ── Morning View HUD calculations (LOCKED state) ──────────────────────────
   const hudWeekEnd = new Date(commit.weekEndDate)
   const hudDaysLeft = Math.max(0, Math.ceil((hudWeekEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
@@ -313,8 +350,6 @@ export function CommitPage(): React.ReactElement {
     (hudWeekStart.getTime() - new Date(hudWeekStart.getFullYear(), 0, 1).getTime()) /
     (7 * 24 * 60 * 60 * 1000)
   )
-  const hudDoneCount = completedCount
-  const hudDonePct = commit.items.length > 0 ? Math.round((hudDoneCount / commit.items.length) * 100) : 0
 
   // Sidebar gap count — outcomes with 0 team weight (server data) or 0 personal weight (fallback)
   const committedOutcomeIds = new Set(commit.items.map((i) => i.outcomeId))
@@ -342,13 +377,22 @@ export function CommitPage(): React.ReactElement {
         </div>
         <div className="w-full md:w-64 bg-white p-4 rounded-xl border border-slate-200 shadow-sm shrink-0">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-semibold text-slate-700">Alignment Ratio</span>
-            <span className="text-sm font-bold text-[#1152d4]">{progressPct}%</span>
+            <span className="text-sm font-semibold text-slate-700">{progressLabel}</span>
+            <span className="text-sm font-bold" style={{ color: progressColor }}>{intentProgressPct}%</span>
           </div>
           <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-[#1152d4] rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${intentProgressPct}%`, backgroundColor: progressColor }}
+            />
           </div>
-          <p className="text-[10px] mt-2 text-slate-400 uppercase tracking-wider font-bold">Strategic vs Routine</p>
+          <p className="text-[10px] mt-2 text-slate-400 uppercase tracking-wider font-bold">
+            {commit.status === 'DRAFT'
+              ? 'Add 3+ items to unlock'
+              : commit.status === 'LOCKED'
+              ? 'Monday Promise locked in'
+              : 'Weight-based integrity score'}
+          </p>
         </div>
       </div>
 
@@ -382,21 +426,24 @@ export function CommitPage(): React.ReactElement {
           >
             <div className="flex justify-between items-end">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Check-in Progress</h3>
+                <h3 className="text-base font-bold text-slate-900">Planning Your Week</h3>
                 <p className="text-sm text-slate-500 mt-0.5">
                   {formatWeekRange(commit.weekStartDate, commit.weekEndDate)}
                 </p>
               </div>
               <span className="text-2xl font-black" style={{ color: '#1152d4' }}>
-                {progressPct}%
+                {intentProgressPct}%
               </span>
             </div>
             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPct}%`, backgroundColor: '#1152d4' }}
+                style={{ width: `${intentProgressPct}%`, backgroundColor: '#1152d4' }}
               />
             </div>
+            <p className="text-xs text-slate-500">
+              {commit.items.length} item{commit.items.length !== 1 ? 's' : ''} — add at least 3 to publish
+            </p>
             {commit.items.length > 0 && !hasKingOrQueen && (
               <div
                 className="flex items-center gap-2 text-sm font-medium p-3 rounded-lg border"
@@ -525,34 +572,61 @@ export function CommitPage(): React.ReactElement {
             )
           })}
 
+          {/* Strategic Nudge Dialog — appears before lock if 0 Kings/Queens + >5 Pawns */}
+          <AlertDialog open={showStrategicNudge} onOpenChange={setShowStrategicNudge}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <span style={{ color: '#d4af37' }}>♔</span> Strategic Opportunity
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your week is heavy on routine tasks. Is there one "King Move" you can prioritize
+                  instead to drive the Team Outcome? A single King (20x) outweighs five Pawns combined.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowStrategicNudge(false)}>
+                  Go Back &amp; Reconsider
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => { setShowStrategicNudge(false); setConfirmLockOpen(true) }}
+                  className="bg-slate-700 hover:bg-slate-800 text-white"
+                >
+                  Continue Anyway
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Confirm Lock Dialog */}
+          <AlertDialog open={confirmLockOpen} onOpenChange={setConfirmLockOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Submit your weekly commit?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will lock your commit and notify your manager. You can retract it until
+                  your manager views it.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSubmitWeek}>Submit</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
           {/* Finalize button */}
           {commit.items.length > 0 && (
             <div className="flex justify-center pt-4">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    disabled={updateStatus.isPending}
-                    className="flex items-center gap-2 px-10 py-4 text-white rounded-xl font-bold text-base shadow-xl transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: '#1e293b' }}
-                  >
-                    <Lock className="h-5 w-5" />
-                    Finalize &amp; Lock Week
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Submit your weekly commit?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will lock your commit and notify your manager. You can retract it until
-                      your manager views it.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSubmitWeek}>Submit</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <button
+                onClick={handleLockAttempt}
+                disabled={updateStatus.isPending}
+                className="flex items-center gap-2 px-10 py-4 text-white rounded-xl font-bold text-base shadow-xl transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: '#1e293b' }}
+              >
+                <Lock className="h-5 w-5" />
+                Finalize &amp; Lock Week
+              </button>
             </div>
           )}
           </div>
@@ -629,23 +703,17 @@ export function CommitPage(): React.ReactElement {
                 </div>
               </div>
 
-              {/* Commitment progress bar */}
+              {/* Commitment Active bar — 100% solid signals Monday Promise is set */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Commitment Progress</span>
+                  <span className="text-[10px] font-bold text-[#1152d4] uppercase tracking-widest">Commitment Active</span>
                   <span className="text-xs font-bold text-white">
-                    {hudDoneCount}/{commit.items.length}
-                    <span className="text-slate-500 font-normal"> · {hudDonePct}%</span>
+                    {commit.items.length} item{commit.items.length !== 1 ? 's' : ''} locked
+                    <span className="text-slate-500 font-normal"> · wt {commit.totalLockedWeight ?? commit.totalWeight}</span>
                   </span>
                 </div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${hudDonePct}%`,
-                      backgroundColor: hudDonePct === 100 ? '#22c55e' : '#1152d4',
-                    }}
-                  />
+                  <div className="h-full rounded-full bg-[#1152d4]" style={{ width: '100%' }} />
                 </div>
                 <p className="text-[10px] text-slate-500">
                   {formatWeekRange(commit.weekStartDate, commit.weekEndDate)}
@@ -730,29 +798,33 @@ export function CommitPage(): React.ReactElement {
                                 {item.title}
                               </h5>
                               {/* Hard link to Outcome */}
-                              <div className="flex items-center gap-1.5 mt-1.5">
-                                <ArrowRight
-                                  className={`h-3 w-3 shrink-0 transition-colors duration-300 ${
-                                    isDone ? 'text-slate-300' : 'text-[#1152d4]'
-                                  }`}
-                                />
-                                <span
-                                  className={`text-[11px] font-semibold truncate transition-colors duration-300 ${
-                                    isDone ? 'text-slate-300' : 'text-[#1152d4]'
-                                  }`}
-                                  title={`${item.outcomeBreadcrumb.definingObjective} → ${item.outcomeBreadcrumb.outcome}`}
-                                >
-                                  {item.outcomeBreadcrumb.outcome}
-                                </span>
-                              </div>
-                              {item.outcomeBreadcrumb.definingObjective && (
-                                <p
-                                  className={`text-[10px] mt-0.5 truncate transition-colors duration-300 ${
-                                    isDone ? 'text-slate-300' : 'text-slate-400'
-                                  }`}
-                                >
-                                  {item.outcomeBreadcrumb.definingObjective}
-                                </p>
+                              {item.outcomeBreadcrumb && (
+                                <>
+                                  <div className="flex items-center gap-1.5 mt-1.5">
+                                    <ArrowRight
+                                      className={`h-3 w-3 shrink-0 transition-colors duration-300 ${
+                                        isDone ? 'text-slate-300' : 'text-[#1152d4]'
+                                      }`}
+                                    />
+                                    <span
+                                      className={`text-[11px] font-semibold truncate transition-colors duration-300 ${
+                                        isDone ? 'text-slate-300' : 'text-[#1152d4]'
+                                      }`}
+                                      title={`${item.outcomeBreadcrumb.definingObjective} → ${item.outcomeBreadcrumb.outcome}`}
+                                    >
+                                      {item.outcomeBreadcrumb.outcome}
+                                    </span>
+                                  </div>
+                                  {item.outcomeBreadcrumb.definingObjective && (
+                                    <p
+                                      className={`text-[10px] mt-0.5 truncate transition-colors duration-300 ${
+                                        isDone ? 'text-slate-300' : 'text-slate-400'
+                                      }`}
+                                    >
+                                      {item.outcomeBreadcrumb.definingObjective}
+                                    </p>
+                                  )}
+                                </>
                               )}
                               {item.unplanned && (
                                 <span
@@ -914,42 +986,59 @@ export function CommitPage(): React.ReactElement {
 
           {/* Stats overview */}
           <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: 'Committed', value: plannedItems.length, unit: 'Tasks', barColor: '#1152d4', barWidth: '100%' },
-              {
-                label: 'Achieved',
-                value: commit.items.filter((i) => i.completionStatus === 'COMPLETED').length,
-                unit: 'Tasks',
-                barColor: '#16a34a',
-                barWidth: `${commit.items.length > 0 ? Math.round((commit.items.filter((i) => i.completionStatus === 'COMPLETED').length / commit.items.length) * 100) : 0}%`,
-              },
-              {
-                label: 'Efficiency',
-                value: `${achievedPct}%`,
-                unit: '',
-                barColor: achievedPct >= 75 ? '#1152d4' : '#f97316',
-                barWidth: `${achievedPct}%`,
-                extra: achievedPct < 75 ? '-vs target' : '',
-              },
-            ].map(({ label, value, unit, barColor, barWidth }) => (
-              <div
-                key={label}
-                className="bg-white p-5 rounded-xl border"
-                style={{ borderColor: 'rgba(30,58,95,0.06)', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
-              >
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-2xl font-extrabold text-slate-900">{value}</span>
-                  {unit && <span className="text-slate-400 font-semibold text-sm">{unit}</span>}
-                </div>
-                <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: barWidth, backgroundColor: barColor }}
-                  />
-                </div>
+            <div
+              className="bg-white p-5 rounded-xl border"
+              style={{ borderColor: 'rgba(30,58,95,0.06)', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+            >
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Committed</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl font-extrabold text-slate-900">{plannedItems.length}</span>
+                <span className="text-slate-400 font-semibold text-sm">Tasks</span>
               </div>
-            ))}
+              <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: '#1152d4' }} />
+              </div>
+            </div>
+            <div
+              className="bg-white p-5 rounded-xl border"
+              style={{ borderColor: 'rgba(30,58,95,0.06)', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+            >
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Weight Done</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl font-extrabold text-slate-900">{commit.totalDoneWeight}</span>
+                <span className="text-slate-400 font-semibold text-sm">/ {commit.totalLockedWeight ?? commit.totalWeight}</span>
+              </div>
+              <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${commit.items.length > 0 ? Math.round((commit.items.filter((i) => i.completionStatus === 'COMPLETED').length / commit.items.length) * 100) : 0}%`,
+                    backgroundColor: '#16a34a',
+                  }}
+                />
+              </div>
+            </div>
+            <div
+              className="bg-white p-5 rounded-xl border"
+              style={{
+                borderColor: `${integrityColor}33`,
+                boxShadow: `0 1px 3px 0 rgb(0 0 0 / 0.04), inset 0 0 0 1px ${integrityColor}22`,
+              }}
+            >
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Execution Integrity</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl font-extrabold" style={{ color: integrityColor }}>{integrityPct}%</span>
+              </div>
+              <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${integrityPct}%`, backgroundColor: integrityColor }}
+                />
+              </div>
+              <p className="text-[10px] mt-1.5 font-semibold" style={{ color: integrityColor }}>
+                {integrityPct >= 80 ? 'High Success' : integrityPct >= 50 ? 'Partial Delivery' : 'Strategic Shortfall'}
+              </p>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -1508,7 +1597,16 @@ export function CommitPage(): React.ReactElement {
         open={unplannedModalOpen}
         onClose={() => setUnplannedModalOpen(false)}
         onSubmit={(item) => createUnplannedItem.mutateAsync({ commitId: commit.id, item })}
-        bumpableItems={commit.items.filter((i) => !i.unplanned)}
+        bumpableItems={commit.items.filter((i) => {
+          if (i.unplanned) return false
+          const alreadyBumped = commit.items.some((u) => u.unplanned && u.bumpedItemId === i.id)
+          return !alreadyBumped
+        })}
+        alreadyBumpedItems={commit.items.filter((i) => {
+          if (i.unplanned) return false
+          return commit.items.some((u) => u.unplanned && u.bumpedItemId === i.id)
+        })}
+        totalLockedWeight={commit.totalLockedWeight}
       />
     </div>
   )

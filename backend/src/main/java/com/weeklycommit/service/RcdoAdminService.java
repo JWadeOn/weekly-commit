@@ -5,10 +5,12 @@ import com.weeklycommit.exception.InvalidStateTransitionException;
 import com.weeklycommit.exception.UnauthorizedException;
 import com.weeklycommit.model.DefiningObjective;
 import com.weeklycommit.model.Outcome;
+import com.weeklycommit.model.OutcomeUpdate;
 import com.weeklycommit.model.RallyCry;
 import com.weeklycommit.model.User;
 import com.weeklycommit.repository.DefiningObjectiveRepository;
 import com.weeklycommit.repository.OutcomeRepository;
+import com.weeklycommit.repository.OutcomeUpdateRepository;
 import com.weeklycommit.repository.RallyCryRepository;
 import com.weeklycommit.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -24,15 +26,18 @@ public class RcdoAdminService {
     private final RallyCryRepository rallyCryRepository;
     private final DefiningObjectiveRepository definingObjectiveRepository;
     private final OutcomeRepository outcomeRepository;
+    private final OutcomeUpdateRepository outcomeUpdateRepository;
     private final UserRepository userRepository;
 
     public RcdoAdminService(RallyCryRepository rallyCryRepository,
                             DefiningObjectiveRepository definingObjectiveRepository,
                             OutcomeRepository outcomeRepository,
+                            OutcomeUpdateRepository outcomeUpdateRepository,
                             UserRepository userRepository) {
         this.rallyCryRepository = rallyCryRepository;
         this.definingObjectiveRepository = definingObjectiveRepository;
         this.outcomeRepository = outcomeRepository;
+        this.outcomeUpdateRepository = outcomeUpdateRepository;
         this.userRepository = userRepository;
     }
 
@@ -53,6 +58,8 @@ public class RcdoAdminService {
                                                     : userRepository.findById(o.getOwnerId())
                                                             .map(User::getFullName)
                                                             .orElse("Unknown");
+                                            boolean inv = o.getTargetValue() != null && o.getStartValue() != null
+                                                    && o.getTargetValue() < o.getStartValue();
                                             return RcDoAdminResponse.AdminOutcomeDto.builder()
                                                     .id(o.getId())
                                                     .definingObjectiveId(o.getDefiningObjectiveId())
@@ -65,6 +72,9 @@ public class RcdoAdminService {
                                                     .targetValue(o.getTargetValue())
                                                     .currentValue(o.getCurrentValue())
                                                     .unit(o.getUnit())
+                                                    .unitLabel(o.getUnitLabel())
+                                                    .unitType(o.getUnitType() != null ? o.getUnitType().name() : null)
+                                                    .inverted(inv)
                                                     .lastUpdated(o.getLastUpdated())
                                                     .build();
                                         })
@@ -204,6 +214,8 @@ public class RcdoAdminService {
                 .targetValue(req.getTargetValue())
                 .currentValue(req.getStartValue() != null ? req.getStartValue() : 0.0)
                 .unit(req.getUnit() != null ? req.getUnit().trim() : null)
+                .unitLabel(req.getUnitLabel() != null ? req.getUnitLabel().trim() : null)
+                .unitType(req.getUnitType())
                 .lastUpdated(LocalDateTime.now())
                 .build();
         Outcome saved = outcomeRepository.save(o);
@@ -236,6 +248,8 @@ public class RcdoAdminService {
             o.setLastUpdated(LocalDateTime.now());
         }
         if (req.getUnit() != null && !req.getUnit().isBlank()) o.setUnit(req.getUnit().trim());
+        if (req.getUnitLabel() != null) o.setUnitLabel(req.getUnitLabel().trim());
+        if (req.getUnitType() != null) o.setUnitType(req.getUnitType());
         Outcome saved = outcomeRepository.save(o);
         return toAdminOutcomeDto(saved);
     }
@@ -305,10 +319,56 @@ public class RcdoAdminService {
             throw new UnauthorizedException("Outcome does not belong to your organization");
         }
 
+        Double oldValue = o.getCurrentValue();
         o.setCurrentValue(req.getCurrentValue());
         o.setLastUpdated(LocalDateTime.now());
         Outcome saved = outcomeRepository.save(o);
+
+        // Immutable audit record — The Ledger of Execution
+        OutcomeUpdate audit = OutcomeUpdate.builder()
+                .outcomeId(outcomeId)
+                .oldValue(oldValue)
+                .newValue(req.getCurrentValue())
+                .actionTaken(req.getActionTaken().trim())
+                .verificationType(req.getVerificationType())
+                .updatedBy(managerId)
+                .timestamp(LocalDateTime.now())
+                .build();
+        outcomeUpdateRepository.save(audit);
+
         return toAdminOutcomeDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OutcomeUpdateDto> getOutcomeHistory(UUID managerId, UUID orgId, UUID outcomeId) {
+        verifyManagerOrg(managerId, orgId);
+
+        Outcome o = outcomeRepository.findById(outcomeId)
+                .orElseThrow(() -> new IllegalArgumentException("Outcome not found"));
+        DefiningObjective do_ = definingObjectiveRepository.findById(o.getDefiningObjectiveId()).orElseThrow();
+        RallyCry rc = rallyCryRepository.findById(do_.getRallyCryId()).orElseThrow();
+        if (!rc.getOrgId().equals(orgId)) {
+            throw new UnauthorizedException("Outcome does not belong to your organization");
+        }
+
+        return outcomeUpdateRepository.findByOutcomeIdOrderByTimestampDesc(outcomeId).stream()
+                .map(upd -> {
+                    String updaterName = upd.getUpdatedBy() == null ? null
+                            : userRepository.findById(upd.getUpdatedBy())
+                                    .map(User::getFullName)
+                                    .orElse(null);
+                    return OutcomeUpdateDto.builder()
+                            .id(upd.getId())
+                            .outcomeId(upd.getOutcomeId())
+                            .oldValue(upd.getOldValue())
+                            .newValue(upd.getNewValue())
+                            .actionTaken(upd.getActionTaken())
+                            .verificationType(upd.getVerificationType().name())
+                            .updatedByName(updaterName)
+                            .timestamp(upd.getTimestamp())
+                            .build();
+                })
+                .toList();
     }
 
     private RcDoAdminResponse.AdminOutcomeDto toAdminOutcomeDto(Outcome o) {
@@ -316,6 +376,8 @@ public class RcdoAdminService {
                 : userRepository.findById(o.getOwnerId())
                         .map(User::getFullName)
                         .orElse("Unknown");
+        boolean inverted = o.getTargetValue() != null && o.getStartValue() != null
+                && o.getTargetValue() < o.getStartValue();
         return RcDoAdminResponse.AdminOutcomeDto.builder()
                 .id(o.getId())
                 .definingObjectiveId(o.getDefiningObjectiveId())
@@ -328,6 +390,9 @@ public class RcdoAdminService {
                 .targetValue(o.getTargetValue())
                 .currentValue(o.getCurrentValue())
                 .unit(o.getUnit())
+                .unitLabel(o.getUnitLabel())
+                .unitType(o.getUnitType() != null ? o.getUnitType().name() : null)
+                .inverted(inverted)
                 .lastUpdated(o.getLastUpdated())
                 .build();
     }

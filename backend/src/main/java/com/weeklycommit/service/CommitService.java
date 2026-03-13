@@ -128,16 +128,16 @@ public class CommitService {
             throw new InvalidStateTransitionException(
                     "Unplanned items can only be added when the week is LOCKED or RECONCILING");
         }
-        outcomeRepository.findById(req.getOutcomeId())
-                .orElseThrow(() -> new ItemNotFoundException("Outcome not found: " + req.getOutcomeId()));
 
-        CommitItem bumpedItem = commitItemRepository.findById(req.getBumpedItemId())
-                .orElseThrow(() -> new ItemNotFoundException("Bumped item not found: " + req.getBumpedItemId()));
-        if (!bumpedItem.getWeeklyCommitId().equals(commitId)) {
-            throw new InvalidStateTransitionException("Bumped item must belong to the same commit");
-        }
-        if (commitItemRepository.existsByWeeklyCommitIdAndBumpedItemId(commitId, req.getBumpedItemId())) {
-            throw new InvalidStateTransitionException("That item has already been bumped by another unplanned item");
+        com.weeklycommit.model.TaskType taskType =
+                req.getTaskType() != null ? req.getTaskType() : com.weeklycommit.model.TaskType.STRATEGIC;
+
+        if (taskType == com.weeklycommit.model.TaskType.STRATEGIC) {
+            if (req.getOutcomeId() == null) {
+                throw new InvalidStateTransitionException("outcomeId is required for STRATEGIC unplanned items");
+            }
+            outcomeRepository.findById(req.getOutcomeId())
+                    .orElseThrow(() -> new ItemNotFoundException("Outcome not found: " + req.getOutcomeId()));
         }
 
         int chessWeight = CHESS_WEIGHTS.get(req.getChessPiece());
@@ -148,9 +148,40 @@ public class CommitService {
                 .max()
                 .orElse(0) + 1;
 
+        if (req.getBumpedItemId() != null) {
+            // Standard path: validate and record the displaced item
+            CommitItem bumpedItem = commitItemRepository.findById(req.getBumpedItemId())
+                    .orElseThrow(() -> new ItemNotFoundException("Bumped item not found: " + req.getBumpedItemId()));
+            if (!bumpedItem.getWeeklyCommitId().equals(commitId)) {
+                throw new InvalidStateTransitionException("Bumped item must belong to the same commit");
+            }
+            if (commitItemRepository.existsByWeeklyCommitIdAndBumpedItemId(commitId, req.getBumpedItemId())) {
+                throw new InvalidStateTransitionException("That item has already been bumped by another unplanned item");
+            }
+        } else {
+            // Debt-first path: no new displacement — verify ghost capacity covers the new item
+            if (commit.getTotalLockedWeight() == null) {
+                throw new InvalidStateTransitionException(
+                        "Cannot add an unplanned item without a displacement: commit has no locked weight snapshot");
+            }
+            // Active weight = non-unplanned items that have NOT already been displaced
+            java.util.Set<java.util.UUID> alreadyBumpedIds = existing.stream()
+                    .filter(i -> i.isUnplanned() && i.getBumpedItemId() != null)
+                    .map(CommitItem::getBumpedItemId)
+                    .collect(java.util.stream.Collectors.toSet());
+            int activeWeight = existing.stream()
+                    .filter(i -> !i.isUnplanned() && !alreadyBumpedIds.contains(i.getId()))
+                    .mapToInt(CommitItem::getChessWeight)
+                    .sum();
+            if (activeWeight + chessWeight > commit.getTotalLockedWeight()) {
+                throw new InvalidStateTransitionException(
+                        "Insufficient ghost capacity: displace a planned task first before adding this item");
+            }
+        }
+
         CommitItem item = CommitItem.builder()
                 .weeklyCommitId(commitId)
-                .outcomeId(req.getOutcomeId())
+                .outcomeId(taskType == com.weeklycommit.model.TaskType.STRATEGIC ? req.getOutcomeId() : null)
                 .title(req.getTitle())
                 .description(req.getDescription())
                 .chessPiece(req.getChessPiece())
@@ -159,6 +190,8 @@ public class CommitService {
                 .carryForward(false)
                 .carryForwardCount(0)
                 .unplanned(true)
+                .taskType(taskType)
+                .kloCategory(req.getKloCategory())
                 .bumpedItemId(req.getBumpedItemId())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -410,6 +443,10 @@ public class CommitService {
 
         int totalWeight = items.stream().mapToInt(CommitItem::getChessWeight).sum();
         Integer alignmentScore = computeAlignmentScore(items);
+        int totalDoneWeight = items.stream()
+                .filter(i -> "COMPLETED".equals(i.getCompletionStatus()))
+                .mapToInt(CommitItem::getChessWeight)
+                .sum();
 
         List<CommitItemResponse> itemResponses = items.stream()
                 .map(this::toItemResponse)
@@ -427,18 +464,21 @@ public class CommitService {
                 .viewedAt(commit.getViewedAt())
                 .totalWeight(totalWeight)
                 .alignmentScore(alignmentScore)
+                .totalLockedWeight(commit.getTotalLockedWeight())
+                .totalDoneWeight(totalDoneWeight)
                 .items(itemResponses)
                 .build();
     }
 
     /**
-     * Alignment = (sum of weights of RCDO-linked items / total weight) * 100.
-     * All items have outcomeId in this schema, so aligned weight = total weight when items exist.
+     * Alignment = (weight of STRATEGIC items / total weight) * 100.
+     * KLO items count in the denominator (total capacity) but NOT the numerator.
      */
     public static Integer computeAlignmentScore(List<CommitItem> items) {
         int totalWeight = items.stream().mapToInt(CommitItem::getChessWeight).sum();
         if (totalWeight == 0) return null;
         int alignedWeight = items.stream()
+                .filter(i -> i.getTaskType() == null || i.getTaskType() == com.weeklycommit.model.TaskType.STRATEGIC)
                 .filter(i -> i.getOutcomeId() != null)
                 .mapToInt(CommitItem::getChessWeight)
                 .sum();
@@ -494,6 +534,8 @@ public class CommitService {
                 .carryForwardCount(item.getCarryForwardCount())
                 .carriedFromId(item.getCarriedFromId())
                 .unplanned(item.isUnplanned())
+                .taskType(item.getTaskType() != null ? item.getTaskType().name() : "STRATEGIC")
+                .kloCategory(item.getKloCategory() != null ? item.getKloCategory().name() : null)
                 .bumpedItemId(item.getBumpedItemId())
                 .bumpedItemTitle(bumpedItemTitle)
                 .createdAt(item.getCreatedAt())
@@ -518,7 +560,10 @@ public class CommitService {
         List<Object[]> rows = commitItemRepository
                 .sumWeightsByOutcomeForOrgAndWeek(orgId, monday);
 
+        // KLO items have outcomeId = null; filter them out before building the map
+        // to avoid NullPointerException from Collectors.toMap (null keys are illegal).
         Map<UUID, Integer> weights = rows.stream()
+                .filter(row -> row[0] != null)
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> ((Number) row[1]).intValue()
@@ -539,6 +584,7 @@ public class CommitService {
     }
 
     private OutcomeBreadcrumbDto buildBreadcrumb(UUID outcomeId) {
+        if (outcomeId == null) return null;
         return outcomeRepository.findById(outcomeId).map(outcome -> {
             String outcomeTitle = outcome.getTitle();
             String objectiveTitle = "";

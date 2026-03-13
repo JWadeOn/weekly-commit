@@ -140,7 +140,7 @@ class CommitServiceTest {
                 .outcomeId(outcomeId)
                 .title("Test")
                 .chessPiece("KING")
-                .chessWeight(100)
+                .chessWeight(20)
                 .priorityOrder(1)
                 .carryForward(false)
                 .carryForwardCount(0)
@@ -157,7 +157,7 @@ class CommitServiceTest {
 
         ArgumentCaptor<CommitItem> captor = ArgumentCaptor.forClass(CommitItem.class);
         verify(commitItemRepository).save(captor.capture());
-        assertThat(captor.getValue().getChessWeight()).isEqualTo(100);
+        assertThat(captor.getValue().getChessWeight()).isEqualTo(20);
         assertThat(captor.getValue().getChessPiece()).isEqualTo("KING");
     }
 
@@ -174,7 +174,7 @@ class CommitServiceTest {
                 .thenReturn(List.of());
         when(definingObjectiveRepository.findById(any())).thenReturn(Optional.empty());
 
-        int[] expectedWeights = {100, 80, 60, 40, 20, 10};
+        int[] expectedWeights = {20, 10, 5, 3, 3, 1};
         String[] pieces = {"KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"};
 
         for (int i = 0; i < pieces.length; i++) {
