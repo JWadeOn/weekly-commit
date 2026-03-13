@@ -390,7 +390,7 @@ const DO_ICON_PALETTE = [
 
 // ─── Rally Cry card ──────────────────────────────────────────────────────────
 function RallyCryCard({
-  rallyCry, onEditRallyCry, onDeactivateRallyCry,
+  rallyCry, onEditRallyCry: _onEditRallyCry, onDeactivateRallyCry,
   onAddDo, onEditDo, onDeactivateDo,
   onAddOutcome, onEditOutcome, onDeactivateOutcome,
   canAddDo = false,

@@ -150,7 +150,7 @@ export function useTeamItemsForBoard(): { commits: BoardCommit[]; loading: boole
         taskName: item.title,
         chessPiece: piece,
         status,
-        definingObjective: item.outcomeBreadcrumb.definingObjective,
+        definingObjective: item.outcomeBreadcrumb?.definingObjective ?? '',
         contributor: member.fullName,
       }
     })

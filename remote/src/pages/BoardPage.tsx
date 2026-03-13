@@ -26,7 +26,7 @@ function mapItems(data: WeeklyCommitResponse, contributorName: string): BoardCom
       taskName: item.title,
       chessPiece: piece,
       status,
-      definingObjective: item.outcomeBreadcrumb.definingObjective,
+      definingObjective: item.outcomeBreadcrumb?.definingObjective ?? '',
       contributor: contributorName,
     }
   })
