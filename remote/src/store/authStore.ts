@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { auth, setAuthExpiredHandler } from '@/api/client'
+import { auth, setAuthExpiredHandler, BACKEND_ORIGIN } from '@/api/client'
 import type { UserResponse } from '@/types'
 
 interface AuthState {
@@ -13,9 +13,11 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => {
+  const oauthUrl = (): string => `${BACKEND_ORIGIN || window.location.origin}/oauth2/authorization/oidc`
+
   const onAuthExpired = (): void => {
     set({ user: null, isAuthenticated: false, isLoading: false })
-    window.location.href = 'http://localhost:8080/oauth2/authorization/oidc'
+    window.location.href = oauthUrl()
   }
 
   setAuthExpiredHandler(onAuthExpired)
@@ -26,7 +28,7 @@ export const useAuthStore = create<AuthState>((set) => {
     isAuthenticated: false,
 
     login: (): void => {
-      window.location.href = 'http://localhost:8080/oauth2/authorization/oidc'
+      window.location.href = oauthUrl()
     },
 
     logout: async (): Promise<void> => {

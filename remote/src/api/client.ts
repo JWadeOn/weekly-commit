@@ -28,7 +28,14 @@ import type {
   OutcomeUpdateDto,
 } from '@/types'
 
-const BASE_URL = 'http://localhost:8080/api'
+/** Set at build time (e.g. VITE_API_URL). Use '/api' for same-origin or full URL for cross-origin. */
+const BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
+
+/** Origin of the backend (for OAuth redirects). Same-origin when BASE_URL is relative. */
+export const BACKEND_ORIGIN =
+  BASE_URL.startsWith('http')
+    ? BASE_URL.replace(/\/api\/?$/, '')
+    : (typeof window !== 'undefined' ? window.location.origin : '')
 
 let _onAuthExpired: (() => void) | null = null
 

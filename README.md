@@ -439,6 +439,7 @@ Flyway migrations live in `backend/src/main/resources/db/migration/`:
 | [`docs/PRD.md`](docs/PRD.md) | Product requirements document |
 | [`docs/SPEC_COMPLIANCE_REVIEW.md`](docs/SPEC_COMPLIANCE_REVIEW.md) | Spec compliance review vs. Organizational Health / The Advantage spec |
 | [`docs/API.md`](docs/API.md) | Full REST API reference |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | **Deployment guide** — production env vars, reverse proxy, Docker Compose |
 | [`docs/SCHEMA.sql`](docs/SCHEMA.sql) | Annotated database schema |
 | [`docs/USER_STORIES.md`](docs/USER_STORIES.md) | Full user story list |
 | [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Implementation assumptions and decisions |

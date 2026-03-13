@@ -6014,7 +6014,8 @@ const createImpl = (createState) => {
 };
 const create = ((createState) => createState ? createImpl(createState) : createImpl);
 
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = ("http://localhost:8080/api").replace(/\/$/, "");
+const BACKEND_ORIGIN = BASE_URL.startsWith("http") ? BASE_URL.replace(/\/api\/?$/, "") : typeof window !== "undefined" ? window.location.origin : "";
 let _onAuthExpired = null;
 function setAuthExpiredHandler(handler) {
   _onAuthExpired = handler;
@@ -6114,9 +6115,10 @@ const manager = {
 };
 
 const useAuthStore = create((set) => {
+  const oauthUrl = () => `${BACKEND_ORIGIN || window.location.origin}/oauth2/authorization/oidc`;
   const onAuthExpired = () => {
     set({ user: null, isAuthenticated: false, isLoading: false });
-    window.location.href = "http://localhost:8080/oauth2/authorization/oidc";
+    window.location.href = oauthUrl();
   };
   setAuthExpiredHandler(onAuthExpired);
   return {
@@ -6124,7 +6126,7 @@ const useAuthStore = create((set) => {
     isLoading: false,
     isAuthenticated: false,
     login: () => {
-      window.location.href = "http://localhost:8080/oauth2/authorization/oidc";
+      window.location.href = oauthUrl();
     },
     logout: async () => {
       try {
@@ -26527,4 +26529,4 @@ function AppNav() {
   ] });
 }
 
-export { ActiveRallyCryContext as A, BoardPage as B, CommitPage as C, MemoryRouter as M, Navigate as N, QueryClient as Q, Routes as R, StrategyPage as S, QueryClientProvider as a, AppNav as b, Route as c, CommitDetailPage as d, CommitHistoryPage as e, ResourcesPage as f, ManagerDashboard as g, cn as h, buttonVariants as i, jsxRuntimeExports as j, BrowserRouter as k, setAuthExpiredHandler as s, useAuthStore as u };
+export { ActiveRallyCryContext as A, BoardPage as B, CommitPage as C, MemoryRouter as M, Navigate as N, QueryClient as Q, Routes as R, StrategyPage as S, QueryClientProvider as a, AppNav as b, Route as c, CommitDetailPage as d, CommitHistoryPage as e, ResourcesPage as f, ManagerDashboard as g, BACKEND_ORIGIN as h, cn as i, jsxRuntimeExports as j, buttonVariants as k, BrowserRouter as l, setAuthExpiredHandler as s, useAuthStore as u };

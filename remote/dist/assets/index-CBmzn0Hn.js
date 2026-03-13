@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-BMdLx5XD.js';
-import { j as jsxRuntimeExports, h as cn, i as buttonVariants, Q as QueryClient, a as QueryClientProvider, k as BrowserRouter, u as useAuthStore, b as AppNav, R as Routes, c as Route, C as CommitPage, d as CommitDetailPage, e as CommitHistoryPage, f as ResourcesPage, B as BoardPage, g as ManagerDashboard, S as StrategyPage, N as Navigate } from './AppNav-Dbyk6-o-.js';
+import { j as jsxRuntimeExports, h as BACKEND_ORIGIN, i as cn, k as buttonVariants, Q as QueryClient, a as QueryClientProvider, l as BrowserRouter, u as useAuthStore, b as AppNav, R as Routes, c as Route, C as CommitPage, d as CommitDetailPage, e as CommitHistoryPage, f as ResourcesPage, B as BoardPage, g as ManagerDashboard, S as StrategyPage, N as Navigate } from './AppNav-Js7HdkC9.js';
 import { r as reactDomExports } from './index-COvqqES_.js';
 
 var client = {};
@@ -11,6 +11,7 @@ var m = reactDomExports;
 }
 
 function LoginPage() {
+  const oauthHref = `${BACKEND_ORIGIN || window.location.origin}/oauth2/authorization/oidc`;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen flex flex-col items-center justify-center gap-6", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-2xl font-bold", children: "Weekly Commit" }),
@@ -19,7 +20,7 @@ function LoginPage() {
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "a",
       {
-        href: "http://localhost:8080/oauth2/authorization/oidc",
+        href: oauthHref,
         className: cn(buttonVariants({ size: "lg" })),
         children: "Sign In"
       }

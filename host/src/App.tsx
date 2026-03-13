@@ -2,7 +2,9 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 
 const WeeklyCommitApp = lazy(() => import('weeklyCommitModule/WeeklyCommitApp'))
 
-const API_BASE = 'http://localhost:8080/api'
+/** Set at build time (VITE_API_URL). Use '/api' for same-origin. */
+const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
+const BACKEND_ORIGIN = API_BASE.startsWith('http') ? API_BASE.replace(/\/api\/?$/, '') : window.location.origin
 
 interface UserInfo {
   userId: string
@@ -39,17 +41,17 @@ export default function App(): JSX.Element {
         window.location.href = window.location.origin + '/'
       } else {
         setUser(null)
-        window.location.href = 'http://localhost:8080/oauth2/authorization/oidc'
+        window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`
       }
     } catch {
       setUser(null)
-      window.location.href = 'http://localhost:8080/oauth2/authorization/oidc'
+      window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`
     }
   }
 
   const handleAuthExpired = (): void => {
     setUser(null)
-    window.location.href = 'http://localhost:8080/oauth2/authorization/oidc'
+    window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`
   }
 
   if (checking) {
@@ -66,7 +68,7 @@ export default function App(): JSX.Element {
         <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Weekly Commit</h1>
         <p style={{ color: '#6b7280' }}>Sign in to access your weekly commits.</p>
         <a
-          href="http://localhost:8080/oauth2/authorization/oidc"
+          href={`${BACKEND_ORIGIN}/oauth2/authorization/oidc`}
           style={{
             display: 'inline-block',
             padding: '0.5rem 1.5rem',
