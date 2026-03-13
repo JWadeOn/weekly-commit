@@ -105,4 +105,12 @@ public class ManagerRcdoController {
         rcdoAdminService.deactivateOutcome(managerId, orgId, id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/outcomes/{id}/current-value")
+    public ResponseEntity<RcDoAdminResponse.AdminOutcomeDto> updateOutcomeCurrentValue(
+            @PathVariable UUID id, @Valid @RequestBody UpdateOutcomeCurrentValueRequest req) {
+        UUID managerId = SecurityContextHelper.getCurrentUserId();
+        UUID orgId = SecurityContextHelper.getCurrentOrgId();
+        return ResponseEntity.ok(rcdoAdminService.updateOutcomeCurrentValue(managerId, orgId, id, req));
+    }
 }

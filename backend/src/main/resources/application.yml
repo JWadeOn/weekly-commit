@@ -3,6 +3,10 @@ spring:
     virtual:
       enabled: true
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
   security:
     oauth2:
       client:
@@ -17,17 +21,16 @@ spring:
             client-name: Weekly Commit
         provider:
           oidc-provider:
-            # issuer-uri uses the Docker-internal hostname so Spring can fetch discovery
-            # at startup and token iss claims match. Browser auth redirect is overridden
-            # below via authorization-uri to use the host-accessible localhost:8090.
-            issuer-uri: ${OAUTH_ISSUER_URI:http://mock-oauth2}
+            # Local dev default: localhost:8090. Docker overrides via OAUTH_ISSUER_URI=http://mock-oauth2.
+            # authorization-uri is always browser-facing (localhost:8090) to avoid Docker hostname leaking to browser.
+            issuer-uri: ${OAUTH_ISSUER_URI:http://localhost:8090}
             authorization-uri: ${OAUTH_AUTHORIZATION_URI:http://localhost:8090/connect/authorize}
-            jwk-set-uri: ${OAUTH_JWK_SET_URI:http://mock-oauth2/.well-known/openid-configuration/jwks}
+            jwk-set-uri: ${OAUTH_JWK_SET_URI:http://localhost:8090/.well-known/openid-configuration/jwks}
 
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/weeklycommit}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -54,7 +57,7 @@ server:
         http-only: true
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:dev-jwt-secret-change-in-production}
   expiry-hours: ${JWT_EXPIRY_HOURS:24}
 
 app:

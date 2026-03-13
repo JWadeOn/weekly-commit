@@ -14,6 +14,7 @@ import com.weeklycommit.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,6 +61,11 @@ public class RcdoAdminService {
                                                     .ownerId(o.getOwnerId())
                                                     .ownerName(ownerName)
                                                     .active(o.isActive())
+                                                    .startValue(o.getStartValue())
+                                                    .targetValue(o.getTargetValue())
+                                                    .currentValue(o.getCurrentValue())
+                                                    .unit(o.getUnit())
+                                                    .lastUpdated(o.getLastUpdated())
                                                     .build();
                                         })
                                         .toList();
@@ -194,6 +200,11 @@ public class RcdoAdminService {
                 .title(req.getTitle().trim())
                 .description(req.getDescription() != null ? req.getDescription().trim() : null)
                 .active(true)
+                .startValue(req.getStartValue() != null ? req.getStartValue() : 0.0)
+                .targetValue(req.getTargetValue())
+                .currentValue(req.getStartValue() != null ? req.getStartValue() : 0.0)
+                .unit(req.getUnit() != null ? req.getUnit().trim() : null)
+                .lastUpdated(LocalDateTime.now())
                 .build();
         Outcome saved = outcomeRepository.save(o);
         return toAdminOutcomeDto(saved);
@@ -218,6 +229,13 @@ public class RcdoAdminService {
             verifyOutcomeOwnerInOrg(req.getOwnerId(), orgId);
             o.setOwnerId(req.getOwnerId());
         }
+        if (req.getStartValue() != null) o.setStartValue(req.getStartValue());
+        if (req.getTargetValue() != null) o.setTargetValue(req.getTargetValue());
+        if (req.getCurrentValue() != null) {
+            o.setCurrentValue(req.getCurrentValue());
+            o.setLastUpdated(LocalDateTime.now());
+        }
+        if (req.getUnit() != null && !req.getUnit().isBlank()) o.setUnit(req.getUnit().trim());
         Outcome saved = outcomeRepository.save(o);
         return toAdminOutcomeDto(saved);
     }
@@ -274,6 +292,25 @@ public class RcdoAdminService {
                 .build();
     }
 
+    @Transactional
+    public RcDoAdminResponse.AdminOutcomeDto updateOutcomeCurrentValue(
+            UUID managerId, UUID orgId, UUID outcomeId, UpdateOutcomeCurrentValueRequest req) {
+        verifyManagerOrg(managerId, orgId);
+
+        Outcome o = outcomeRepository.findById(outcomeId)
+                .orElseThrow(() -> new IllegalArgumentException("Outcome not found"));
+        DefiningObjective do_ = definingObjectiveRepository.findById(o.getDefiningObjectiveId()).orElseThrow();
+        RallyCry rc = rallyCryRepository.findById(do_.getRallyCryId()).orElseThrow();
+        if (!rc.getOrgId().equals(orgId)) {
+            throw new UnauthorizedException("Outcome does not belong to your organization");
+        }
+
+        o.setCurrentValue(req.getCurrentValue());
+        o.setLastUpdated(LocalDateTime.now());
+        Outcome saved = outcomeRepository.save(o);
+        return toAdminOutcomeDto(saved);
+    }
+
     private RcDoAdminResponse.AdminOutcomeDto toAdminOutcomeDto(Outcome o) {
         String ownerName = o.getOwnerId() == null ? "Unassigned"
                 : userRepository.findById(o.getOwnerId())
@@ -287,6 +324,11 @@ public class RcdoAdminService {
                 .ownerId(o.getOwnerId())
                 .ownerName(ownerName)
                 .active(o.isActive())
+                .startValue(o.getStartValue())
+                .targetValue(o.getTargetValue())
+                .currentValue(o.getCurrentValue())
+                .unit(o.getUnit())
+                .lastUpdated(o.getLastUpdated())
                 .build();
     }
 }

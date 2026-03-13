@@ -1,7 +1,6 @@
 package com.weeklycommit.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +18,8 @@ public class UpdateOutcomeRequest {
     private String title;
     private String description;
     private Boolean active;
+    private Double startValue;
+    private Double targetValue;
+    private Double currentValue;
+    private String unit;
 }

@@ -9,6 +9,7 @@ import type {
   UpdateDefiningObjectiveRequest,
   CreateOutcomeRequest,
   UpdateOutcomeRequest,
+  UpdateOutcomeCurrentValueRequest,
 } from '@/types'
 
 export function useRcdoAdmin() {
@@ -123,6 +124,17 @@ export function useDeactivateOutcome() {
     onSuccess: () => {
       q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
       q.invalidateQueries({ queryKey: ['rcdo'] })
+    },
+  })
+}
+
+export function useUpdateOutcomeCurrentValue() {
+  const q = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateOutcomeCurrentValueRequest }) =>
+      manager.rcdo.updateOutcomeCurrentValue(id, body),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ['manager', 'rcdo'] })
     },
   })
 }

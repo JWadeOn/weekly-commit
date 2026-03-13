@@ -7,6 +7,7 @@ import type {
   CommitItemResponse,
   TeamMemberApiResponse,
   TeamAlignmentResponse,
+  TeamOutcomeWeightResponse,
   ManagerNoteResponse,
   CreateCommitItemRequest,
   CreateUnplannedItemRequest,
@@ -23,6 +24,7 @@ import type {
   UpdateDefiningObjectiveRequest,
   CreateOutcomeRequest,
   UpdateOutcomeRequest,
+  UpdateOutcomeCurrentValueRequest,
 } from '@/types'
 
 const BASE_URL = 'http://localhost:8080/api'
@@ -129,6 +131,9 @@ export const commits = {
 
   completeReconciliation: (commitId: string): Promise<ReconcileCommitResponse> =>
     request(`/commits/${commitId}/reconcile`, { method: 'POST' }),
+
+  teamOutcomeWeights: (): Promise<TeamOutcomeWeightResponse> =>
+    request('/commits/team-outcomes/weight'),
 }
 
 export const manager = {
@@ -176,5 +181,7 @@ export const manager = {
       request(`/manager/rcdo/outcomes/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     deactivateOutcome: (id: string): Promise<void> =>
       request(`/manager/rcdo/outcomes/${id}`, { method: 'DELETE' }),
+    updateOutcomeCurrentValue: (id: string, body: UpdateOutcomeCurrentValueRequest): Promise<RcDoAdminResponse['rallyCries'][0]['definingObjectives'][0]['outcomes'][0]> =>
+      request(`/manager/rcdo/outcomes/${id}/current-value`, { method: 'PATCH', body: JSON.stringify(body) }),
   },
 }

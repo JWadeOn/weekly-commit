@@ -16,12 +16,12 @@ export type CommitStatus = 'DRAFT' | 'LOCKED' | 'RECONCILING' | 'RECONCILED'
 export type CompletionStatus = 'COMPLETED' | 'PARTIAL' | 'NOT_COMPLETED' | 'BUMPED'
 
 export const CHESS_WEIGHT: Record<ChessPiece, number> = {
-  KING: 100,
-  QUEEN: 80,
-  ROOK: 60,
-  BISHOP: 40,
-  KNIGHT: 20,
-  PAWN: 10,
+  KING: 20,
+  QUEEN: 10,
+  ROOK: 5,
+  BISHOP: 3,
+  KNIGHT: 3,
+  PAWN: 1,
 }
 
 export const CHESS_ICON: Record<ChessPiece, string> = {
@@ -101,6 +101,11 @@ export interface OutcomeDto {
   id: string
   title: string
   ownerId: string
+  startValue: number | null
+  targetValue: number | null
+  currentValue: number | null
+  unit: string | null
+  lastUpdated: string | null
 }
 
 export interface DefiningObjectiveDto {
@@ -220,6 +225,9 @@ export interface DefiningObjectiveBreakdownDto {
   supportingItemCount: number
   supportingWeight: number
   weightPercentage: number
+  allocationSharePercentage: number
+  lowVelocity: boolean
+  hasPowerPiece: boolean
 }
 
 export interface TeamAlignmentResponse {
@@ -229,6 +237,9 @@ export interface TeamAlignmentResponse {
   strategicWeight: number
   tacticalWeight: number
   strategicPercentage: number
+  teamIntegrityScore: number
+  lockedOnMondayWeight: number
+  doneWeight: number
   rallyCryBreakdown: RallyCryBreakdownDto[]
   underSupportedRallyCries?: UnderSupportedRallyCryDto[]
   definingObjectiveBreakdown?: DefiningObjectiveBreakdownDto[]
@@ -249,6 +260,11 @@ export interface AdminOutcomeDto {
   ownerId: string
   ownerName: string
   active: boolean
+  startValue: number | null
+  targetValue: number | null
+  currentValue: number | null
+  unit: string | null
+  lastUpdated: string | null
 }
 
 export interface AdminDefiningObjectiveDto {
@@ -306,6 +322,9 @@ export interface CreateOutcomeRequest {
   ownerId: string
   title: string
   description?: string
+  startValue?: number
+  targetValue: number
+  unit: string
 }
 
 export interface UpdateOutcomeRequest {
@@ -313,6 +332,14 @@ export interface UpdateOutcomeRequest {
   title: string
   description?: string
   active?: boolean
+  startValue?: number
+  targetValue?: number
+  currentValue?: number
+  unit?: string
+}
+
+export interface UpdateOutcomeCurrentValueRequest {
+  currentValue: number
 }
 
 export interface ReconciliationSummary {
@@ -327,6 +354,13 @@ export interface ReconcileCommitResponse {
   id: string
   status: CommitStatus
   summary: ReconciliationSummary
+}
+
+export interface TeamOutcomeWeightResponse {
+  /** outcomeId (UUID string) → summed chess weight for DRAFT + LOCKED commits this week */
+  weights: Record<string, number>
+  weekStartDate: string
+  participatingCommits: number
 }
 
 export interface ErrorResponse {

@@ -21,4 +21,10 @@ public class CreateOutcomeRequest {
     @NotBlank(message = "Title is required")
     private String title;
     private String description;
+    /** Baseline value when the outcome was created. Defaults to 0 if omitted. */
+    private Double startValue;
+    @NotNull(message = "Target value is required. Outcomes must be quantitative (Advantage Rule).")
+    private Double targetValue;
+    @NotBlank(message = "Unit is required (e.g. ms, USD, Percentage, Tickets)")
+    private String unit;
 }

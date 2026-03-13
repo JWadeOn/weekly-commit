@@ -48,6 +48,11 @@ public class RcDoService {
                                                 .title(o.getTitle())
                                                 .description(o.getDescription())
                                                 .ownerId(o.getOwnerId())
+                                                .startValue(o.getStartValue())
+                                                .targetValue(o.getTargetValue())
+                                                .currentValue(o.getCurrentValue())
+                                                .unit(o.getUnit())
+                                                .lastUpdated(o.getLastUpdated())
                                                 .build())
                                         .toList();
 

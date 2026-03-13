@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -16,4 +17,9 @@ public class OutcomeDto {
     private String title;
     private String description;
     private UUID ownerId;
+    private Double startValue;
+    private Double targetValue;
+    private Double currentValue;
+    private String unit;
+    private LocalDateTime lastUpdated;
 }

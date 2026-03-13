@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,5 +53,10 @@ public class RcDoAdminResponse {
         private UUID ownerId;
         private String ownerName;
         private boolean active;
+        private Double startValue;
+        private Double targetValue;
+        private Double currentValue;
+        private String unit;
+        private LocalDateTime lastUpdated;
     }
 }

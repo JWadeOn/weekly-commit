@@ -38,4 +38,19 @@ public class Outcome {
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "start_value")
+    private Double startValue;
+
+    @Column(name = "target_value")
+    private Double targetValue;
+
+    @Column(name = "current_value")
+    private Double currentValue;
+
+    @Column(name = "unit", length = 50)
+    private String unit;
+
+    @Column(name = "last_updated")
+    private LocalDateTime lastUpdated;
 }
