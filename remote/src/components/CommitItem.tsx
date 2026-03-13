@@ -10,11 +10,12 @@ import type { CommitItemResponse } from '@/types'
 interface CommitItemProps {
   item: CommitItemResponse
   isDraggable?: boolean
+  isHighlighted?: boolean
   onEdit?: (item: CommitItemResponse) => void
   onDelete?: (item: CommitItemResponse) => void
 }
 
-export function CommitItem({ item, isDraggable = false, onEdit, onDelete }: CommitItemProps): React.ReactElement {
+export function CommitItem({ item, isDraggable = false, isHighlighted = false, onEdit, onDelete }: CommitItemProps): React.ReactElement {
   const {
     attributes,
     listeners,
@@ -24,17 +25,27 @@ export function CommitItem({ item, isDraggable = false, onEdit, onDelete }: Comm
     isDragging,
   } = useSortable({ id: item.id })
 
+  const highlightStyle = isHighlighted
+    ? {
+        boxShadow: '0 0 0 2px rgba(17,82,212,0.5), 0 0 14px rgba(17,82,212,0.25)',
+        backgroundColor: 'rgba(17,82,212,0.06)',
+      }
+    : {}
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    ...highlightStyle,
   }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-start gap-3 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+      className={`flex items-start gap-3 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-all duration-200 ${
+        isHighlighted ? 'border-[#1152d4]/40' : ''
+      }`}
     >
       {isDraggable && (
         <button

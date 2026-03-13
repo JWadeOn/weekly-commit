@@ -25,12 +25,12 @@ import java.util.stream.Collectors;
 public class CommitService {
 
     private static final Map<String, Integer> CHESS_WEIGHTS = Map.of(
-            "KING", 100,
-            "QUEEN", 80,
-            "ROOK", 60,
-            "BISHOP", 40,
-            "KNIGHT", 20,
-            "PAWN", 10
+            "KING", 20,
+            "QUEEN", 10,
+            "ROOK", 5,
+            "BISHOP", 3,
+            "KNIGHT", 3,
+            "PAWN", 1
     );
 
     private final WeeklyCommitRepository weeklyCommitRepository;
@@ -498,6 +498,43 @@ public class CommitService {
                 .bumpedItemTitle(bumpedItemTitle)
                 .createdAt(item.getCreatedAt())
                 .updatedAt(item.getUpdatedAt())
+                .build();
+    }
+
+    // ── Team Outcome Weights ────────────────────────────────────────────────
+
+    /**
+     * Returns aggregate chess-weight totals per Outcome for the current week,
+     * scoped to the caller's org.  Only DRAFT and LOCKED commits are counted.
+     *
+     * The query is a single GROUP-BY aggregate — no N+1 loading of full commit
+     * objects.  Security boundary: orgId comes from the JWT and is never
+     * caller-supplied, so a user can only see their own org's numbers.
+     */
+    @Transactional(readOnly = true)
+    public TeamOutcomeWeightResponse getTeamOutcomeWeights(UUID orgId) {
+        LocalDate monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
+        List<Object[]> rows = commitItemRepository
+                .sumWeightsByOutcomeForOrgAndWeek(orgId, monday);
+
+        Map<UUID, Integer> weights = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> ((Number) row[1]).intValue()
+                ));
+
+        int participatingCommits = weeklyCommitRepository
+                .findByOrgIdAndWeekStartDate(orgId, monday)
+                .stream()
+                .filter(wc -> "DRAFT".equals(wc.getStatus()) || "LOCKED".equals(wc.getStatus()))
+                .mapToInt(wc -> 1)
+                .sum();
+
+        return TeamOutcomeWeightResponse.builder()
+                .weights(weights)
+                .weekStartDate(monday)
+                .participatingCommits(participatingCommits)
                 .build();
     }
 

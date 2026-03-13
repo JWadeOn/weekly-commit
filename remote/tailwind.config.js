@@ -41,6 +41,16 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        gold: {
+          DEFAULT: 'hsl(var(--gold))',
+          light: 'hsl(var(--gold) / 0.1)',
+        },
+        'navy-matte': '#1e293b',
+        'background-light': '#f1f5f9',
+      },
+      fontFamily: {
+        display: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',

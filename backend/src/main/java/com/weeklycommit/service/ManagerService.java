@@ -244,6 +244,8 @@ public class ManagerService {
         long alignedWeight = 0;
         long strategicWeight = 0;
         long tacticalWeight = 0;
+        long doneWeight = 0;
+        long mondayWeight = 0;
         java.util.Set<String> strategicPieces = java.util.Set.of("KING", "QUEEN", "ROOK");
         Map<UUID, RallyCryBucket> byRallyCry = new java.util.HashMap<>();
         Map<UUID, DefiningObjectiveBucket> byDO = new java.util.HashMap<>();
@@ -255,6 +257,7 @@ public class ManagerService {
 
             List<CommitItem> items = commitItemRepository
                     .findByWeeklyCommitIdOrderByChessWeightDescPriorityOrderAsc(commitOpt.get().getId());
+            String commitStatus = commitOpt.get().getStatus();
             for (CommitItem item : items) {
                 int w = item.getChessWeight();
                 totalWeight += w;
@@ -273,7 +276,15 @@ public class ManagerService {
                     UUID doId = commitService.getDefiningObjectiveIdForOutcome(item.getOutcomeId());
                     if (doId != null) {
                         byDO.computeIfAbsent(doId, k -> new DefiningObjectiveBucket())
-                                .add(item.getChessWeight(), rallyCryId);
+                                .add(item.getChessWeight(), rallyCryId, item.getChessPiece());
+                    }
+                }
+                if (("RECONCILING".equals(commitStatus) || "RECONCILED".equals(commitStatus))
+                        && !item.isUnplanned()) {
+                    mondayWeight += w;
+                    String cs = item.getCompletionStatus();
+                    if ("COMPLETED".equals(cs) || "PARTIAL".equals(cs)) {
+                        doneWeight += w;
                     }
                 }
             }
@@ -284,6 +295,7 @@ public class ManagerService {
                 : 0;
 
         final long totalWeightFinal = totalWeight;
+        final long alignedWeightFinal = alignedWeight;
         List<TeamAlignmentResponse.RallyCryBreakdownDto> breakdown = byRallyCry.entrySet().stream()
                 .map(e -> {
                     RallyCryBucket b = e.getValue();
@@ -313,12 +325,20 @@ public class ManagerService {
                 ? (int) Math.round((double) strategicWeight / totalWeightFinal * 100.0)
                 : 0;
 
+        int teamIntegrityScore = mondayWeight > 0
+                ? (int) Math.round((double) doneWeight / mondayWeight * 100.0)
+                : 0;
+
         List<TeamAlignmentResponse.DefiningObjectiveBreakdownDto> doBreakdown = byDO.entrySet().stream()
                 .map(e -> {
                     DefiningObjectiveBucket b = e.getValue();
                     int pct = totalWeightFinal > 0
                             ? (int) Math.round((double) b.weight / totalWeightFinal * 100.0)
                             : 0;
+                    int allocShare = alignedWeightFinal > 0
+                            ? (int) Math.round((double) b.weight / alignedWeightFinal * 100.0)
+                            : 0;
+                    boolean lowVelocity = allocShare > 0 && allocShare < 5;
                     return TeamAlignmentResponse.DefiningObjectiveBreakdownDto.builder()
                             .definingObjectiveId(e.getKey())
                             .rallyCryId(b.rallyCryId)
@@ -326,6 +346,9 @@ public class ManagerService {
                             .supportingItemCount(b.itemCount)
                             .supportingWeight(b.weight)
                             .weightPercentage(pct)
+                            .allocationSharePercentage(allocShare)
+                            .lowVelocity(lowVelocity)
+                            .hasPowerPiece(b.hasPowerPiece)
                             .build();
                 })
                 .toList();
@@ -337,6 +360,9 @@ public class ManagerService {
                 .strategicWeight(strategicWeight)
                 .tacticalWeight(tacticalWeight)
                 .strategicPercentage(strategicPercentage)
+                .teamIntegrityScore(teamIntegrityScore)
+                .lockedOnMondayWeight(mondayWeight)
+                .doneWeight(doneWeight)
                 .rallyCryBreakdown(breakdown)
                 .underSupportedRallyCries(underSupported)
                 .definingObjectiveBreakdown(doBreakdown)
@@ -430,11 +456,15 @@ public class ManagerService {
         UUID rallyCryId;
         long weight;
         int itemCount;
+        boolean hasPowerPiece;
 
-        void add(int itemWeight, UUID rcId) {
+        void add(int itemWeight, UUID rcId, String chessPiece) {
             weight += itemWeight;
             itemCount++;
             if (rallyCryId == null) rallyCryId = rcId;
+            if ("KING".equals(chessPiece) || "QUEEN".equals(chessPiece)) {
+                hasPowerPiece = true;
+            }
         }
     }
 }

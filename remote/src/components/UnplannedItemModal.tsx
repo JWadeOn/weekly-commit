@@ -3,10 +3,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,11 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Check } from 'lucide-react'
+import { Check, Lock } from 'lucide-react'
 import { useRcdo } from '@/hooks/useRcdo'
 import { CHESS_ICON } from '@/types'
 import type { ChessPiece, CreateUnplannedItemRequest, CommitItemResponse } from '@/types'
-import type { RcDoHierarchyResponse } from '@/types'
 
 const CHESS_PIECES: ChessPiece[] = ['KING', 'QUEEN', 'ROOK', 'BISHOP', 'KNIGHT', 'PAWN']
 
@@ -32,23 +28,6 @@ const CHESS_DESCRIPTION: Record<ChessPiece, string> = {
   BISHOP: 'Medium — meaningful progress.',
   KNIGHT: 'Lower — good to have.',
   PAWN: 'Lowest — small but valuable.',
-}
-
-function flattenOutcomes(rcdo: RcDoHierarchyResponse | undefined): { id: string; title: string; breadcrumb: string }[] {
-  if (!rcdo) return []
-  const out: { id: string; title: string; breadcrumb: string }[] = []
-  for (const rc of rcdo.rallyCries) {
-    for (const do_ of rc.definingObjectives) {
-      for (const outcome of do_.outcomes) {
-        out.push({
-          id: outcome.id,
-          title: outcome.title,
-          breadcrumb: `${rc.title} › ${do_.title}`,
-        })
-      }
-    }
-  }
-  return out
 }
 
 interface UnplannedItemModalProps {
@@ -68,34 +47,37 @@ export function UnplannedItemModal({
   const { data: rcdo } = useRcdo()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [selectedDoId, setSelectedDoId] = useState('')
   const [outcomeId, setOutcomeId] = useState('')
-  const [outcomeSearch, setOutcomeSearch] = useState('')
   const [chessPiece, setChessPiece] = useState<ChessPiece>('PAWN')
   const [bumpedItemId, setBumpedItemId] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const allOutcomes = useMemo(() => flattenOutcomes(rcdo), [rcdo])
-  const filteredOutcomes = useMemo(() => {
-    const q = outcomeSearch.trim().toLowerCase()
-    if (!q) return allOutcomes
-    return allOutcomes.filter(
-      (o) =>
-        o.title.toLowerCase().includes(q) || o.breadcrumb.toLowerCase().includes(q)
-    )
-  }, [allOutcomes, outcomeSearch])
+  const rc = rcdo?.rallyCries?.[0]
+  const definingObjectives = rc?.definingObjectives ?? []
+  const selectedDo = useMemo(
+    () => definingObjectives.find((d) => d.id === selectedDoId) ?? null,
+    [definingObjectives, selectedDoId]
+  )
+  const outcomes = selectedDo?.outcomes ?? []
 
   React.useEffect(() => {
     if (open) {
       setTitle('')
       setDescription('')
+      setSelectedDoId('')
       setOutcomeId('')
-      setOutcomeSearch('')
       setChessPiece('PAWN')
       setBumpedItemId(bumpableItems.length > 0 ? bumpableItems[0]?.id ?? '' : '')
       setError(null)
     }
   }, [open, bumpableItems])
+
+  const handleSelectDo = (doId: string): void => {
+    setSelectedDoId(doId)
+    setOutcomeId('')
+  }
 
   const handleSubmit = async (): Promise<void> => {
     if (!title.trim()) {
@@ -131,73 +113,73 @@ export function UnplannedItemModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Add unplanned item (Strategic pivot)</DialogTitle>
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-[#1e293b] leading-tight">Mid-Week Pivot Detected</h2>
+              <p className="text-sm text-slate-500 mt-1">Adding tasks mid-week requires resource recalibration.</p>
+            </div>
+            <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-tighter rounded shrink-0">
+              Unplanned Entry
+            </span>
+          </div>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Adding an unplanned item means you are making room by bumping one of your Monday commitments. Select which item you are bumping below.
-        </p>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="unplanned-title">Title</Label>
-            <Input
-              id="unplanned-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What unplanned item are you adding?"
-            />
+        <div className="px-6 py-4 space-y-5 max-h-[60vh] overflow-y-auto">
+          {/* New commitment form */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">The New Commitment</p>
+            <div className="border border-amber-200 bg-amber-50/30 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                  <span className="text-lg">{CHESS_ICON[chessPiece]}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="What unplanned item are you adding?"
+                    className="border-0 bg-transparent p-0 h-auto text-sm font-semibold text-[#1e293b] focus-visible:ring-0 placeholder:text-slate-400"
+                  />
+                  <p className="text-xs text-slate-500 mt-0.5">Chess Move: {chessPiece.charAt(0) + chessPiece.slice(1).toLowerCase()} ({CHESS_DESCRIPTION[chessPiece].split(' — ')[0]})</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="px-2 py-0.5 bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase rounded flex items-center gap-1">
+                  ▌▌▌ Resource Impact: High
+                </span>
+              </div>
+            </div>
           </div>
 
+          {/* Description */}
           <div className="space-y-1.5">
-            <Label htmlFor="unplanned-desc">Description (optional)</Label>
+            <Label htmlFor="unplanned-desc" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Why is this needed? (optional)</Label>
             <Textarea
               id="unplanned-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Why is this needed mid-week?"
-              rows={3}
-              className="resize-none"
+              placeholder="Context for the mid-week pivot..."
+              rows={2}
+              className="resize-none text-sm"
             />
           </div>
 
+          {/* Chess piece */}
           <div className="space-y-1.5">
-            <Label>Which Monday commit are you bumping? <span className="text-destructive">*</span></Label>
-            <Select value={bumpedItemId} onValueChange={setBumpedItemId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select item to bump..." />
-              </SelectTrigger>
-              <SelectContent>
-                {bumpableItems.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    <span className="flex items-center gap-2">
-                      <span>{CHESS_ICON[item.chessPiece]}</span>
-                      <span className="truncate">{item.title}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {bumpableItems.length === 0 && (
-              <p className="text-xs text-muted-foreground">No bumpable items in this commit.</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Chess Piece Priority</Label>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Chess Move</Label>
             <Select value={chessPiece} onValueChange={(v) => setChessPiece(v as ChessPiece)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {CHESS_PIECES.map((piece) => (
-                  <SelectItem key={piece} value={piece} title={CHESS_DESCRIPTION[piece]}>
-                    <span className="flex flex-col items-start gap-0.5">
-                      <span>{CHESS_ICON[piece]} {piece}</span>
-                      <span className="text-xs text-muted-foreground font-normal">
-                        {CHESS_DESCRIPTION[piece]}
-                      </span>
+                  <SelectItem key={piece} value={piece}>
+                    <span className="flex items-center gap-2">
+                      <span>{CHESS_ICON[piece]}</span>
+                      <span>{piece.charAt(0) + piece.slice(1).toLowerCase()}</span>
                     </span>
                   </SelectItem>
                 ))}
@@ -205,68 +187,125 @@ export function UnplannedItemModal({
             </Select>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Outcome (RCDO)</Label>
-            <Input
-              placeholder="Search outcomes..."
-              value={outcomeSearch}
-              onChange={(e) => setOutcomeSearch(e.target.value)}
-              className="mb-1"
-            />
-            <div className="border rounded-md max-h-40 overflow-y-auto pr-2">
-              {!rcdo && (
-                <p className="p-3 text-sm text-muted-foreground">Loading outcomes...</p>
-              )}
-              {rcdo && filteredOutcomes.length === 0 && (
-                <p className="p-3 text-sm text-muted-foreground">
-                  {outcomeSearch.trim() ? 'No outcomes match.' : 'No outcomes available.'}
-                </p>
-              )}
-              {rcdo && filteredOutcomes.length > 0 && (
-                <ul className="p-1 pr-2">
-                  {filteredOutcomes.map((o) => {
-                    const selected = outcomeId === o.id
-                    return (
-                      <li key={o.id}>
-                        <button
-                          type="button"
-                          onClick={() => setOutcomeId(o.id)}
-                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-start gap-2 ${
-                            selected
-                              ? 'bg-primary/10 border border-primary/30 ring-1 ring-primary/20'
-                              : 'hover:bg-accent border border-transparent'
-                          }`}
-                        >
-                          <span
-                            className={`mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full border ${
-                              selected ? 'bg-primary text-primary-foreground border-primary' : 'border-muted-foreground/40'
-                            }`}
-                            aria-hidden
-                          >
-                            {selected ? <Check className="h-2.5 w-2.5" /> : null}
-                          </span>
-                          <span className="flex-1 min-w-0">
-                            <span className="block font-medium break-words">{o.title}</span>
-                            <span className="block text-xs text-muted-foreground break-words mt-0.5">{o.breadcrumb}</span>
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
+          {/* DO + Outcome selection */}
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aligned Outcome (Mandatory)</Label>
+            {definingObjectives.length > 0 && (
+              <div className="grid gap-1.5">
+                {definingObjectives.map((do_) => {
+                  const selected = selectedDoId === do_.id
+                  return (
+                    <button
+                      key={do_.id}
+                      type="button"
+                      onClick={() => handleSelectDo(do_.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-colors flex items-start gap-2.5 ${
+                        selected
+                          ? 'bg-[#1152d4]/8 border-[#1152d4]/40 ring-1 ring-[#1152d4]/20'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full border transition-colors ${
+                        selected ? 'bg-[#1152d4] border-[#1152d4] text-white' : 'border-slate-300'
+                      }`} aria-hidden>
+                        {selected && <Check className="h-2.5 w-2.5" />}
+                      </span>
+                      <span className="font-medium leading-snug break-words">{do_.title}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {selectedDoId && outcomes.length > 0 && (
+              <div className="grid gap-1 ml-2 pl-2 border-l-2 border-[#1152d4]/20">
+                {outcomes.map((o) => {
+                  const selected = outcomeId === o.id
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => setOutcomeId(o.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2.5 ${
+                        selected
+                          ? 'bg-[#1152d4]/8 border-[#1152d4]/40 ring-1 ring-[#1152d4]/20'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`shrink-0 flex h-4 w-4 items-center justify-center rounded-full border transition-colors ${
+                        selected ? 'bg-[#1152d4] border-[#1152d4] text-white' : 'border-slate-300'
+                      }`} aria-hidden>
+                        {selected && <Check className="h-2.5 w-2.5" />}
+                      </span>
+                      <span className="font-medium break-words">{o.title}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {/* Bump selection */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-1">
+              Which planned task is being displaced (bumped)?
+            </p>
+            <p className="text-xs text-slate-400 italic mb-3">Mandatory selection to maintain velocity</p>
+            {bumpableItems.length === 0 ? (
+              <p className="text-sm text-slate-400">No bumpable items in this commit.</p>
+            ) : (
+              <div className="space-y-2">
+                {bumpableItems.map((item) => (
+                  <label
+                    key={item.id}
+                    className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-colors ${
+                      bumpedItemId === item.id
+                        ? 'border-[#1152d4]/40 bg-[#1152d4]/5'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="bumped-item"
+                      value={item.id}
+                      checked={bumpedItemId === item.id}
+                      onChange={() => setBumpedItemId(item.id)}
+                      className="shrink-0 accent-[#1152d4]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[#1e293b] truncate">{item.title}</p>
+                      <p className="text-xs text-slate-400">Chess Move: {CHESS_ICON[item.chessPiece]} {item.chessPiece.charAt(0) + item.chessPiece.slice(1).toLowerCase()}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={submitting}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitting || bumpableItems.length === 0}>
-            {submitting ? 'Adding...' : 'Add unplanned item'}
-          </Button>
-        </DialogFooter>
+        {/* Dark footer */}
+        <div className="bg-[#0f172a] px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-slate-400">
+            <Lock className="h-4 w-4 shrink-0" />
+            <span className="text-xs italic">&ldquo;A promise made is a debt unpaid.&rdquo;</span>
+          </div>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <button
+              onClick={onClose}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => void handleSubmit()}
+              disabled={submitting || bumpableItems.length === 0 || !outcomeId || !title.trim()}
+              className="flex-1 sm:flex-none px-6 py-2.5 bg-[#1152d4] hover:bg-[#1152d4]/90 text-white rounded-xl text-sm font-bold shadow-lg shadow-[#1152d4]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'Adding...' : 'Confirm Commitment & Lock'}
+            </button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

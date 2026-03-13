@@ -3,14 +3,14 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: weeklycommit
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d weeklycommit"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d weeklycommit"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -70,6 +70,33 @@ services:
               {"Type": "email", "Value": "dual@acme.com"},
               {"Type": "name", "Value": "Jordan Dual"}
             ]
+          },
+          {
+            "SubjectId": "mock|marcus",
+            "Username": "marcus@acme.com",
+            "Password": "password",
+            "Claims": [
+              {"Type": "email", "Value": "marcus@acme.com"},
+              {"Type": "name", "Value": "Marcus Chen"}
+            ]
+          },
+          {
+            "SubjectId": "mock|priya",
+            "Username": "priya@acme.com",
+            "Password": "password",
+            "Claims": [
+              {"Type": "email", "Value": "priya@acme.com"},
+              {"Type": "name", "Value": "Priya Nair"}
+            ]
+          },
+          {
+            "SubjectId": "mock|tom",
+            "Username": "tom@acme.com",
+            "Password": "password",
+            "Claims": [
+              {"Type": "email", "Value": "tom@acme.com"},
+              {"Type": "name", "Value": "Tom Rivera"}
+            ]
           }
         ]
 
@@ -84,8 +111,8 @@ services:
         condition: service_started
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/weeklycommit
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
       OAUTH_ISSUER_URI: http://mock-oauth2

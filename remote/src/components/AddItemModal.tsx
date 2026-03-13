@@ -34,21 +34,14 @@ const CHESS_DESCRIPTION: Record<ChessPiece, string> = {
   PAWN: 'Lowest — small but valuable.',
 }
 
-function flattenOutcomes(rcdo: RcDoHierarchyResponse | undefined): { id: string; title: string; breadcrumb: string }[] {
-  if (!rcdo) return []
-  const out: { id: string; title: string; breadcrumb: string }[] = []
+function findDoIdForOutcome(rcdo: RcDoHierarchyResponse | undefined, outcomeId: string): string {
+  if (!rcdo || !outcomeId) return ''
   for (const rc of rcdo.rallyCries) {
     for (const do_ of rc.definingObjectives) {
-      for (const outcome of do_.outcomes) {
-        out.push({
-          id: outcome.id,
-          title: outcome.title,
-          breadcrumb: `${rc.title} › ${do_.title}`,
-        })
-      }
+      if (do_.outcomes.some((o) => o.id === outcomeId)) return do_.id
     }
   }
-  return out
+  return ''
 }
 
 interface AddItemModalProps {
@@ -63,33 +56,37 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
   const { data: rcdo } = useRcdo()
   const [title, setTitle] = useState(editItem?.title ?? '')
   const [description, setDescription] = useState(editItem?.description ?? '')
+  const [selectedDoId, setSelectedDoId] = useState('')
   const [outcomeId, setOutcomeId] = useState(editItem?.outcomeId ?? '')
-  const [outcomeSearch, setOutcomeSearch] = useState('')
   const [chessPiece, setChessPiece] = useState<ChessPiece>(editItem?.chessPiece ?? 'PAWN')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const allOutcomes = useMemo(() => flattenOutcomes(rcdo), [rcdo])
-  const filteredOutcomes = useMemo(() => {
-    const q = outcomeSearch.trim().toLowerCase()
-    if (!q) return allOutcomes
-    return allOutcomes.filter(
-      (o) =>
-        o.title.toLowerCase().includes(q) || o.breadcrumb.toLowerCase().includes(q)
-    )
-  }, [allOutcomes, outcomeSearch])
+  const rc = rcdo?.rallyCries?.[0]
+  const definingObjectives = rc?.definingObjectives ?? []
+  const selectedDo = useMemo(
+    () => definingObjectives.find((d) => d.id === selectedDoId) ?? null,
+    [definingObjectives, selectedDoId]
+  )
+  const outcomes = selectedDo?.outcomes ?? []
 
-  // Reset form when opening
+  // Reset form when opening; derive DO from editItem outcome if editing
   React.useEffect(() => {
     if (open) {
+      const initialOutcomeId = editItem?.outcomeId ?? ''
       setTitle(editItem?.title ?? '')
       setDescription(editItem?.description ?? '')
-      setOutcomeId(editItem?.outcomeId ?? '')
-      setOutcomeSearch('')
+      setOutcomeId(initialOutcomeId)
+      setSelectedDoId(findDoIdForOutcome(rcdo, initialOutcomeId))
       setChessPiece(editItem?.chessPiece ?? 'PAWN')
       setError(null)
     }
-  }, [open, editItem])
+  }, [open, editItem, rcdo])
+
+  const handleSelectDo = (doId: string): void => {
+    setSelectedDoId(doId)
+    setOutcomeId('')
+  }
 
   const handleSubmit = async (): Promise<void> => {
     if (!title.trim()) { setError('Title is required'); return }
@@ -115,50 +112,142 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editItem ? 'Edit Item' : 'Add Commit Item'}</DialogTitle>
+          <DialogTitle className="text-lg font-black text-[#1e293b]">
+            {editItem ? 'Edit Commit Item' : 'Add Commit Item'}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Step 1: Pick a Defining Objective */}
           <div className="space-y-1.5">
-            <Label htmlFor="title">Title</Label>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aligned Outcome</span>
+              <span className="text-[10px] font-bold text-[#1152d4] uppercase">(Mandatory)</span>
+            </div>
+            {rc && (
+              <p className="text-xs text-slate-500">{rc.title}</p>
+            )}
+            {!rcdo && (
+              <p className="text-sm text-slate-400">Loading...</p>
+            )}
+            {rcdo && definingObjectives.length === 0 && (
+              <p className="text-sm text-slate-400">No defining objectives available.</p>
+            )}
+            {definingObjectives.length > 0 && (
+              <div className="grid gap-1.5">
+                {definingObjectives.map((do_) => {
+                  const selected = selectedDoId === do_.id
+                  return (
+                    <button
+                      key={do_.id}
+                      type="button"
+                      onClick={() => handleSelectDo(do_.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-colors flex items-start gap-2.5 ${
+                        selected
+                          ? 'bg-[#1152d4]/8 border-[#1152d4]/40 ring-1 ring-[#1152d4]/20'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span
+                        className={`mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full border transition-colors ${
+                          selected
+                            ? 'bg-[#1152d4] border-[#1152d4] text-white'
+                            : 'border-slate-300'
+                        }`}
+                        aria-hidden
+                      >
+                        {selected && <Check className="h-2.5 w-2.5" />}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-medium leading-snug break-words">{do_.title}</p>
+                        {do_.description && (
+                          <p className="text-xs text-slate-400 mt-0.5 break-words">
+                            {do_.description}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Step 2: Pick an Outcome within the selected DO */}
+          {selectedDoId && (
+            <div className="space-y-1.5 ml-2 pl-2 border-l-2 border-[#1152d4]/20">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select Outcome</Label>
+              {outcomes.length === 0 ? (
+                <p className="text-sm text-slate-400">No outcomes defined for this objective.</p>
+              ) : (
+                <div className="grid gap-1">
+                  {outcomes.map((o) => {
+                    const selected = outcomeId === o.id
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        onClick={() => setOutcomeId(o.id)}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2.5 ${
+                          selected
+                            ? 'bg-[#1152d4]/8 border-[#1152d4]/40 ring-1 ring-[#1152d4]/20'
+                            : 'border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span
+                          className={`shrink-0 flex h-4 w-4 items-center justify-center rounded-full border transition-colors ${
+                            selected
+                              ? 'bg-[#1152d4] border-[#1152d4] text-white'
+                              : 'border-slate-300'
+                          }`}
+                          aria-hidden
+                        >
+                          {selected && <Check className="h-2.5 w-2.5" />}
+                        </span>
+                        <span className="font-medium break-words">{o.title}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="title" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Commit Description</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="What will you accomplish this week?"
+              placeholder="What will you deliver this week?"
+              className="text-sm"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="description">Description (optional)</Label>
+            <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Description (optional)</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Additional context..."
-              rows={4}
-              className="resize-none"
+              rows={2}
+              className="resize-none text-sm"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Chess Piece Priority</Label>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Chess Move</Label>
             <Select value={chessPiece} onValueChange={(v) => setChessPiece(v as ChessPiece)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {CHESS_PIECES.map((piece) => (
-                  <SelectItem
-                    key={piece}
-                    value={piece}
-                    title={CHESS_DESCRIPTION[piece]}
-                  >
-                    <span className="flex flex-col items-start gap-0.5">
-                      <span>{CHESS_ICON[piece]} {piece}</span>
-                      <span className="text-xs text-muted-foreground font-normal">
-                        {CHESS_DESCRIPTION[piece]}
-                      </span>
+                  <SelectItem key={piece} value={piece} title={CHESS_DESCRIPTION[piece]}>
+                    <span className="flex items-center gap-2">
+                      <span>{CHESS_ICON[piece]}</span>
+                      <span>{piece.charAt(0) + piece.slice(1).toLowerCase()}</span>
                     </span>
                   </SelectItem>
                 ))}
@@ -166,73 +255,16 @@ export function AddItemModal({ open, onClose, onSubmit, editItem, onUpdate }: Ad
             </Select>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Outcome (RCDO)</Label>
-            <p className="text-xs text-muted-foreground">
-              Click an outcome below to link this commit item to it.
-            </p>
-            <Input
-              placeholder="Search outcomes..."
-              value={outcomeSearch}
-              onChange={(e) => setOutcomeSearch(e.target.value)}
-              className="mb-1"
-            />
-            <div className="border rounded-md max-h-52 overflow-y-auto pr-2">
-              {!rcdo && (
-                <p className="p-3 text-sm text-muted-foreground">Loading outcomes...</p>
-              )}
-              {rcdo && filteredOutcomes.length === 0 && (
-                <p className="p-3 text-sm text-muted-foreground">
-                  {outcomeSearch.trim() ? 'No outcomes match your search.' : 'No outcomes available.'}
-                </p>
-              )}
-              {rcdo && filteredOutcomes.length > 0 && (
-                <ul className="p-1 pr-2">
-                  {filteredOutcomes.map((o) => {
-                    const selected = outcomeId === o.id
-                    return (
-                      <li key={o.id}>
-                        <button
-                          type="button"
-                          onClick={() => setOutcomeId(o.id)}
-                          className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-start gap-2 ${
-                            selected
-                              ? 'bg-primary/10 border border-primary/30 ring-1 ring-primary/20'
-                              : 'hover:bg-accent border border-transparent'
-                          }`}
-                        >
-                          <span
-                            className={`mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full border ${
-                              selected ? 'bg-primary text-primary-foreground border-primary' : 'border-muted-foreground/40'
-                            }`}
-                            aria-hidden
-                          >
-                            {selected ? <Check className="h-2.5 w-2.5" /> : null}
-                          </span>
-                          <span className="flex-1 min-w-0 overflow-hidden">
-                            <span className="block font-medium break-words">{o.title}</span>
-                            <span className="block text-xs text-muted-foreground break-words mt-0.5">{o.breadcrumb}</span>
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
-            {rcdo && outcomeId && (
-              <p className="text-xs text-muted-foreground">
-                Selected: {allOutcomes.find((o) => o.id === outcomeId)?.title ?? ''}
-              </p>
-            )}
-          </div>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={submitting}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button
+            onClick={handleSubmit}
+            disabled={submitting || !outcomeId}
+            className="bg-[#1152d4] hover:bg-[#1152d4]/90 text-white font-bold"
+          >
             {submitting ? 'Saving...' : editItem ? 'Save Changes' : 'Add Item'}
           </Button>
         </DialogFooter>

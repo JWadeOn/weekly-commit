@@ -3,6 +3,7 @@ import { commits } from '@/api/client'
 import type {
   WeeklyCommitResponse,
   CommitItemResponse,
+  TeamOutcomeWeightResponse,
   CreateCommitItemRequest,
   CreateUnplannedItemRequest,
   UpdateCommitItemRequest,
@@ -30,6 +31,15 @@ export function useCommitHistory(page = 0, size = 10) {
   return useQuery({
     queryKey: ['commits', 'history', page, size],
     queryFn: () => commits.history(page, size),
+  })
+}
+
+export function useTeamOutcomeWeights() {
+  return useQuery<TeamOutcomeWeightResponse>({
+    queryKey: ['commits', 'team-outcomes', 'weight'],
+    queryFn: () => commits.teamOutcomeWeights(),
+    staleTime: 30 * 1000,   // 30 s — matches other team-facing queries
+    refetchInterval: 60 * 1000, // re-poll every minute while the page is open
   })
 }
 

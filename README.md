@@ -23,7 +23,7 @@ Browser
   └── Host (localhost:3000)
         └── Remote MFE via Module Federation (localhost:3001)
               └── Backend API (localhost:8080)
-                    ├── PostgreSQL (localhost:5432)
+                    ├── PostgreSQL (localhost:5433)
                     └── Mock OAuth2 server (localhost:8090)  ← local dev only
 ```
 
@@ -144,7 +144,7 @@ docker compose up --build
 ```
 
 This starts:
-- PostgreSQL on port **5432**
+- PostgreSQL on port **5433** (host) so it doesn’t conflict with a local Postgres on 5432
 - Mock OAuth2 server on port **8090**
 - Backend API on port **8080**
 - Remote MFE on port **3001**
@@ -215,20 +215,23 @@ After logging in at [http://localhost:3000](http://localhost:3000), use these fl
 
 ## Running Without Docker (Local Dev)
 
+**Fast development:** Run backend and frontends locally for instant feedback—Vite HMR on remote and host, Spring Boot devtools on the backend, and no Docker image rebuilds. Use Docker only for infrastructure (PostgreSQL + mock OAuth2), or start the full stack with `docker compose up` and run backend/remote/host locally against it.
+
 Run these from the **Weekly Commit Module root** (`ci_pm/`). You need PostgreSQL and the mock OAuth2 server running (e.g. start only those with Docker, or use `docker compose up` for the full stack and run backend/remote/host locally against it).
 
 **Start order:** database + OAuth → backend → remote → host. Then open [http://localhost:3000](http://localhost:3000).
 
 ### 1. Backend
 
-Requires PostgreSQL and the mock OAuth2 server (or a real OAuth provider). Load environment variables from `.env` (e.g. `set -a && source .env && set +a` or use your shell’s equivalent).
+Requires PostgreSQL and the mock OAuth2 server (or a real OAuth provider). The backend reads `JWT_SECRET`, `DB_*`, and `OAUTH_*` from the environment; load `.env` (e.g. `set -a && source .env && set +a` or use your shell’s equivalent).
 
 ```bash
-cd backend
-./mvnw spring-boot:run
+cp .env.example .env   # first time only; edit if needed
+set -a && source .env && set +a
+cd backend && ./mvnw spring-boot:run
 ```
 
-Backend runs on **8080**. See `.env.example` in the module root for all supported variables.
+Backend runs on **8080**. See `.env.example` in the module root for all supported variables. If you see `Could not resolve placeholder 'JWT_SECRET'`, you're not in a shell that has sourced `.env`—run the three lines above from `ci_pm/`. Local dev uses the default **postgres** user (password `postgres`); if you see password errors, run `docker compose down -v` then `docker compose up postgres -d` to reinitialize the database.
 
 ### 2. Remote MFE
 
@@ -237,10 +240,10 @@ In a new terminal:
 ```bash
 cd remote
 npm install
-npm run dev
 ```
 
-Runs on [http://localhost:3001](http://localhost:3001). In standalone mode the remote can be used without the host (it renders its own login page).
+- **Standalone (no host):** run `npm run dev`. The app runs on [http://localhost:3001](http://localhost:3001) with its own login page.
+- **With host (Module Federation):** run `npm run dev:federated` instead of `npm run dev`. The plugin only exposes `remoteEntry.js` when the remote is built, not in Vite dev mode, so the host (localhost:3000) needs the remote to be served via build + preview. `dev:federated` builds once, then runs `vite build --watch` and `vite preview --port 3001` so [http://localhost:3001/assets/remoteEntry.js](http://localhost:3001/assets/remoteEntry.js) is available.
 
 ### 3. Host (optional — for full Module Federation)
 
@@ -350,9 +353,9 @@ Remote name: `weeklyCommitModule` · Exposed path: `./WeeklyCommitApp` · Entry:
 
 | Variable | Description | Default |
 |---|---|---|
-| `DB_URL` | JDBC connection string | `jdbc:postgresql://localhost:5432/weeklycommit` |
-| `DB_USERNAME` | PostgreSQL username | — |
-| `DB_PASSWORD` | PostgreSQL password | — |
+| `DB_URL` | JDBC connection string | `jdbc:postgresql://localhost:5433/weeklycommit` |
+| `DB_USERNAME` | PostgreSQL username (local dev: `postgres`) | — |
+| `DB_PASSWORD` | PostgreSQL password (local dev: `postgres`) | — |
 | `OAUTH_CLIENT_ID` | OAuth2 client ID | `weekly-commit-client` |
 | `OAUTH_CLIENT_SECRET` | OAuth2 client secret | `client-secret` |
 | `OAUTH_ISSUER_URI` | OIDC issuer URI (used for discovery + token validation) | `http://mock-oauth2` |

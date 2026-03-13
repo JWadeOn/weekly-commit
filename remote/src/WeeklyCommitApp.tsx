@@ -10,6 +10,7 @@ import { StrategyPage } from '@/pages/StrategyPage'
 import { CommitDetailPage } from '@/pages/CommitDetailPage'
 import { CommitHistoryPage } from '@/pages/CommitHistoryPage'
 import { ResourcesPage } from '@/pages/ResourcesPage'
+import { BoardPage } from '@/pages/BoardPage'
 import { AppNav } from '@/components/AppNav'
 import './index.css'
 
@@ -63,15 +64,16 @@ function AppContent({ onAuthExpired }: { onAuthExpired: () => void }): React.Rea
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex min-h-screen">
       <AppNav />
-      <main>
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<RoleRedirect />} />
           <Route path="/commits" element={<CommitPage />} />
           <Route path="/commits/:id" element={<CommitDetailPage />} />
           <Route path="/history" element={<CommitHistoryPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/board" element={<BoardPage />} />
           <Route path="/manager" element={<ManagerDashboard />} />
           <Route path="/manager/strategy" element={<StrategyPage />} />
         </Routes>

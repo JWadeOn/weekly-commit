@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { manager } from '@/api/client'
 import type {
   TeamResponse,
@@ -11,6 +11,7 @@ import type {
   RcDoAdminResponse,
   PivotRadarItemDto,
 } from '@/types'
+import type { Commit as BoardCommit } from '@/components/StrategicBoard'
 
 /** Backend returns an array; normalize to TeamResponse for the UI */
 function toTeamResponse(raw: TeamMemberApiResponse[]): TeamResponse {
@@ -106,4 +107,54 @@ export function useAddNote() {
       queryClient.invalidateQueries({ queryKey: ['manager', 'notes', userId, commitId] })
     },
   })
+}
+
+/** Fetch every team member's current commit in parallel and map to StrategicBoard format. */
+export function useTeamItemsForBoard(): { commits: BoardCommit[]; loading: boolean } {
+  const { data: team, isLoading: teamLoading } = useTeamDashboard()
+
+  const membersWithCommit = (team?.teamMembers ?? []).filter(
+    (m): m is TeamMemberResponse & { currentCommit: NonNullable<TeamMemberResponse['currentCommit']> } =>
+      m.currentCommit != null,
+  )
+
+  const results = useQueries({
+    queries: membersWithCommit.map((m) => ({
+      queryKey: ['manager', 'commit', m.userId, m.currentCommit.id],
+      queryFn: () => manager.getCommit(m.userId, m.currentCommit.id),
+      staleTime: 30_000,
+    })),
+  })
+
+  const loading = teamLoading || results.some((r) => r.isLoading)
+
+  const commits: BoardCommit[] = results.flatMap((r, idx) => {
+    const commit = r.data as WeeklyCommitResponse | undefined
+    const member = membersWithCommit[idx]
+    if (!member) return []
+    if (!commit) return []
+    return commit.items.map((item): BoardCommit => {
+      const piece = (item.chessPiece.charAt(0) + item.chessPiece.slice(1).toLowerCase()) as BoardCommit['chessPiece']
+
+      let status: BoardCommit['status']
+      if (item.completionStatus === 'COMPLETED' || item.completionStatus === 'PARTIAL') {
+        status = 'Done'
+      } else if (item.completionStatus === 'BUMPED' || item.carryForward) {
+        status = 'Bumped'
+      } else {
+        status = 'Pending'
+      }
+
+      return {
+        id: item.id,
+        taskName: item.title,
+        chessPiece: piece,
+        status,
+        definingObjective: item.outcomeBreadcrumb.definingObjective,
+        contributor: member.fullName,
+      }
+    })
+  })
+
+  return { commits, loading }
 }

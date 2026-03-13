@@ -20,6 +20,9 @@ public class TeamAlignmentResponse {
     private long strategicWeight;
     private long tacticalWeight;
     private int strategicPercentage;
+    private int teamIntegrityScore;
+    private long lockedOnMondayWeight;
+    private long doneWeight;
     private List<RallyCryBreakdownDto> rallyCryBreakdown;
     private List<UnderSupportedRallyCryDto> underSupportedRallyCries;
     private List<DefiningObjectiveBreakdownDto> definingObjectiveBreakdown;
@@ -68,5 +71,8 @@ public class TeamAlignmentResponse {
         private int supportingItemCount;
         private long supportingWeight;
         private int weightPercentage;
+        private int allocationSharePercentage;
+        private boolean lowVelocity;
+        private boolean hasPowerPiece;
     }
 }

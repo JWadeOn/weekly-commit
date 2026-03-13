@@ -14,7 +14,24 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { Plus, Lock, Unlock, CheckCircle2, AlertTriangle } from 'lucide-react'
+import {
+  Plus,
+  Lock,
+  Unlock,
+  CheckCircle2,
+  AlertTriangle,
+  Crown,
+  Star,
+  Users,
+  Grid2x2,
+  Zap,
+  FileEdit,
+  Info,
+  ArrowRight,
+  ClipboardList,
+  XCircle,
+  PanelRight,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -40,7 +57,7 @@ import { CommitItem } from '@/components/CommitItem'
 import { AddItemModal } from '@/components/AddItemModal'
 import { UnplannedItemModal } from '@/components/UnplannedItemModal'
 import { StatusBadge } from '@/components/StatusBadge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { TeamOutcomesSidebar } from '@/components/TeamOutcomesSidebar'
 import {
   useCurrentCommit,
   useUpdateStatus,
@@ -51,97 +68,104 @@ import {
   useReorderItems,
   useReconcileItem,
   useCompleteReconciliation,
+  useTeamOutcomeWeights,
 } from '@/hooks/useCurrentCommit'
 import { useRcdo } from '@/hooks/useRcdo'
+import { useRcdoAdmin } from '@/hooks/useRcdoAdmin'
 import { formatWeekRange } from '@/utils/formatDate'
 import type { CommitItemResponse, ChessPiece, CompletionStatus, RallyCryDto } from '@/types'
 import { CHESS_ICON, CHESS_WEIGHT } from '@/types'
 
 const CHESS_PIECE_ORDER: ChessPiece[] = ['KING', 'QUEEN', 'ROOK', 'BISHOP', 'KNIGHT', 'PAWN']
 
-// Weekly weight summary bar: "1 ♔ · 2 ♕ · 3 ♖ · total wt 420"
-function WeightSummaryBar({ items }: { items: CommitItemResponse[] }): React.ReactElement {
-  const counts = CHESS_PIECE_ORDER.reduce<Partial<Record<ChessPiece, number>>>(
-    (acc, piece) => {
-      const count = items.filter((i) => i.chessPiece === piece).length
-      if (count > 0) acc[piece] = count
-      return acc
-    },
-    {}
-  )
-  const totalWeight = items.reduce((sum, item) => sum + item.chessWeight, 0)
-  const parts = CHESS_PIECE_ORDER.filter((p) => counts[p])
-    .map((p) => `${counts[p]} ${CHESS_ICON[p]}`)
-    .join(' · ')
+// Chess layer visual groupings (matching the design's 4-category layout)
+const CHESS_LAYERS = [
+  {
+    id: 'king',
+    pieces: ['KING'] as ChessPiece[],
+    label: 'Rally Cry',
+    sublabel: 'King',
+    Icon: Crown,
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-500',
+    accent: '#d4af37',
+  },
+  {
+    id: 'queen',
+    pieces: ['QUEEN', 'ROOK'] as ChessPiece[],
+    label: 'Objectives',
+    sublabel: 'Queen',
+    Icon: Star,
+    iconBg: 'bg-purple-50',
+    iconColor: 'text-purple-600',
+    accent: '#7c3aed',
+  },
+  {
+    id: 'bishop',
+    pieces: ['BISHOP', 'KNIGHT'] as ChessPiece[],
+    label: 'Supporting',
+    sublabel: 'Bishop/Knight',
+    Icon: Users,
+    iconBg: 'bg-blue-50',
+    iconColor: 'text-blue-600',
+    accent: '#1152d4',
+  },
+  {
+    id: 'pawn',
+    pieces: ['PAWN'] as ChessPiece[],
+    label: 'Operational',
+    sublabel: 'Pawn',
+    Icon: Grid2x2,
+    iconBg: 'bg-slate-50',
+    iconColor: 'text-slate-500',
+    accent: '#64748b',
+  },
+]
 
+// Impact bolts for reconciliation view based on chess weight
+function ImpactBolts({ weight }: { weight: number }): React.ReactElement {
+  const level = weight >= 200 ? 3 : weight >= 100 ? 2 : 1
   return (
-    <div className="flex items-center gap-3 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-      <span>{parts}</span>
-      <span>·</span>
-      <span className="font-medium">Total weight: {totalWeight}</span>
+    <div className="flex gap-0.5" style={{ color: '#d4af37' }}>
+      {[1, 2, 3].map((i) => (
+        <Zap
+          key={i}
+          className={`h-4 w-4 ${i <= level ? 'fill-current' : 'opacity-15'}`}
+        />
+      ))}
     </div>
   )
 }
 
-// Read-only Rally Cry & Defining Objectives for employee context
+// Read-only Rally Cry banner for employee context (dark navy, matches Screen 3)
 function StrategySummary({
   rallyCries,
-  activeRallyCryId,
 }: {
   rallyCries: RallyCryDto[]
   activeRallyCryId?: string
 }): React.ReactElement | null {
-  if (!rallyCries?.length) return null
+  const rc = rallyCries?.[0]
+  if (!rc) return null
+
   return (
-    <Card className="bg-muted/30 border-muted-foreground/20">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Rally Cry & Objectives</CardTitle>
-        <CardDescription>Your organization&apos;s focus — align your commit items to these</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {rallyCries.map((rc) => {
-          const isActive = activeRallyCryId ? rc.id === activeRallyCryId : false
-          return (
-            <div
-              key={rc.id}
-              className={`space-y-2 rounded-md p-2 -mx-2 transition-colors ${isActive ? 'bg-primary/5 ring-1 ring-primary/20' : ''}`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Rally Cry (RC):
-                </span>
-                <h3 className="font-semibold text-foreground">{rc.title}</h3>
-                {isActive && (
-                  <Badge variant="outline" className="text-xs text-primary border-primary/40">
-                    Active
-                  </Badge>
-                )}
-              </div>
-              {rc.description && (
-                <p className="text-sm text-muted-foreground mt-0.5">{rc.description}</p>
-              )}
-              {rc.definingObjectives?.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
-                    Objectives (Defining Objectives):
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
-                    {rc.definingObjectives.map((do_) => (
-                      <li key={do_.id}>
-                        <span className="text-foreground/90">{do_.title}</span>
-                        {do_.description && (
-                          <span className="text-muted-foreground"> — {do_.description}</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </CardContent>
-    </Card>
+    <div className="w-full bg-[#1e293b] text-white p-5 rounded-xl border-b-4 border-[#1152d4] flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+      <div className="flex items-center gap-4">
+        <div className="p-3 bg-[#1152d4]/20 rounded-full border border-[#1152d4]/30 shrink-0">
+          <Crown className="h-6 w-6 text-[#1152d4]" />
+        </div>
+        <div>
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1152d4]">Team Rally Cry</h3>
+          <p className="text-xl font-black tracking-tight italic">&ldquo;{rc.title}&rdquo;</p>
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-sm text-slate-400">Strategic Priority</p>
+        <div className="flex items-center gap-2 justify-end mt-1">
+          <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-xs font-bold text-green-500">Active Campaign</span>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -158,21 +182,39 @@ export function CommitPage(): React.ReactElement {
   const reconcileItem = useReconcileItem()
   const completeReconciliation = useCompleteReconciliation()
 
+  // Team-wide aggregate weights from the new analytics endpoint
+  const { data: teamOutcomeWeightData } = useTeamOutcomeWeights()
+
+  // Admin RCDO provides ownerName; may 403 for non-managers — graceful fallback
+  const { data: rcdoAdminData } = useRcdoAdmin()
+  const ownerNameMap = React.useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {}
+    rcdoAdminData?.rallyCries.forEach((rc) =>
+      rc.definingObjectives.forEach((doObj) =>
+        doObj.outcomes.forEach((o) => { map[o.ownerId] = o.ownerName })
+      )
+    )
+    return map
+  }, [rcdoAdminData])
+
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [unplannedModalOpen, setUnplannedModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<CommitItemResponse | null>(null)
+  const [hoveredOutcomeId, setHoveredOutcomeId] = useState<string | null>(null)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [reconcileData, setReconcileData] = useState<
     Record<string, { actualOutcome: string; completionStatus: CompletionStatus | ''; carryForward: boolean }>
   >({})
+  const [reconcileTab, setReconcileTab] = useState<'planned' | 'unplanned'>('planned')
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading...</div>
-  if (error) return <div className="p-8 text-center text-destructive">Failed to load commit</div>
-  if (!commit) return <div className="p-8 text-center">No commit found</div>
+  if (isLoading) return <div className="p-8 text-center text-slate-400 font-medium">Loading...</div>
+  if (error) return <div className="p-8 text-center text-red-500">Failed to load commit</div>
+  if (!commit) return <div className="p-8 text-center text-slate-400">No commit found</div>
 
   const itemsByPiece = CHESS_PIECE_ORDER.reduce<Record<ChessPiece, CommitItemResponse[]>>(
     (acc, piece) => {
@@ -187,6 +229,12 @@ export function CommitPage(): React.ReactElement {
   const hasKingOrQueen = commit.items.some(
     (i) => i.chessPiece === 'KING' || i.chessPiece === 'QUEEN'
   )
+
+  // Progress calculation — count how many of the 4 visual layers have at least 1 item
+  const filledLayers = CHESS_LAYERS.filter((layer) =>
+    layer.pieces.some((p) => itemsByPiece[p]?.length > 0)
+  ).length
+  const progressPct = Math.round((filledLayers / CHESS_LAYERS.length) * 100)
 
   const handleDragEnd = (event: DragEndEvent, piece: ChessPiece): void => {
     const { active, over } = event
@@ -250,66 +298,204 @@ export function CommitPage(): React.ReactElement {
     }))
   }
 
+  const plannedItems = commit.items.filter((i) => !i.unplanned)
+  const unplannedItems = commit.items.filter((i) => i.unplanned)
+
+  const completedCount = commit.items.filter((i) => i.completionStatus === 'COMPLETED').length
+  const achievedPct =
+    commit.items.length > 0 ? Math.round((completedCount / commit.items.length) * 100) : 0
+
+  // ── Morning View HUD calculations (LOCKED state) ──────────────────────────
+  const hudWeekEnd = new Date(commit.weekEndDate)
+  const hudDaysLeft = Math.max(0, Math.ceil((hudWeekEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+  const hudWeekStart = new Date(commit.weekStartDate)
+  const hudWeekNum = Math.ceil(
+    (hudWeekStart.getTime() - new Date(hudWeekStart.getFullYear(), 0, 1).getTime()) /
+    (7 * 24 * 60 * 60 * 1000)
+  )
+  const hudDoneCount = completedCount
+  const hudDonePct = commit.items.length > 0 ? Math.round((hudDoneCount / commit.items.length) * 100) : 0
+
+  // Sidebar gap count — outcomes with 0 team weight (server data) or 0 personal weight (fallback)
+  const committedOutcomeIds = new Set(commit.items.map((i) => i.outcomeId))
+  const sidebarGapCount = (rcdoData?.rallyCries ?? [])
+    .flatMap((rc) => rc.definingObjectives.flatMap((doObj) => doObj.outcomes))
+    .filter((o) => teamOutcomeWeightData
+      ? (teamOutcomeWeightData.weights[o.id] ?? 0) === 0
+      : !committedOutcomeIds.has(o.id)
+    ).length
+
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      {/* Rally Cry & DOs — context for employees; host may pass activeRallyCryId to highlight */}
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      {/* Rally Cry context */}
       <StrategySummary rallyCries={rcdoData?.rallyCries ?? []} activeRallyCryId={activeRallyCryId} />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Weekly Commit</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {formatWeekRange(commit.weekStartDate, commit.weekEndDate)}
+      {/* Page header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-[#1e293b]">
+            {commit.status === 'DRAFT' ? 'Monday Commitment' : commit.status === 'LOCKED' ? 'This Week\'s Focus' : commit.status === 'RECONCILING' ? 'Friday Reconciliation' : 'Week Reconciled'}
+          </h1>
+          <p className="text-slate-500 text-sm">
+            {commit.status === 'DRAFT' ? 'Draft your weekly focus and align with outcomes.' : commit.status === 'LOCKED' ? 'Your plan is locked and in execution.' : commit.status === 'RECONCILING' ? 'Compare committed goals with actual outcomes.' : `${formatWeekRange(commit.weekStartDate, commit.weekEndDate)}`}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <StatusBadge status={commit.status} />
-          {commit.totalWeight > 0 && (
-            <Badge variant="outline" className="text-xs">
-              Weight: {commit.totalWeight}
-            </Badge>
-          )}
+        <div className="w-full md:w-64 bg-white p-4 rounded-xl border border-slate-200 shadow-sm shrink-0">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-semibold text-slate-700">Alignment Ratio</span>
+            <span className="text-sm font-bold text-[#1152d4]">{progressPct}%</span>
+          </div>
+          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-[#1152d4] rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+          </div>
+          <p className="text-[10px] mt-2 text-slate-400 uppercase tracking-wider font-bold">Strategic vs Routine</p>
         </div>
       </div>
 
-      {/* Weekly weight summary — shown whenever there are items */}
-      {commit.items.length > 0 && <WeightSummaryBar items={commit.items} />}
-
-      {/* DRAFT State */}
+      {/* ── DRAFT ── */}
       {commit.status === 'DRAFT' && (
-        <>
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              {commit.items.length === 0
-                ? 'No items yet. Add your first commit item.'
-                : `${commit.items.length} item${commit.items.length !== 1 ? 's' : ''}`}
-            </p>
-            <Button onClick={() => setAddModalOpen(true)} size="sm">
-              <Plus className="h-4 w-4 mr-1" /> Add Item
-            </Button>
+        <div className="flex gap-6 items-start">
+          {/* ── Main content column ── */}
+          <div className="flex-1 min-w-0 space-y-6">
+          {/* Lifecycle tabs */}
+          <div
+            className="bg-white rounded-xl border p-1 flex"
+            style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+          >
+            <button
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold text-white transition-colors"
+              style={{ backgroundColor: '#1e293b' }}
+            >
+              <FileEdit className="h-4 w-4" />
+              Draft
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold text-slate-400 hover:bg-slate-50 transition-colors">
+              <Lock className="h-4 w-4" />
+              Locked
+            </button>
           </div>
 
-          {/* No Kings or Queens soft warning */}
-          {commit.items.length > 0 && !hasKingOrQueen && (
-            <div className="flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>
-                No Kings or Queens this week — consider whether your highest-leverage work is
-                represented.
+          {/* Progress card */}
+          <div
+            className="bg-white rounded-xl border p-5 space-y-3"
+            style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+          >
+            <div className="flex justify-between items-end">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Check-in Progress</h3>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  {formatWeekRange(commit.weekStartDate, commit.weekEndDate)}
+                </p>
+              </div>
+              <span className="text-2xl font-black" style={{ color: '#1152d4' }}>
+                {progressPct}%
               </span>
             </div>
-          )}
+            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${progressPct}%`, backgroundColor: '#1152d4' }}
+              />
+            </div>
+            {commit.items.length > 0 && !hasKingOrQueen && (
+              <div
+                className="flex items-center gap-2 text-sm font-medium p-3 rounded-lg border"
+                style={{ backgroundColor: 'rgba(212,175,55,0.08)', borderColor: 'rgba(212,175,55,0.25)', color: '#7a5c00' }}
+              >
+                <Info className="h-4 w-4 shrink-0" style={{ color: '#d4af37' }} />
+                <span>No King or Queen items — consider your highest-leverage work.</span>
+              </div>
+            )}
+          </div>
 
+          {/* Chess layer grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {CHESS_LAYERS.map((layer) => {
+              const hasItems = layer.pieces.some((p) => itemsByPiece[p]?.length > 0)
+              const count = layer.pieces.reduce((sum, p) => sum + (itemsByPiece[p]?.length ?? 0), 0)
+              return (
+                <div
+                  key={layer.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl bg-white border transition-all ${
+                    hasItems ? 'ring-2 shadow-sm' : ''
+                  }`}
+                  style={{
+                    borderColor: hasItems ? layer.accent : '#e2e8f0',
+                    ...(hasItems ? { ringColor: `${layer.accent}33` } : {}),
+                    boxShadow: hasItems ? `0 0 0 2px ${layer.accent}22` : undefined,
+                  }}
+                >
+                  <div
+                    className={`w-9 h-9 shrink-0 flex items-center justify-center rounded-lg ${layer.iconBg}`}
+                  >
+                    <layer.Icon className={`h-4 w-4 ${layer.iconColor}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      {layer.sublabel}
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{layer.label}</p>
+                    {count > 0 && (
+                      <p className="text-[10px] text-slate-400">{count} item{count !== 1 ? 's' : ''}</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Items section header */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-500">
+              {commit.items.length === 0
+                ? 'No items yet — add your first commit item.'
+                : `${commit.items.length} item${commit.items.length !== 1 ? 's' : ''} this week`}
+            </p>
+            <div className="flex items-center gap-2">
+              {/* Mobile: open outcomes drawer */}
+              <button
+                onClick={() => setMobileDrawerOpen(true)}
+                className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg border transition-colors"
+                style={{
+                  borderColor: '#e2e8f0',
+                  color: sidebarGapCount > 0 ? '#d4af37' : '#64748b',
+                  backgroundColor: 'white',
+                }}
+                aria-label="View team outcomes"
+              >
+                <PanelRight className="h-3.5 w-3.5" />
+                Goals
+                {sidebarGapCount > 0 && (
+                  <span
+                    className="ml-0.5 text-[9px] font-black px-1 rounded-full"
+                    style={{ backgroundColor: '#d4af37', color: '#1e293b' }}
+                  >
+                    {sidebarGapCount}
+                  </span>
+                )}
+              </button>
+              <Button
+                onClick={() => setAddModalOpen(true)}
+                size="sm"
+                className="text-white font-bold shadow-sm"
+                style={{ backgroundColor: '#1e293b' }}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Item
+              </Button>
+            </div>
+          </div>
+
+          {/* Items grouped by chess piece */}
           {CHESS_PIECE_ORDER.map((piece) => {
             const items = itemsByPiece[piece]
             if (items.length === 0) return null
             return (
               <div key={piece} className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <div className="flex items-center gap-2">
                   <span className="text-base">{CHESS_ICON[piece]}</span>
-                  <span>{piece}</span>
-                  <span className="text-xs font-normal">— wt {CHESS_WEIGHT[piece]}</span>
+                  <span className="text-sm font-bold text-slate-600">{piece}</span>
+                  <span className="text-xs text-slate-400 font-normal">— wt {CHESS_WEIGHT[piece]}</span>
                 </div>
                 <DndContext
                   sensors={sensors}
@@ -323,6 +509,7 @@ export function CommitPage(): React.ReactElement {
                           key={item.id}
                           item={item}
                           isDraggable
+                          isHighlighted={hoveredOutcomeId === item.outcomeId}
                           onEdit={() => setEditingItem(item)}
                           onDelete={() => {
                             if (confirm('Delete this item?')) {
@@ -338,72 +525,334 @@ export function CommitPage(): React.ReactElement {
             )
           })}
 
+          {/* Finalize button */}
           {commit.items.length > 0 && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button className="w-full" disabled={updateStatus.isPending}>
-                  <Lock className="h-4 w-4 mr-2" />
-                  Submit Week
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Submit your weekly commit?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will lock your commit and notify your manager. You can retract it until
-                    your manager views it.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSubmitWeek}>Submit</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex justify-center pt-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    disabled={updateStatus.isPending}
+                    className="flex items-center gap-2 px-10 py-4 text-white rounded-xl font-bold text-base shadow-xl transition-all hover:opacity-90 disabled:opacity-50"
+                    style={{ backgroundColor: '#1e293b' }}
+                  >
+                    <Lock className="h-5 w-5" />
+                    Finalize &amp; Lock Week
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Submit your weekly commit?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will lock your commit and notify your manager. You can retract it until
+                      your manager views it.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSubmitWeek}>Submit</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
-        </>
+          </div>
+
+          {/* ── Team Outcomes Sidebar ── */}
+          <TeamOutcomesSidebar
+            rallyCries={rcdoData?.rallyCries ?? []}
+            commitItems={commit.items}
+            teamWeights={teamOutcomeWeightData?.weights}
+            participatingCommits={teamOutcomeWeightData?.participatingCommits}
+            hoveredOutcomeId={hoveredOutcomeId}
+            onHoverOutcome={setHoveredOutcomeId}
+            ownerNameMap={ownerNameMap}
+            mobileOpen={mobileDrawerOpen}
+            onMobileClose={() => setMobileDrawerOpen(false)}
+          />
+        </div>
       )}
 
-      {/* LOCKED State */}
+      {/* ── LOCKED — Morning View HUD ── */}
       {commit.status === 'LOCKED' && (
         <>
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setUnplannedModalOpen(true)}
-              disabled={commit.items.filter((i) => !i.unplanned).length === 0}
-            >
-              <Plus className="h-4 w-4 mr-1" /> Add unplanned item
-            </Button>
-          </div>
-          {CHESS_PIECE_ORDER.map((piece) => {
-            const items = itemsByPiece[piece]
-            if (items.length === 0) return null
-            return (
-              <div key={piece} className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                  <span className="text-base">{CHESS_ICON[piece]}</span>
-                  <span>{piece}</span>
+          {/* ━━━━ 1. PULSE HEADER ━━━━ */}
+          <section
+            aria-label="Weekly Pulse Header"
+            className="relative overflow-hidden rounded-2xl bg-[#1e293b] text-white shadow-2xl shadow-[#1e293b]/30"
+          >
+            {/* Atmospheric depth */}
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 size-52 bg-[#1152d4]/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -mb-8 -ml-8 size-36 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 p-6 space-y-5">
+              {/* Top row: label + week + status chips */}
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#1152d4]">Morning View</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-600" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Week {hudWeekNum}</span>
                 </div>
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <CommitItem key={item.id} item={item} />
-                  ))}
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold text-slate-300">
+                    <Lock className="h-3 w-3" />
+                    Locked
+                  </span>
+                  <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                    hudDaysLeft === 0
+                      ? 'bg-red-500/20 border border-red-500/30 text-red-400'
+                      : hudDaysLeft <= 2
+                      ? 'bg-orange-500/20 border border-orange-500/30 text-orange-400'
+                      : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                  }`}>
+                    <span className={`size-1.5 rounded-full ${
+                      hudDaysLeft === 0 ? 'bg-red-400 animate-pulse' :
+                      hudDaysLeft <= 2 ? 'bg-orange-400 animate-pulse' :
+                      'bg-emerald-400'
+                    }`} />
+                    {hudDaysLeft === 0
+                      ? 'Last Day'
+                      : `${hudDaysLeft} Day${hudDaysLeft !== 1 ? 's' : ''} Remaining`}
+                  </span>
                 </div>
               </div>
-            )
-          })}
 
+              {/* Rally Cry anchor */}
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-[#1152d4]/20 rounded-xl border border-[#1152d4]/30 shrink-0 mt-0.5">
+                  <Crown className="h-5 w-5 text-[#1152d4]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#1152d4] mb-1">Rallying Cry</p>
+                  <p className="text-xl font-black tracking-tight leading-snug text-white">
+                    {rcdoData?.rallyCries?.[0]?.title ?? '—'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Commitment progress bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Commitment Progress</span>
+                  <span className="text-xs font-bold text-white">
+                    {hudDoneCount}/{commit.items.length}
+                    <span className="text-slate-500 font-normal"> · {hudDonePct}%</span>
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${hudDonePct}%`,
+                      backgroundColor: hudDonePct === 100 ? '#22c55e' : '#1152d4',
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  {formatWeekRange(commit.weekStartDate, commit.weekEndDate)}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ━━━━ 2. STRATEGIC HUD LIST ━━━━ */}
+          <section aria-label="Strategic task list" className="space-y-6">
+            {CHESS_LAYERS.map((layer) => {
+              const layerItems = layer.pieces.flatMap((p) => itemsByPiece[p] ?? [])
+              if (layerItems.length === 0) return null
+              const layerDone = layerItems.filter((i) => i.completionStatus === 'COMPLETED').length
+              return (
+                <div key={layer.id} className="space-y-3">
+                  {/* Layer header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider"
+                        style={{
+                          backgroundColor: `${layer.accent}15`,
+                          borderColor: `${layer.accent}30`,
+                          color: layer.accent,
+                        }}
+                      >
+                        {layer.sublabel}
+                      </span>
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        {layer.label}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold tabular-nums">
+                      {layerDone}/{layerItems.length}
+                    </span>
+                  </div>
+
+                  {/* Task cards */}
+                  {layerItems.map((item) => {
+                    const isDone = item.completionStatus === 'COMPLETED'
+                    const isThisPending = reconcileItem.isPending && reconcileItem.variables?.itemId === item.id
+                    return (
+                      <article
+                        key={item.id}
+                        aria-label={`Task: ${item.title}${isDone ? ' — completed' : ''}`}
+                        className={`bg-white border rounded-2xl p-5 flex items-start gap-4 relative overflow-hidden transition-all duration-300 ${
+                          isDone
+                            ? 'opacity-50 border-slate-100'
+                            : 'border-slate-200 hover:border-[#1152d4]/30 hover:shadow-sm'
+                        }`}
+                        style={{ boxShadow: isDone ? 'none' : '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+                      >
+                        {/* Left accent bar */}
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl transition-opacity duration-300"
+                          style={{ backgroundColor: isDone ? '#cbd5e1' : layer.accent }}
+                        />
+
+                        {/* Chess piece icon */}
+                        <div
+                          className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center transition-all duration-300 ${
+                            isDone ? 'bg-slate-100' : layer.iconBg
+                          }`}
+                        >
+                          <layer.Icon
+                            className={`h-5 w-5 transition-colors duration-300 ${
+                              isDone ? 'text-slate-300' : layer.iconColor
+                            }`}
+                          />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <h5
+                                className={`font-bold text-sm leading-snug transition-all duration-300 ${
+                                  isDone ? 'line-through text-slate-400' : 'text-[#1e293b]'
+                                }`}
+                              >
+                                {item.title}
+                              </h5>
+                              {/* Hard link to Outcome */}
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <ArrowRight
+                                  className={`h-3 w-3 shrink-0 transition-colors duration-300 ${
+                                    isDone ? 'text-slate-300' : 'text-[#1152d4]'
+                                  }`}
+                                />
+                                <span
+                                  className={`text-[11px] font-semibold truncate transition-colors duration-300 ${
+                                    isDone ? 'text-slate-300' : 'text-[#1152d4]'
+                                  }`}
+                                  title={`${item.outcomeBreadcrumb.definingObjective} → ${item.outcomeBreadcrumb.outcome}`}
+                                >
+                                  {item.outcomeBreadcrumb.outcome}
+                                </span>
+                              </div>
+                              {item.outcomeBreadcrumb.definingObjective && (
+                                <p
+                                  className={`text-[10px] mt-0.5 truncate transition-colors duration-300 ${
+                                    isDone ? 'text-slate-300' : 'text-slate-400'
+                                  }`}
+                                >
+                                  {item.outcomeBreadcrumb.definingObjective}
+                                </p>
+                              )}
+                              {item.unplanned && (
+                                <span
+                                  className="inline-flex items-center gap-1 mt-2 text-[10px] font-bold uppercase"
+                                  style={{ color: isDone ? '#94a3b8' : '#d4af37' }}
+                                >
+                                  <Zap className="h-3 w-3 fill-current" />
+                                  Unplanned Pivot
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider shrink-0 transition-colors duration-300 ${
+                                isDone ? 'text-slate-300' : 'text-slate-400'
+                              }`}
+                            >
+                              wt {item.chessWeight}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Mark Done toggle */}
+                        <div className="shrink-0 flex flex-col items-center gap-1 ml-1">
+                          <button
+                            role="checkbox"
+                            aria-checked={isDone}
+                            aria-label={isDone ? `Unmark "${item.title}" as done` : `Mark "${item.title}" as done`}
+                            disabled={isThisPending}
+                            onClick={() => {
+                              reconcileItem.mutate({
+                                commitId: commit.id,
+                                itemId: item.id,
+                                data: {
+                                  actualOutcome: item.title,
+                                  completionStatus: isDone ? 'NOT_COMPLETED' : 'COMPLETED',
+                                  carryForward: false,
+                                },
+                              })
+                            }}
+                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+                              isThisPending
+                                ? 'opacity-40 cursor-not-allowed border-slate-300'
+                                : isDone
+                                ? 'bg-[#1152d4] border-[#1152d4] hover:opacity-80'
+                                : 'border-slate-300 hover:border-[#1152d4] bg-white'
+                            }`}
+                          >
+                            {isDone && <CheckCircle2 className="h-4 w-4 text-white" />}
+                          </button>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">
+                            {isDone ? 'Done' : 'Mark'}
+                          </span>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              )
+            })}
+
+            {commit.items.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
+                <p className="text-slate-400 text-sm">No committed tasks this week.</p>
+              </div>
+            )}
+          </section>
+
+          {/* ━━━━ 3. PIVOT TRIGGER ━━━━ */}
           <div className="space-y-2">
+            <button
+              aria-label="Add an unplanned task — triggers Mid-Week Pivot selection"
+              onClick={() => setUnplannedModalOpen(true)}
+              disabled={commit.items.filter((i) => !i.unplanned).length === 0}
+              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-sm transition-all bg-[#1e293b] text-white hover:bg-[#0f172a] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#1e293b]/20"
+            >
+              <div className="p-1.5 bg-[#1152d4]/20 rounded-lg border border-[#1152d4]/30">
+                <Zap className="h-4 w-4 text-[#1152d4]" />
+              </div>
+              <span>Add Unplanned Task</span>
+              <span className="text-xs font-medium text-slate-400">— Mid-Week Pivot</span>
+            </button>
+            <p className="text-center text-[11px] text-slate-400">
+              Adding a task mid-week requires selecting which committed item is being bumped.
+            </p>
+          </div>
+
+          {/* ━━━━ 4. BOTTOM ACTIONS ━━━━ */}
+          <div className="space-y-3 pt-2 border-t border-slate-200">
             {commit.viewedAt ? (
-              <p className="text-sm text-muted-foreground text-center py-2">
-                Manager has viewed this commit — retract is no longer available.
+              <p className="text-sm text-slate-400 text-center py-2">
+                Manager has viewed this commit — retract no longer available.
               </p>
             ) : (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="w-full" disabled={updateStatus.isPending}>
+                  <Button
+                    variant="outline"
+                    className="w-full font-bold"
+                    disabled={updateStatus.isPending}
+                  >
                     <Unlock className="h-4 w-4 mr-2" />
                     Retract Submission
                   </Button>
@@ -424,7 +873,7 @@ export function CommitPage(): React.ReactElement {
             )}
             <Button
               variant="secondary"
-              className="w-full"
+              className="w-full font-bold"
               onClick={handleStartReconciliation}
               disabled={updateStatus.isPending}
             >
@@ -434,212 +883,504 @@ export function CommitPage(): React.ReactElement {
         </>
       )}
 
-      {/* RECONCILING State — side-by-side "Monday Promise" vs "Friday Reality" */}
+      {/* ── RECONCILING ── */}
       {commit.status === 'RECONCILING' && (
         <>
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setUnplannedModalOpen(true)}
-              disabled={commit.items.filter((i) => !i.unplanned).length === 0}
-            >
-              <Plus className="h-4 w-4 mr-1" /> Add unplanned item
-            </Button>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b pb-6" style={{ borderColor: 'rgba(30,58,95,0.08)' }}>
+            <div>
+              <nav className="flex gap-2 text-sm text-slate-400 mb-2 font-medium">
+                <span>Week Review</span>
+              </nav>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                Reconciliation
+              </h1>
+              <p className="text-slate-500 mt-1.5 text-sm max-w-xl">
+                Compare committed goals with actual outcomes. Mark each item before finalizing.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setUnplannedModalOpen(true)}
+                disabled={plannedItems.length === 0}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add unplanned
+              </Button>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Reflect on each item. For partial or missed items, a reason for miss is required.
-          </p>
 
-          <div className="space-y-4">
-            {commit.items
-              .sort(
-                (a, b) =>
-                  CHESS_PIECE_ORDER.indexOf(a.chessPiece) -
-                  CHESS_PIECE_ORDER.indexOf(b.chessPiece)
-              )
-              .map((item) => {
-                const state = getReconcileState(item.id)
-                const alreadyReconciled = item.completionStatus !== null
-                const isBumpedItem = commit.items.some((o) => o.bumpedItemId === item.id)
-                const requiresReason =
-                  state.completionStatus === 'PARTIAL' ||
-                  state.completionStatus === 'NOT_COMPLETED'
-                const saveDisabled =
-                  !state.completionStatus ||
-                  (requiresReason && !state.actualOutcome.trim()) ||
-                  reconcileItem.isPending
+          {/* Stats overview */}
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: 'Committed', value: plannedItems.length, unit: 'Tasks', barColor: '#1152d4', barWidth: '100%' },
+              {
+                label: 'Achieved',
+                value: commit.items.filter((i) => i.completionStatus === 'COMPLETED').length,
+                unit: 'Tasks',
+                barColor: '#16a34a',
+                barWidth: `${commit.items.length > 0 ? Math.round((commit.items.filter((i) => i.completionStatus === 'COMPLETED').length / commit.items.length) * 100) : 0}%`,
+              },
+              {
+                label: 'Efficiency',
+                value: `${achievedPct}%`,
+                unit: '',
+                barColor: achievedPct >= 75 ? '#1152d4' : '#f97316',
+                barWidth: `${achievedPct}%`,
+                extra: achievedPct < 75 ? '-vs target' : '',
+              },
+            ].map(({ label, value, unit, barColor, barWidth }) => (
+              <div
+                key={label}
+                className="bg-white p-5 rounded-xl border"
+                style={{ borderColor: 'rgba(30,58,95,0.06)', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+              >
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-2xl font-extrabold text-slate-900">{value}</span>
+                  {unit && <span className="text-slate-400 font-semibold text-sm">{unit}</span>}
+                </div>
+                <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: barWidth, backgroundColor: barColor }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
 
-                return (
-                  <div key={item.id} className="border rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-2 divide-x min-h-0">
-                      {/* LEFT: Monday Promise */}
-                      <div className="p-4 bg-muted/30 space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Monday Promise
-                        </p>
-                        <div className="flex items-start gap-2">
-                          <span className="text-base shrink-0">{CHESS_ICON[item.chessPiece]}</span>
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm break-words">{item.title}</p>
-                            {item.outcomeBreadcrumb && (
-                              <p className="text-xs text-muted-foreground mt-1 break-words">
-                                {item.outcomeBreadcrumb.rallyCry} ›{' '}
-                                {item.outcomeBreadcrumb.definingObjective} ›{' '}
-                                {item.outcomeBreadcrumb.outcome}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {item.description && (
-                          <p className="text-xs text-muted-foreground italic">{item.description}</p>
-                        )}
-                      </div>
+          {/* Tabs */}
+          <div style={{ borderBottom: '1px solid rgba(30,58,95,0.08)' }}>
+            <div className="flex gap-8">
+              <button
+                onClick={() => setReconcileTab('planned')}
+                className={`pb-3 border-b-[3px] text-sm font-bold tracking-tight transition-colors ${
+                  reconcileTab === 'planned'
+                    ? 'text-primary'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+                style={reconcileTab === 'planned' ? { borderColor: '#1152d4', color: '#1152d4' } : {}}
+              >
+                PLANNED VS ACTUAL
+              </button>
+              <button
+                onClick={() => setReconcileTab('unplanned')}
+                className={`pb-3 border-b-[3px] text-sm font-bold tracking-tight transition-colors ${
+                  reconcileTab === 'unplanned'
+                    ? 'text-primary'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+                style={reconcileTab === 'unplanned' ? { borderColor: '#1152d4', color: '#1152d4' } : {}}
+              >
+                UNPLANNED TASKS{unplannedItems.length > 0 ? ` (${unplannedItems.length})` : ''}
+              </button>
+            </div>
+          </div>
 
-                      {/* RIGHT: Friday Reality */}
-                      <div className="p-4 space-y-3">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Friday Reality
-                        </p>
-                        {alreadyReconciled ? (
-                          <div className="space-y-2">
-                            <Badge variant="success" className="text-xs">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              {item.completionStatus}
-                            </Badge>
-                            {item.actualOutcome && (
-                              <p className="text-sm text-muted-foreground italic">
-                                &ldquo;{item.actualOutcome}&rdquo;
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-medium text-muted-foreground">
-                                Completion Status
-                              </label>
-                              <Select
-                                value={state.completionStatus}
-                                onValueChange={(v) =>
-                                  updateReconcileField(item.id, 'completionStatus', v)
-                                }
-                              >
-                                <SelectTrigger className="h-8 text-sm">
-                                  <SelectValue placeholder="Select status..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                                  <SelectItem value="PARTIAL">Partial</SelectItem>
-                                  <SelectItem value="NOT_COMPLETED">Not Completed</SelectItem>
-                                  {isBumpedItem && (
-                                    <SelectItem value="BUMPED">Bumped</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
+          {/* Planned vs Actual — Reconciliation Ledger */}
+          {reconcileTab === 'planned' && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800">
+                  <ClipboardList className="h-5 w-5" style={{ color: '#d4af37' }} />
+                  Reconciliation Ledger
+                </h3>
+                <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                    ACHIEVED
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    TO BE CARRIED FORWARD
+                  </span>
+                </div>
+              </div>
 
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-medium text-muted-foreground">
-                                {requiresReason ? (
-                                  <span className="text-red-600">
-                                    Reason for Miss <span className="font-bold">*</span>
-                                  </span>
-                                ) : (
-                                  'Actual Outcome'
+              <div
+                className="overflow-hidden rounded-xl border bg-white"
+                style={{ borderColor: 'rgba(30,58,95,0.08)', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+              >
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b" style={{ backgroundColor: '#f8faff', borderColor: 'rgba(30,58,95,0.08)' }}>
+                      <th className="px-5 py-3.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                        Task / Commitment
+                      </th>
+                      <th className="px-5 py-3.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                        Chess Layer
+                      </th>
+                      <th className="px-5 py-3.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                        Impact
+                      </th>
+                      <th className="px-5 py-3.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider text-center">
+                        Status
+                      </th>
+                      <th className="px-5 py-3.5" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y" style={{ borderColor: 'rgba(30,58,95,0.05)' }}>
+                    {commit.items
+                      .filter((i) => !i.unplanned)
+                      .sort(
+                        (a, b) =>
+                          CHESS_PIECE_ORDER.indexOf(a.chessPiece) -
+                          CHESS_PIECE_ORDER.indexOf(b.chessPiece)
+                      )
+                      .map((item) => {
+                        const state = getReconcileState(item.id)
+                        const alreadyReconciled = item.completionStatus !== null
+                        const isBumpedItem = commit.items.some((o) => o.bumpedItemId === item.id)
+                        const requiresReason =
+                          state.completionStatus === 'PARTIAL' ||
+                          state.completionStatus === 'NOT_COMPLETED'
+                        const saveDisabled =
+                          !state.completionStatus ||
+                          (requiresReason && !state.actualOutcome.trim()) ||
+                          reconcileItem.isPending
+
+                        const layer = CHESS_LAYERS.find((l) => l.pieces.includes(item.chessPiece))
+                        const isCarryForward =
+                          item.completionStatus === 'NOT_COMPLETED' ||
+                          item.completionStatus === 'PARTIAL'
+
+                        return (
+                          <tr
+                            key={item.id}
+                            className={`transition-colors ${
+                              isCarryForward ? 'bg-red-50/20 hover:bg-red-50/30' : 'hover:bg-slate-50/50'
+                            }`}
+                          >
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-slate-900 text-sm">{item.title}</p>
+                                {isCarryForward && item.completionStatus && (
+                                  <ArrowRight className="h-3.5 w-3.5 text-red-400 shrink-0" />
                                 )}
-                              </label>
+                              </div>
+                              {item.completionStatus === 'NOT_COMPLETED' && (
+                                <p className="text-[10px] text-red-600 mt-1 uppercase font-bold flex items-center gap-1">
+                                  Carry Forward
+                                </p>
+                              )}
+                            </td>
+                            <td className="px-5 py-4">
+                              {layer && (
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`w-7 h-7 rounded-lg flex items-center justify-center ${layer.iconBg}`}
+                                  >
+                                    <layer.Icon className={`h-3.5 w-3.5 ${layer.iconColor}`} />
+                                  </div>
+                                  <span
+                                    className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded border"
+                                    style={{
+                                      backgroundColor: `${layer.accent}08`,
+                                      borderColor: `${layer.accent}20`,
+                                      color: layer.accent,
+                                    }}
+                                  >
+                                    {item.chessPiece}
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-5 py-4">
+                              <ImpactBolts weight={item.chessWeight} />
+                            </td>
+                            <td className="px-5 py-4 text-center">
+                              {alreadyReconciled ? (
+                                item.completionStatus === 'COMPLETED' ? (
+                                  <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-100 mx-auto" />
+                                ) : item.completionStatus === 'NOT_COMPLETED' ? (
+                                  <XCircle className="h-6 w-6 text-red-400 mx-auto" />
+                                ) : (
+                                  <Badge variant="warning" className="text-xs mx-auto">
+                                    {item.completionStatus}
+                                  </Badge>
+                                )
+                              ) : (
+                                <span className="text-xs text-slate-300 font-medium">Pending</span>
+                              )}
+                            </td>
+                            <td className="px-5 py-4">
+                              {!alreadyReconciled && (
+                                <div className="space-y-2 min-w-[180px]">
+                                  <Select
+                                    value={state.completionStatus}
+                                    onValueChange={(v) =>
+                                      updateReconcileField(item.id, 'completionStatus', v)
+                                    }
+                                  >
+                                    <SelectTrigger className="h-7 text-xs">
+                                      <SelectValue placeholder="Select status..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="COMPLETED">Completed</SelectItem>
+                                      <SelectItem value="PARTIAL">Partial</SelectItem>
+                                      <SelectItem value="NOT_COMPLETED">Not Completed</SelectItem>
+                                      {isBumpedItem && (
+                                        <SelectItem value="BUMPED">Bumped</SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                  {requiresReason && (
+                                    <>
+                                      <Textarea
+                                        value={state.actualOutcome}
+                                        onChange={(e) =>
+                                          updateReconcileField(item.id, 'actualOutcome', e.target.value)
+                                        }
+                                        placeholder="Why was this not completed?"
+                                        rows={2}
+                                        className="text-xs resize-none"
+                                      />
+                                      <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600">
+                                        <input
+                                          type="checkbox"
+                                          checked={state.carryForward}
+                                          onChange={(e) =>
+                                            updateReconcileField(item.id, 'carryForward', e.target.checked)
+                                          }
+                                          className="rounded border-input"
+                                        />
+                                        Carry forward to next week
+                                      </label>
+                                    </>
+                                  )}
+                                  {state.completionStatus === 'COMPLETED' && (
+                                    <Textarea
+                                      value={state.actualOutcome}
+                                      onChange={(e) =>
+                                        updateReconcileField(item.id, 'actualOutcome', e.target.value)
+                                      }
+                                      placeholder="What actually happened? (optional)"
+                                      rows={2}
+                                      className="text-xs resize-none"
+                                    />
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleReconcileItem(item.id)}
+                                    disabled={saveDisabled}
+                                    className="h-7 text-xs w-full"
+                                  >
+                                    Save
+                                  </Button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Unplanned deviations tab */}
+          {reconcileTab === 'unplanned' && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-slate-800">
+                  <AlertTriangle className="h-5 w-5" style={{ color: '#d4af37' }} />
+                  Unplanned Deviations
+                </h3>
+                {unplannedItems.length > 0 && (
+                  <span
+                    className="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider"
+                    style={{ backgroundColor: 'rgba(30,58,95,0.08)', color: '#1152d4' }}
+                  >
+                    +{unplannedItems.length} Added Mid-Week
+                  </span>
+                )}
+              </div>
+
+              {unplannedItems.length === 0 ? (
+                <p className="text-sm text-slate-400 py-8 text-center">
+                  No unplanned items this week.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {unplannedItems.map((item) => {
+                    const alreadyReconciled = item.completionStatus !== null
+                    const state = getReconcileState(item.id)
+                    const requiresReason =
+                      state.completionStatus === 'PARTIAL' ||
+                      state.completionStatus === 'NOT_COMPLETED'
+                    const saveDisabled =
+                      !state.completionStatus ||
+                      (requiresReason && !state.actualOutcome.trim()) ||
+                      reconcileItem.isPending
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-white border-l-4 p-4 rounded-r-xl flex flex-col justify-between"
+                        style={{
+                          borderLeftColor: '#1152d4',
+                          borderTopColor: '#e2e8f0',
+                          borderRightColor: '#e2e8f0',
+                          borderBottomColor: '#e2e8f0',
+                          border: '1px solid #e2e8f0',
+                          borderLeft: '4px solid #1152d4',
+                          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)',
+                        }}
+                      >
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <span
+                              className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded"
+                              style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}
+                            >
+                              {item.chessPiece}
+                            </span>
+                            {alreadyReconciled &&
+                              (item.completionStatus === 'COMPLETED' ? (
+                                <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-100" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-slate-400" />
+                              ))}
+                          </div>
+                          <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
+                          {item.description && (
+                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed italic line-clamp-3">
+                              &ldquo;{item.description}&rdquo;
+                            </p>
+                          )}
+                        </div>
+
+                        {!alreadyReconciled && (
+                          <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                            <Select
+                              value={state.completionStatus}
+                              onValueChange={(v) =>
+                                updateReconcileField(item.id, 'completionStatus', v)
+                              }
+                            >
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue placeholder="Select status..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="COMPLETED">Completed</SelectItem>
+                                <SelectItem value="PARTIAL">Partial</SelectItem>
+                                <SelectItem value="NOT_COMPLETED">Not Completed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {requiresReason && (
                               <Textarea
                                 value={state.actualOutcome}
                                 onChange={(e) =>
                                   updateReconcileField(item.id, 'actualOutcome', e.target.value)
                                 }
-                                placeholder={
-                                  requiresReason
-                                    ? 'Why was this not completed?'
-                                    : 'What actually happened?'
-                                }
+                                placeholder="Why was this not completed?"
                                 rows={2}
-                                className={`text-sm ${requiresReason && !state.actualOutcome.trim() ? 'border-red-300 focus-visible:ring-red-400' : ''}`}
+                                className="text-xs resize-none"
                               />
-                              {requiresReason && !state.actualOutcome.trim() && (
-                                <p className="text-xs text-red-600">
-                                  Required for partial or missed items
-                                </p>
-                              )}
-                            </div>
-
-                            {requiresReason && (
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={state.carryForward}
-                                  onChange={(e) =>
-                                    updateReconcileField(
-                                      item.id,
-                                      'carryForward',
-                                      e.target.checked
-                                    )
-                                  }
-                                  className="rounded border-input"
-                                />
-                                <span className="text-sm">Carry forward to next week</span>
-                              </label>
                             )}
-
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleReconcileItem(item.id)}
                               disabled={saveDisabled}
+                              className="h-7 text-xs w-full"
                             >
                               Save
                             </Button>
                           </div>
                         )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-          </div>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                className="w-full"
-                disabled={
-                  commit.items.some((i) => !i.completionStatus) ||
-                  completeReconciliation.isPending
-                }
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Complete Reconciliation
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Complete reconciliation?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will finalize this week&apos;s commit and seed any carry-forward items into
-                  next week.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleCompleteReconciliation}>
-                  Complete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                        {alreadyReconciled && (
+                          <div
+                            className="mt-3 pt-3 border-t flex items-center gap-2"
+                            style={{ borderColor: '#f1f5f9' }}
+                          >
+                            <Zap className="h-3.5 w-3.5 fill-current" style={{ color: '#d4af37' }} />
+                            <span
+                              className="text-[9px] font-bold uppercase"
+                              style={{ color: '#1152d4' }}
+                            >
+                              {item.chessPiece}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Footer: complete reconciliation */}
+          <div
+            className="mt-4 bg-slate-900 text-white p-7 rounded-xl flex flex-col md:flex-row items-center justify-between gap-5 overflow-hidden relative"
+            style={{ borderTop: '3px solid #1152d4' }}
+          >
+            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 blur-[80px] -mr-24 -mt-24 pointer-events-none" />
+            <div className="relative z-10 text-center md:text-left">
+              <h3 className="text-xl font-bold">Ready to finalize?</h3>
+              <p className="text-slate-400 mt-1 text-sm">
+                Finalizing locks all entries and seeds carry-forward items into next week.
+              </p>
+            </div>
+            <div className="relative z-10 flex gap-3 w-full md:w-auto">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    disabled={
+                      commit.items.some((i) => !i.completionStatus) ||
+                      completeReconciliation.isPending
+                    }
+                    className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm shadow-xl transition-all hover:brightness-110 disabled:opacity-50"
+                    style={{ backgroundColor: '#1152d4' }}
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                    Finalize &amp; Start Next Planning
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Complete reconciliation?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will finalize this week&apos;s commit and seed any carry-forward items
+                      into next week.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCompleteReconciliation}>
+                      Complete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
         </>
       )}
 
-      {/* RECONCILED State — side-by-side "The Promise" vs "The Reality" */}
+      {/* ── RECONCILED ── */}
       {commit.status === 'RECONCILED' && (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Week Reconciled</h1>
+              <p className="text-sm text-slate-500 mt-1">
+                {formatWeekRange(commit.weekStartDate, commit.weekEndDate)}
+              </p>
+            </div>
+            <StatusBadge status={commit.status} />
+          </div>
+
+          {/* Summary stats */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {[
               {
                 label: 'Completed',
@@ -654,12 +1395,12 @@ export function CommitPage(): React.ReactElement {
               {
                 label: 'Not Done',
                 count: commit.items.filter((i) => i.completionStatus === 'NOT_COMPLETED').length,
-                color: 'text-red-600',
+                color: 'text-red-500',
               },
               {
                 label: 'Bumped',
                 count: commit.items.filter((i) => i.completionStatus === 'BUMPED').length,
-                color: 'text-orange-600',
+                color: 'text-orange-500',
               },
               {
                 label: 'Carried Fwd',
@@ -667,47 +1408,61 @@ export function CommitPage(): React.ReactElement {
                 color: 'text-blue-600',
               },
             ].map(({ label, count, color }) => (
-              <div key={label} className="border rounded-lg p-3 text-center">
+              <div
+                key={label}
+                className="bg-white border rounded-xl p-4 text-center"
+                style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+              >
                 <p className={`text-2xl font-bold ${color}`}>{count}</p>
-                <p className="text-xs text-muted-foreground mt-1">{label}</p>
+                <p className="text-xs text-slate-400 mt-1 font-medium">{label}</p>
               </div>
             ))}
           </div>
 
-          <div className="space-y-2">
-            {commit.items
-              .sort(
-                (a, b) =>
-                  CHESS_PIECE_ORDER.indexOf(a.chessPiece) -
-                  CHESS_PIECE_ORDER.indexOf(b.chessPiece)
-              )
-              .map((item) => (
-                <div key={item.id} className="border rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-2 divide-x">
-                    {/* LEFT: The Promise */}
-                    <div className="p-3 bg-muted/30 space-y-1">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        The Promise
-                      </p>
-                      <div className="flex items-start gap-2">
-                        <span className="shrink-0">{CHESS_ICON[item.chessPiece]}</span>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm break-words">{item.title}</p>
-                          {item.outcomeBreadcrumb && (
-                            <p className="text-xs text-muted-foreground mt-0.5 break-words">
-                              {item.outcomeBreadcrumb.rallyCry} › {item.outcomeBreadcrumb.outcome}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* RIGHT: The Reality */}
-                    <div className="p-3 space-y-1.5">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        The Reality
-                      </p>
-                      <div className="space-y-1">
+          {/* Read-only ledger */}
+          <div
+            className="overflow-hidden rounded-xl border bg-white"
+            style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.04)' }}
+          >
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b" style={{ backgroundColor: '#f8faff', borderColor: '#e2e8f0' }}>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                    Task
+                  </th>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                    Layer
+                  </th>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                    Result
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: '#f1f5f9' }}>
+                {commit.items
+                  .sort(
+                    (a, b) =>
+                      CHESS_PIECE_ORDER.indexOf(a.chessPiece) -
+                      CHESS_PIECE_ORDER.indexOf(b.chessPiece)
+                  )
+                  .map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-4">
+                        <p className="font-bold text-slate-900 text-sm">{item.title}</p>
+                        {item.actualOutcome && (
+                          <p className="text-xs text-slate-400 italic mt-1">&ldquo;{item.actualOutcome}&rdquo;</p>
+                        )}
+                        {item.carryForward && (
+                          <Badge variant="outline" className="text-xs mt-1">
+                            Carried forward
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-sm">{CHESS_ICON[item.chessPiece]}</span>
+                        <span className="text-xs text-slate-500 ml-1.5">{item.chessPiece}</span>
+                      </td>
+                      <td className="px-5 py-4">
                         {item.completionStatus && (
                           <Badge
                             variant={
@@ -724,21 +1479,11 @@ export function CommitPage(): React.ReactElement {
                             {item.completionStatus.replace('_', ' ')}
                           </Badge>
                         )}
-                        {item.actualOutcome && (
-                          <p className="text-xs text-muted-foreground italic break-words">
-                            &ldquo;{item.actualOutcome}&rdquo;
-                          </p>
-                        )}
-                        {item.carryForward && (
-                          <Badge variant="outline" className="text-xs">
-                            Carried forward
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </>
       )}

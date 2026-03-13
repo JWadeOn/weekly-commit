@@ -2,8 +2,8 @@ const currentImports = {};
       const exportSet = new Set(['Module', '__esModule', 'default', '_export_sfc']);
       let moduleMap = {
 "./WeeklyCommitApp":()=>{
-      dynamicLoadingCss(["style-CpJEGCn4.css"], false, './WeeklyCommitApp');
-      return __federation_import('./__federation_expose_WeeklyCommitApp-C4m7ek7C.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
+      dynamicLoadingCss(["style-DmQYfKsC.css"], false, './WeeklyCommitApp');
+      return __federation_import('./__federation_expose_WeeklyCommitApp-cDZB6bdP.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};
       const dynamicLoadingCss = (cssFilePaths, dontAppendStylesToHead, exposeItemName) => {
         const metaUrl = import.meta.url;

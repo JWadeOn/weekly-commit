@@ -44,6 +44,22 @@ public class CommitController {
         return ResponseEntity.ok(commitService.getCurrentWeek(userId, orgId));
     }
 
+    /**
+     * GET /api/commits/team-outcomes/weight
+     *
+     * Returns aggregate chess-weight totals per Outcome for the current week across
+     * all team members in the caller's org whose commit is DRAFT or LOCKED.
+     *
+     * Security: orgId is read from the JWT — never from the request — so a user
+     * can only fetch aggregates for the org they authenticated into.
+     * Privacy: only summed numbers are returned; no per-user breakdown.
+     */
+    @GetMapping("/team-outcomes/weight")
+    public ResponseEntity<TeamOutcomeWeightResponse> getTeamOutcomeWeights() {
+        UUID orgId = SecurityContextHelper.getCurrentOrgId();
+        return ResponseEntity.ok(commitService.getTeamOutcomeWeights(orgId));
+    }
+
     @GetMapping("/history")
     public ResponseEntity<PagedResponse<CommitSummaryResponse>> getHistory(
             @RequestParam(defaultValue = "0") int page,
