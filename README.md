@@ -290,7 +290,7 @@ Full details are in **[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)**. Summary:
 4. **Host** — build with `REMOTE_URL=<browser-url-to-remote-assets>` (and optional `VITE_API_URL`).
 5. **Reverse proxy** (if used) — route `/api`, `/`, and remote assets to the right services.
 
-See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for a production checklist, example Docker Compose, Railway notes, and troubleshooting.
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for a production checklist, **step-by-step implementation plan for Auth0 (production OAuth)**, example Docker Compose, Railway notes, and troubleshooting.
 
 ---
 

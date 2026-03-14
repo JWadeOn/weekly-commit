@@ -96,6 +96,76 @@ If you use **Option A** (single domain), set `VITE_API_URL` to empty or `/` so t
 
 Register the redirect URI in your IdP. See [§6 Troubleshooting](#6-troubleshooting) for the "Unable to resolve Configuration" error.
 
+---
+
+## Implementation plan: Production OAuth (Auth0)
+
+Use this as a step-by-step checklist to enable production login with Auth0 (or any OIDC IdP). No code changes are required in this repo; the backend already supports OIDC via environment variables.
+
+### Phase 1: Auth0 setup (external)
+
+1. **Create an Auth0 account** (if needed) at [auth0.com](https://auth0.com).
+2. **Create an Application** in the Auth0 Dashboard: Applications → Create Application → choose **Regular Web Application** → Create.
+3. **Note the Application credentials:** Client ID and Client Secret (from the Application’s Settings tab).
+4. **Set the callback URL:** In the Application → Settings → Application URIs, set **Allowed Callback URLs** to:
+   ```text
+   https://<your-backend-host>/login/oauth2/code/oidc
+   ```
+   Use your real backend URL (e.g. `https://your-service.up.railway.app/login/oauth2/code/oidc`). No trailing slash.
+5. **Note your Auth0 issuer:** It is `https://<your-tenant>.auth0.com/` (tenant name is in the Auth0 Dashboard URL or under Settings → Tenant).
+
+### Phase 2: Backend environment variables (e.g. Railway)
+
+A production env template is in the repo root [`.env.example`](../.env.example) (see the “Production (e.g. Auth0)” section). Use it as a checklist.
+
+6. **Set these variables** on the **backend** service (Railway → your backend service → Variables):
+
+   | Variable | Value |
+   |----------|--------|
+   | `OAUTH_ISSUER_URI` | `https://<your-tenant>.auth0.com/` |
+   | `OAUTH_CLIENT_ID` | From Auth0 Application |
+   | `OAUTH_CLIENT_SECRET` | From Auth0 Application |
+   | `OAUTH_REDIRECT_URI` | `https://<your-backend-host>/login/oauth2/code/oidc` |
+   | `JWT_SECRET` | Long random string (for the app’s own JWT cookie) |
+   | `FRONTEND_URL` | URL of your host app (e.g. `https://your-host.up.railway.app`) |
+   | `CORS_ALLOWED_ORIGINS` | Comma-separated host (and remote) origins |
+
+   Also set the following so the backend does not use localhost defaults:
+   - `OAUTH_AUTHORIZATION_URI` = `https://<your-tenant>.auth0.com/authorize`
+   - `OAUTH_JWK_SET_URI` = `https://<your-tenant>.auth0.com/.well-known/jwks.json`
+
+7. **Redeploy the backend** so it picks up the new variables. The app should start and use Auth0 instead of `localhost:8090`.
+
+### Phase 3: User mapping (choose one approach)
+
+8. **Option A — findOrCreate only (simplest):**  
+   Any user who signs in via Auth0 will be created in the app’s database with the default org and **EMPLOYEE** role (`OAuthUserService`). To test manager flows, add the **MANAGER** role for that user in the database (e.g. insert into `user_roles` or run a one-off SQL script).
+
+9. **Option B — Align with seed users (optional):**  
+   To use the same personas as local dev (e.g. manager@acme.com, employee@acme.com):
+   - Create users in Auth0 with those emails and note the Auth0 user IDs (Auth0 Dashboard → User Management → Users; the ID is the `sub` claim, e.g. `auth0|xxxxxxxx`).
+   - Update the seed users in the database so their `oauth_subject` matches the Auth0 subject. A template script is in [`docs/scripts/link-auth0-users.sql.example`](scripts/link-auth0-users.sql.example)—copy it, replace the placeholders with your Auth0 user IDs, then run it against your production DB. The next login will find the existing user and keep their roles (MANAGER, EMPLOYEE, etc.).
+
+### Phase 4: Frontend and CORS
+
+10. **Ensure the host (and remote) are built** with the correct `VITE_API_URL` (your backend URL) if they are on a different domain than the backend. See [Sign-in redirects to the host URL and gets stuck](#sign-in-redirects-to-the-host-url-and-gets-stuck) if Sign In does not redirect to the IdP.
+11. **Verify CORS:** `CORS_ALLOWED_ORIGINS` must include the exact origin(s) of your host and remote (e.g. `https://your-host.up.railway.app`).
+
+### Phase 5: Verify
+
+12. **Open the host app** in a browser, click Sign In, and complete the Auth0 login. You should be redirected back to the app with a session (JWT cookie). Check that you can hit protected endpoints (e.g. `/api/auth/me`) and that the app shows the correct view (IC vs manager) based on roles.
+
+### Summary checklist
+
+- [ ] Auth0 application created (Regular Web Application)
+- [ ] Allowed Callback URL set in Auth0 to backend `/login/oauth2/code/oidc`
+- [ ] Backend env: `OAUTH_ISSUER_URI`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, `OAUTH_REDIRECT_URI`, `JWT_SECRET`, `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS`
+- [ ] Backend redeployed
+- [ ] User mapping decided (findOrCreate only vs. aligning seed users)
+- [ ] Host/remote built with correct API URL and CORS; Sign In flow tested
+
+---
+
 ### 2.3 Build order
 
 1. **Backend:** `docker build ./backend -t weekly-commit-backend` (or build JAR and run on a Java 21 runtime).

@@ -1,0 +1,9 @@
+-- Option B: Link Auth0 users to existing seed users (manager/employee/dual roles)
+-- Run once after creating users in Auth0 with the same emails as seed data.
+-- Get Auth0 user IDs from Auth0 Dashboard → User Management → Users (e.g. auth0|abc123xyz).
+-- Replace the placeholders below with the real Auth0 subject (sub) for each email.
+-- Then run: psql $DATABASE_URL -f link-auth0-users.sql (after uncommenting and substituting).
+
+-- UPDATE users SET oauth_subject = 'auth0|MANAGER_AUTH0_ID'   WHERE email = 'manager@acme.com';
+-- UPDATE users SET oauth_subject = 'auth0|EMPLOYEE_AUTH0_ID'  WHERE email = 'employee@acme.com';
+-- UPDATE users SET oauth_subject = 'auth0|DUAL_AUTH0_ID'      WHERE email = 'dual@acme.com';
