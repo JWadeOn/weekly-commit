@@ -87,6 +87,15 @@ If you use **Option A** (single domain), set `VITE_API_URL` to empty or `/` so t
 
 **Railway Postgres:** If you add the Postgres plugin and reference it from the backend service, Railway sets `DATABASE_URL` (e.g. `postgresql://user:pass@host:port/railway`). The backend accepts this: it normalizes any URL that does not start with `jdbc:` to `jdbc:postgresql://...` and uses `PGUSER` / `PGPASSWORD` when `DB_USERNAME` / `DB_PASSWORD` are not set. You do **not** need to set `DB_URL` manually when using Railway's Postgres reference.
 
+**Railway — OAuth required:** The backend defaults to the **local mock OAuth server** (`http://localhost:8090`). In production you **must** set all OAuth variables to a real OIDC provider (Auth0, Okta, Keycloak, Google, etc.), otherwise the app will fail on startup with *"Unable to resolve Configuration with the provided Issuer of http://localhost:8090"*. In the Railway backend service, set at least:
+
+- `OAUTH_ISSUER_URI` — your IdP’s issuer (e.g. `https://your-tenant.auth0.com/` or `https://your-domain.okta.com/oauth2/default`)
+- `OAUTH_CLIENT_ID` and `OAUTH_CLIENT_SECRET` — from the IdP app
+- `OAUTH_REDIRECT_URI` — `https://<your-backend>.up.railway.app/login/oauth2/code/oidc`
+- `OAUTH_AUTHORIZATION_URI` and `OAUTH_JWK_SET_URI` — from your IdP’s OIDC discovery (often the same as issuer’s `authorization_endpoint` and `jwks_uri`)
+
+Register the redirect URI in your IdP. See [§6 Troubleshooting](#6-troubleshooting) for the "Unable to resolve Configuration" error.
+
 ### 2.3 Build order
 
 1. **Backend:** `docker build ./backend -t weekly-commit-backend` (or build JAR and run on a Java 21 runtime).
@@ -258,6 +267,23 @@ Spring Boot’s datasource expects a JDBC URL (e.g. `jdbc:postgresql://host:5432
 
 - **Railway:** Use the Postgres service reference so the backend gets `DATABASE_URL` (and `PGUSER`, `PGPASSWORD`). The app normalizes `postgresql://` or `postgres://` to `jdbc:postgresql://` automatically. Ensure the backend service has the Postgres plugin linked and **do not** override `DB_URL` with a non-JDBC value.
 - **Manual:** Set `DB_URL` to a full JDBC URL: `jdbc:postgresql://<host>:<port>/<database>` and set `DB_USERNAME` and `DB_PASSWORD` (or use the same variables your platform provides, e.g. `PGUSER` / `PGPASSWORD`).
+
+### Backend fails: "Unable to resolve Configuration with the provided Issuer of http://localhost:8090"
+
+The backend is still using the **local dev** OAuth issuer (mock server at `localhost:8090`). In production that server does not exist, so Spring cannot fetch OIDC discovery and the app fails to start.
+
+**Fix:** Set **production OAuth environment variables** on the backend service (e.g. in Railway → your backend service → Variables). You must use a real OIDC provider (Auth0, Okta, Keycloak, Google, etc.):
+
+| Variable | Example |
+|----------|---------|
+| `OAUTH_ISSUER_URI` | `https://your-tenant.auth0.com/` or your IdP’s issuer URL |
+| `OAUTH_CLIENT_ID` | Client ID from your IdP application |
+| `OAUTH_CLIENT_SECRET` | Client secret from your IdP application |
+| `OAUTH_REDIRECT_URI` | `https://<your-backend>.up.railway.app/login/oauth2/code/oidc` |
+| `OAUTH_AUTHORIZATION_URI` | Your IdP’s authorization endpoint (from OIDC discovery or IdP docs) |
+| `OAUTH_JWK_SET_URI` | Your IdP’s JWK set URI (for token validation) |
+
+In your IdP, register an application and add `OAUTH_REDIRECT_URI` as an allowed redirect/callback URL. Then redeploy the backend so it picks up the new variables.
 
 ### Sign-in redirects to the host URL and gets stuck
 

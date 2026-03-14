@@ -259,6 +259,41 @@ Runs on [http://localhost:3000](http://localhost:3000) and loads the remote from
 
 ---
 
+## Using in production
+
+Full details are in **[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)**. Summary:
+
+### Deployment options
+
+| Option | Description |
+|--------|-------------|
+| **Single-domain reverse proxy** | Serve host, remote, and API under one origin (e.g. `https://weekly-commit.example.com`). No CORS; same-site cookies. Route `/` → host, `/assets/*` → remote, `/api/*` → backend. |
+| **Separate hosts** | API, host, and remote on different domains. Configure CORS (`CORS_ALLOWED_ORIGINS`), cookie `SameSite`/`Secure`, and build-time `VITE_API_URL` / `REMOTE_URL`. |
+| **Docker Compose** | Run the stack on a server; put Nginx or Traefik in front for SSL and routing. Use a real OAuth provider and managed or containerized Postgres. |
+| **Railway** | Add the Postgres plugin and link it to the backend service. Set OAuth, JWT, and frontend URLs in the dashboard. Backend accepts Railway’s `DATABASE_URL` (postgresql://…) and normalizes it automatically. |
+
+### Backend (production env)
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` or `DB_URL` | Database URL. Railway sets `DATABASE_URL` (e.g. `postgresql://user:pass@host:port/railway`); the app normalizes it to JDBC and extracts username/password. Or set `DB_URL=jdbc:postgresql://host:port/db` and `DB_USERNAME` / `DB_PASSWORD`. |
+| `OAUTH_*` | **Required in production.** Real OIDC provider: `OAUTH_ISSUER_URI`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, `OAUTH_REDIRECT_URI`, `OAUTH_AUTHORIZATION_URI`, `OAUTH_JWK_SET_URI`. Defaults point to localhost (mock server); if unset, the app fails with *"Unable to resolve Configuration with the provided Issuer of http://localhost:8090"*. See [DEPLOYMENT.md](docs/DEPLOYMENT.md) §Troubleshooting. |
+| `JWT_SECRET` | Strong secret for internal JWT (HS256). |
+| `FRONTEND_URL` | Origin of the host app (e.g. `https://app.example.com`) for post-login redirects. |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated origins allowed for CORS (host + remote if on different domains). |
+
+### Build and run order
+
+1. **PostgreSQL** — up and reachable (Flyway runs on backend startup).
+2. **Backend** — `docker build ./backend` or run the JAR with Java 21; set env vars above.
+3. **Remote** — build with `VITE_API_URL` if API is on another origin.
+4. **Host** — build with `REMOTE_URL=<browser-url-to-remote-assets>` (and optional `VITE_API_URL`).
+5. **Reverse proxy** (if used) — route `/api`, `/`, and remote assets to the right services.
+
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for a production checklist, example Docker Compose, Railway notes, and troubleshooting.
+
+---
+
 ## Running tests
 
 All commands are from the **Weekly Commit Module root** (`ci_pm/`).
@@ -353,7 +388,8 @@ Remote name: `weeklyCommitModule` · Exposed path: `./WeeklyCommitApp` · Entry:
 
 | Variable | Description | Default |
 |---|---|---|
-| `DB_URL` | JDBC connection string | `jdbc:postgresql://localhost:5433/weeklycommit` |
+| `DB_URL` | JDBC connection string (or use `DATABASE_URL` in production; see [Using in production](#using-in-production)) | `jdbc:postgresql://localhost:5433/weeklycommit` |
+| `DATABASE_URL` | PaaS-style URL (e.g. Railway): `postgresql://user:pass@host:port/db`. App normalizes to JDBC and uses username/password from URL or `PGUSER`/`PGPASSWORD`. | — |
 | `DB_USERNAME` | PostgreSQL username (local dev: `postgres`) | — |
 | `DB_PASSWORD` | PostgreSQL password (local dev: `postgres`) | — |
 | `OAUTH_CLIENT_ID` | OAuth2 client ID | `weekly-commit-client` |
