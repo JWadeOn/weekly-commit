@@ -23594,7 +23594,7 @@ function useTeamItemsForBoard() {
         taskName: item.title,
         chessPiece: piece,
         status,
-        definingObjective: item.outcomeBreadcrumb.definingObjective,
+        definingObjective: item.outcomeBreadcrumb?.definingObjective ?? "",
         contributor: member.fullName
       };
     });
@@ -25354,7 +25354,7 @@ const DO_ICON_PALETTE = [
 ];
 function RallyCryCard({
   rallyCry,
-  onEditRallyCry,
+  onEditRallyCry: _onEditRallyCry,
   onDeactivateRallyCry,
   onAddDo,
   onEditDo,
@@ -26372,7 +26372,7 @@ function mapItems(data, contributorName) {
       taskName: item.title,
       chessPiece: piece,
       status,
-      definingObjective: item.outcomeBreadcrumb.definingObjective,
+      definingObjective: item.outcomeBreadcrumb?.definingObjective ?? "",
       contributor: contributorName
     };
   });

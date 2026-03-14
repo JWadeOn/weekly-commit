@@ -56,9 +56,9 @@ Run the full stack with Docker Compose; use a reverse proxy (Nginx or Traefik) o
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DB_URL` | JDBC URL | `jdbc:postgresql://postgres:5432/weeklycommit` |
-| `DB_USERNAME` | DB user | — |
-| `DB_PASSWORD` | DB password | — |
+| `DB_URL` | JDBC URL (or use `DATABASE_URL` on Railway; see below) | `jdbc:postgresql://postgres:5432/weeklycommit` |
+| `DB_USERNAME` | DB user (or `PGUSER` on Railway) | — |
+| `DB_PASSWORD` | DB password (or `PGPASSWORD` on Railway) | — |
 | `OAUTH_CLIENT_ID` | From your IdP | — |
 | `OAUTH_CLIENT_SECRET` | From your IdP | — |
 | `OAUTH_ISSUER_URI` | OIDC issuer (discovery) | `https://auth.example.com/realms/myorg` |
@@ -84,6 +84,8 @@ Run the full stack with Docker Compose; use a reverse proxy (Nginx or Traefik) o
 | `VITE_API_URL` | API base URL (origin + path to API) | `https://api-weekly.example.com` or leave empty for relative `/api` |
 
 If you use **Option A** (single domain), set `VITE_API_URL` to empty or `/` so the app uses relative `/api` and you don’t need to change it per environment.
+
+**Railway Postgres:** If you add the Postgres plugin and reference it from the backend service, Railway sets `DATABASE_URL` (e.g. `postgresql://user:pass@host:port/railway`). The backend accepts this: it normalizes any URL that does not start with `jdbc:` to `jdbc:postgresql://...` and uses `PGUSER` / `PGPASSWORD` when `DB_USERNAME` / `DB_PASSWORD` are not set. You do **not** need to set `DB_URL` manually when using Railway's Postgres reference.
 
 ### 2.3 Build order
 
@@ -249,6 +251,13 @@ Build host with `REMOTE_URL=https://weekly-commit.example.com/assets`. If fronte
 ---
 
 ## 6. Troubleshooting
+
+### Backend fails: "URL must start with 'jdbc'"
+
+Spring Boot’s datasource expects a JDBC URL (e.g. `jdbc:postgresql://host:5432/db`). If you see this error, the value used for the database URL does not start with `jdbc:`.
+
+- **Railway:** Use the Postgres service reference so the backend gets `DATABASE_URL` (and `PGUSER`, `PGPASSWORD`). The app normalizes `postgresql://` or `postgres://` to `jdbc:postgresql://` automatically. Ensure the backend service has the Postgres plugin linked and **do not** override `DB_URL` with a non-JDBC value.
+- **Manual:** Set `DB_URL` to a full JDBC URL: `jdbc:postgresql://<host>:<port>/<database>` and set `DB_USERNAME` and `DB_PASSWORD` (or use the same variables your platform provides, e.g. `PGUSER` / `PGPASSWORD`).
 
 ### Sign-in redirects to the host URL and gets stuck
 

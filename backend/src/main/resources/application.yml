@@ -28,9 +28,10 @@ spring:
             jwk-set-uri: ${OAUTH_JWK_SET_URI:http://localhost:8090/.well-known/openid-configuration/jwks}
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/weeklycommit}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    # DB_URL or DATABASE_URL (Railway) — non-JDBC URLs are normalized to jdbc: by JdbcUrlEnvironmentPostProcessor
+    url: ${DB_URL:${DATABASE_URL:jdbc:postgresql://localhost:5432/weeklycommit}}
+    username: ${DB_USERNAME:${PGUSER:postgres}}
+    password: ${DB_PASSWORD:${PGPASSWORD:postgres}}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2

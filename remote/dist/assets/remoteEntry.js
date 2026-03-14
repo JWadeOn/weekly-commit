@@ -3,7 +3,7 @@ const currentImports = {};
       let moduleMap = {
 "./WeeklyCommitApp":()=>{
       dynamicLoadingCss(["style-pC7NUYq5.css"], false, './WeeklyCommitApp');
-      return __federation_import('./__federation_expose_WeeklyCommitApp-DI0HRA2U.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
+      return __federation_import('./__federation_expose_WeeklyCommitApp-D2pnEnfW.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};
       const dynamicLoadingCss = (cssFilePaths, dontAppendStylesToHead, exposeItemName) => {
         const metaUrl = import.meta.url;

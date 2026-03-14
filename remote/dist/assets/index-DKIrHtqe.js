@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-BMdLx5XD.js';
-import { j as jsxRuntimeExports, h as BACKEND_ORIGIN, i as cn, k as buttonVariants, Q as QueryClient, a as QueryClientProvider, l as BrowserRouter, u as useAuthStore, b as AppNav, R as Routes, c as Route, C as CommitPage, d as CommitDetailPage, e as CommitHistoryPage, f as ResourcesPage, B as BoardPage, g as ManagerDashboard, S as StrategyPage, N as Navigate } from './AppNav-Js7HdkC9.js';
+import { j as jsxRuntimeExports, h as BACKEND_ORIGIN, i as cn, k as buttonVariants, Q as QueryClient, a as QueryClientProvider, l as BrowserRouter, u as useAuthStore, b as AppNav, R as Routes, c as Route, C as CommitPage, d as CommitDetailPage, e as CommitHistoryPage, f as ResourcesPage, B as BoardPage, g as ManagerDashboard, S as StrategyPage, N as Navigate } from './AppNav-Y4VMLD6C.js';
 import { r as reactDomExports } from './index-COvqqES_.js';
 
 var client = {};

@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-BMdLx5XD.js';
-import { Q as QueryClient, j as jsxRuntimeExports, a as QueryClientProvider, M as MemoryRouter, A as ActiveRallyCryContext, u as useAuthStore, s as setAuthExpiredHandler, b as AppNav, R as Routes, c as Route, C as CommitPage, d as CommitDetailPage, e as CommitHistoryPage, f as ResourcesPage, B as BoardPage, g as ManagerDashboard, S as StrategyPage, N as Navigate } from './AppNav-Js7HdkC9.js';
+import { Q as QueryClient, j as jsxRuntimeExports, a as QueryClientProvider, M as MemoryRouter, A as ActiveRallyCryContext, u as useAuthStore, s as setAuthExpiredHandler, b as AppNav, R as Routes, c as Route, C as CommitPage, d as CommitDetailPage, e as CommitHistoryPage, f as ResourcesPage, B as BoardPage, g as ManagerDashboard, S as StrategyPage, N as Navigate } from './AppNav-Y4VMLD6C.js';
 
 const {useEffect} = await importShared('react');
 const queryClient = new QueryClient({

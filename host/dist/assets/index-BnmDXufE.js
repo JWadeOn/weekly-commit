@@ -530,7 +530,8 @@ const remotesMap = {
 const {Suspense,lazy,useEffect,useState} = await importShared('react');
 
 const WeeklyCommitApp = lazy(() => __federation_method_getRemote("weeklyCommitModule" , "./WeeklyCommitApp").then(module=>__federation_method_wrapDefault(module, true)));
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = ("http://localhost:8080/api").replace(/\/$/, "");
+const BACKEND_ORIGIN = API_BASE.startsWith("http") ? API_BASE.replace(/\/api\/?$/, "") : window.location.origin;
 function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -552,16 +553,16 @@ function App() {
         window.location.href = window.location.origin + "/";
       } else {
         setUser(null);
-        window.location.href = "http://localhost:8080/oauth2/authorization/oidc";
+        window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`;
       }
     } catch {
       setUser(null);
-      window.location.href = "http://localhost:8080/oauth2/authorization/oidc";
+      window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`;
     }
   };
   const handleAuthExpired = () => {
     setUser(null);
-    window.location.href = "http://localhost:8080/oauth2/authorization/oidc";
+    window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`;
   };
   if (checking) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { style: { color: "#6b7280" }, children: "Loading..." }) });
@@ -573,7 +574,7 @@ function App() {
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "a",
         {
-          href: "http://localhost:8080/oauth2/authorization/oidc",
+          href: `${BACKEND_ORIGIN}/oauth2/authorization/oidc`,
           style: {
             display: "inline-block",
             padding: "0.5rem 1.5rem",
@@ -623,7 +624,8 @@ function App() {
         userId: user.userId,
         orgId: user.orgId,
         authToken: "cookie",
-        onAuthExpired: handleAuthExpired
+        onAuthExpired: handleAuthExpired,
+        activeRallyCryId: void 0
       }
     ) }) })
   ] });
