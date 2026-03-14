@@ -13,6 +13,7 @@ RUN mvn package -DskipTests -q
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+# JAR is at /app/app.jar (do not override with target/*.jar in Railway)
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
