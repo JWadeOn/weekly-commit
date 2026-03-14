@@ -68,6 +68,7 @@ Run the full stack with Docker Compose; use a reverse proxy (Nginx or Traefik) o
 | `JWT_SECRET` | Strong secret for internal JWT (HS256) | Long random string |
 | `JWT_EXPIRY_HOURS` | JWT lifetime | `24` |
 | `FRONTEND_URL` | Origin of the host app (for redirects) | `https://app-weekly.example.com` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated origins for CORS (host + remote in production) | `https://app-weekly.example.com,https://remote.example.com` |
 
 **Host build (build-time only):**
 
@@ -247,7 +248,25 @@ Build host with `REMOTE_URL=https://weekly-commit.example.com/assets`. If fronte
 
 ---
 
-## 6. Security reminders
+## 6. Troubleshooting
+
+### Sign-in redirects to the host URL and gets stuck
+
+If clicking "Sign In" sends the browser to `https://<host-domain>/oauth2/authorization/oidc` and the page never leaves the sign-in screen, the frontend is using the **host** origin as the backend. That happens when the host (and/or remote) was built with `VITE_API_URL` set to a relative value (e.g. `/api`) or left unset — so `BACKEND_ORIGIN` becomes `window.location.origin` (the host). The host is a static app and has no `/oauth2` or `/login` routes, so the OAuth flow never starts.
+
+**Fix:** Set **`VITE_API_URL`** on the **host** (and **remote**) Railway service to the **full backend API URL**, e.g. `https://<your-backend-service>.up.railway.app/api`. Redeploy the host and remote so they are rebuilt with the correct value. Then "Sign In" will redirect to the backend, which will redirect to your OAuth provider.
+
+### CORS blocking requests from the host/remote
+
+If the browser reports that the request to the backend was "blocked by CORS policy" and "No 'Access-Control-Allow-Origin' header is present", the backend is not allowing your frontend origin. Set **`CORS_ALLOWED_ORIGINS`** on the **backend** service to a comma-separated list of the host and remote URLs (exact origins, with `https://`), e.g.:
+
+`https://faithful-intuition-production-2773.up.railway.app,https://<your-remote-service>.up.railway.app`
+
+Redeploy the backend so it picks up the new value. No trailing slashes.
+
+---
+
+## 7. Security reminders
 
 - Use a **strong, random `JWT_SECRET`** in production.
 - Run OAuth over HTTPS; register only HTTPS redirect URIs.
@@ -257,7 +276,7 @@ Build host with `REMOTE_URL=https://weekly-commit.example.com/assets`. If fronte
 
 ---
 
-## 7. PaaS / cloud options
+## 8. PaaS / cloud options
 
 - **Railway / Render / Fly.io:** Deploy backend, host, and remote as separate services; add Postgres (managed or container). Set env vars in the dashboard; build host with correct `REMOTE_URL` and optional `VITE_API_URL`.
 - **Kubernetes:** Run backend as Deployment + Service; host and remote as static serving Deployments or Ingress; use Ingress to implement the single-domain proxy pattern above.
