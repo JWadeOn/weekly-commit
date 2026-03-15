@@ -32,9 +32,17 @@ import type {
 const BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
 
 /** Origin of the backend (for OAuth redirects). Same-origin when BASE_URL is relative. */
-export const BACKEND_ORIGIN =
+const _rawBackendOrigin =
   BASE_URL.startsWith('http')
-    ? BASE_URL.replace(/\/api.*$/, '') // strip /api and any path (e.g. /api/auth/me) so we get origin only
+    ? BASE_URL.replace(/\/api.*$/, '') // strip /api and any path so we get origin only
+    : (typeof window !== 'undefined' ? window.location.origin : '')
+
+/** Always a full URL for OAuth: if build left origin without scheme, fix it so the link is not relative. */
+export const BACKEND_ORIGIN =
+  _rawBackendOrigin.startsWith('http')
+    ? _rawBackendOrigin
+    : _rawBackendOrigin && _rawBackendOrigin.includes('.')
+    ? 'https://' + _rawBackendOrigin.replace(/\/api.*$/, '').replace(/^\/+/, '') // hostname-like: prepend https, strip path
     : (typeof window !== 'undefined' ? window.location.origin : '')
 
 let _onAuthExpired: (() => void) | null = null

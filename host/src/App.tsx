@@ -4,7 +4,9 @@ const WeeklyCommitApp = lazy(() => import('weeklyCommitModule/WeeklyCommitApp'))
 
 /** Set at build time (VITE_API_URL). Use '/api' for same-origin. */
 const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
-const BACKEND_ORIGIN = API_BASE.startsWith('http') ? API_BASE.replace(/\/api.*$/, '') : window.location.origin
+const _raw = API_BASE.startsWith('http') ? API_BASE.replace(/\/api.*$/, '') : window.location.origin
+/** Ensure absolute URL for OAuth so the link is never relative (e.g. when env omitted scheme). */
+const BACKEND_ORIGIN = _raw.startsWith('http') ? _raw : _raw.includes('.') ? 'https://' + _raw.replace(/\/api.*$/, '').replace(/^\/+/, '') : window.location.origin
 
 interface UserInfo {
   userId: string
