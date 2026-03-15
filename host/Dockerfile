@@ -7,7 +7,7 @@ RUN npm ci
 
 COPY . .
 
-# REMOTE_URL is the browser-facing URL of the remote MFE — baked in at build time
+# REMOTE_URL is the browser-facing URL of the remote MFE (with or without https://; vite adds https if missing)
 ARG REMOTE_URL=http://localhost:3001
 ENV REMOTE_URL=${REMOTE_URL}
 # Optional: API base URL for production (e.g. /api for same-origin)
