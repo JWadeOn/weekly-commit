@@ -5,8 +5,13 @@ const WeeklyCommitApp = lazy(() => import('weeklyCommitModule/WeeklyCommitApp'))
 /** Set at build time (VITE_API_URL). Use '/api' for same-origin. */
 const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
 const _raw = API_BASE.startsWith('http') ? API_BASE.replace(/\/api.*$/, '') : window.location.origin
-/** Ensure absolute URL for OAuth so the link is never relative (e.g. when env omitted scheme). */
+/** Ensure absolute URL for OAuth so the link is never relative (avoids "doubled" URL on current origin). */
 const BACKEND_ORIGIN = _raw.startsWith('http') ? _raw : _raw.includes('.') ? 'https://' + _raw.replace(/\/api.*$/, '').replace(/^\/+/, '') : window.location.origin
+
+function oauthUrl(): string {
+  const u = BACKEND_ORIGIN.startsWith('http') ? BACKEND_ORIGIN : BACKEND_ORIGIN.includes('.') ? 'https://' + BACKEND_ORIGIN.replace(/\/api.*$/, '').replace(/^\/+/, '') : window.location.origin
+  return u + '/oauth2/authorization/oidc'
+}
 
 interface UserInfo {
   userId: string
@@ -43,17 +48,17 @@ export default function App(): JSX.Element {
         window.location.href = window.location.origin + '/'
       } else {
         setUser(null)
-        window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`
+        window.location.href = oauthUrl()
       }
     } catch {
       setUser(null)
-      window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`
+      window.location.href = oauthUrl()
     }
   }
 
   const handleAuthExpired = (): void => {
     setUser(null)
-    window.location.href = `${BACKEND_ORIGIN}/oauth2/authorization/oidc`
+    window.location.href = oauthUrl()
   }
 
   if (checking) {
@@ -70,7 +75,7 @@ export default function App(): JSX.Element {
         <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Weekly Commit</h1>
         <p style={{ color: '#6b7280' }}>Sign in to access your weekly commits.</p>
         <a
-          href={`${BACKEND_ORIGIN}/oauth2/authorization/oidc`}
+          href={oauthUrl()}
           style={{
             display: 'inline-block',
             padding: '0.5rem 1.5rem',

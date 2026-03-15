@@ -45,6 +45,16 @@ export const BACKEND_ORIGIN =
     ? 'https://' + _rawBackendOrigin.replace(/\/api.*$/, '').replace(/^\/+/, '') // hostname-like: prepend https, strip path
     : (typeof window !== 'undefined' ? window.location.origin : '')
 
+const OAUTH_PATH = '/oauth2/authorization/oidc'
+
+/** OAuth URL for Sign In. Always returns an absolute URL so the browser never treats it as relative (which would double the host). */
+export function getOAuthUrl(): string {
+  const base = BACKEND_ORIGIN || (typeof window !== 'undefined' ? window.location.origin : '')
+  if (base.startsWith('http')) return base + OAUTH_PATH
+  if (base.includes('.')) return 'https://' + base.replace(/\/api.*$/, '').replace(/^\/+/, '') + OAUTH_PATH
+  return (typeof window !== 'undefined' ? window.location.origin : '') + OAUTH_PATH
+}
+
 let _onAuthExpired: (() => void) | null = null
 
 export function setAuthExpiredHandler(handler: () => void): void {

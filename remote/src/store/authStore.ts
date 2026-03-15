@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { auth, setAuthExpiredHandler, BACKEND_ORIGIN } from '@/api/client'
+import { auth, setAuthExpiredHandler, getOAuthUrl } from '@/api/client'
 import type { UserResponse } from '@/types'
 
 interface AuthState {
@@ -13,7 +13,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => {
-  const oauthUrl = (): string => `${BACKEND_ORIGIN || window.location.origin}/oauth2/authorization/oidc`
+  const oauthUrl = (): string => getOAuthUrl()
 
   const onAuthExpired = (): void => {
     set({ user: null, isAuthenticated: false, isLoading: false })

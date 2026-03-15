@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,9 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    @Value("${app.frontend-url:}")
+    private String frontendUrl;
+
     /**
      * POST /api/auth/logout
      * Clears JWT and session cookies and invalidates the server session.
@@ -36,23 +40,24 @@ public class AuthController {
             session.invalidate();
         }
 
-        // Clear JWT cookie (no domain so it matches how it was set by this host)
+        // Match SameSite/Secure used when setting cookie so browser clears it
+        boolean crossOrigin = frontendUrl != null && frontendUrl.startsWith("http");
         ResponseCookie clearJwt = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(crossOrigin)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite(crossOrigin ? "None" : "Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, clearJwt.toString());
 
         // Clear JSESSIONID so the browser drops the session cookie
         ResponseCookie clearSession = ResponseCookie.from("JSESSIONID", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(crossOrigin)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite(crossOrigin ? "None" : "Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, clearSession.toString());
 

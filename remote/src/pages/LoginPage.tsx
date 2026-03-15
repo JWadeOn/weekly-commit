@@ -1,10 +1,10 @@
 import React from 'react'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { BACKEND_ORIGIN } from '@/api/client'
+import { getOAuthUrl } from '@/api/client'
 
 export function LoginPage(): React.ReactElement {
-  const oauthHref = `${BACKEND_ORIGIN || window.location.origin}/oauth2/authorization/oidc`
+  const oauthHref = getOAuthUrl()
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6">
       <div className="text-center space-y-2">

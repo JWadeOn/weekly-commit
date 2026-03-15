@@ -61,12 +61,14 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
 
             String jwt = jwtService.generateToken(user, roles);
 
+            // Cross-origin (host on different domain) requires SameSite=None; Secure so browser sends cookie on fetch()
+            boolean crossOrigin = frontendUrl != null && frontendUrl.startsWith("http");
             ResponseCookie cookie = ResponseCookie.from("jwt", jwt)
                     .httpOnly(true)
-                    .secure(false)          // set true in production (HTTPS)
+                    .secure(crossOrigin)     // true in production (HTTPS) when frontend is separate origin
                     .path("/")
                     .maxAge(Duration.ofHours(jwtService.getExpiryHours()))
-                    .sameSite("Lax")        // Lax allows redirect from OAuth provider
+                    .sameSite(crossOrigin ? "None" : "Lax")  // None required for cross-origin requests from host to API
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
