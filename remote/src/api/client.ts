@@ -1,5 +1,8 @@
 import type {
   UserResponse,
+  AdminUserResponse,
+  CreateUserRequest,
+  UpdateUserRequest,
   RcDoHierarchyResponse,
   WeeklyCommitResponse,
   CommitSummaryResponse,
@@ -99,6 +102,14 @@ export const auth = {
   me: (): Promise<UserResponse> => request('/auth/me'),
   logout: (): Promise<{ message: string }> =>
     request('/auth/logout', { method: 'POST' }),
+}
+
+export const admin = {
+  listUsers: (): Promise<AdminUserResponse[]> => request('/admin/users'),
+  createUser: (body: CreateUserRequest): Promise<AdminUserResponse> =>
+    request('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
+  updateUser: (userId: string, body: UpdateUserRequest): Promise<AdminUserResponse> =>
+    request(`/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) }),
 }
 
 export const rcdo = {

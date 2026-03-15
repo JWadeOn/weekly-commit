@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,6 +37,9 @@ public class OAuthUserService extends OidcUserService {
         return oidcUser;
     }
 
+    /** Prefix for demo seed users that can be "claimed" on first sign-in by email match. */
+    private static final String DEMO_CLAIM_PREFIX = "demo-claim|";
+
     @Transactional
     public User findOrCreate(OidcUser oidcUser) {
         String subject = oidcUser.getSubject();
@@ -43,7 +47,28 @@ public class OAuthUserService extends OidcUserService {
         String name = oidcUser.getFullName();
 
         return userRepository.findByOauthSubject(subject)
+                .or(() -> claimDemoUserByEmail(subject, email, name))
                 .orElseGet(() -> createNewUser(subject, email, name));
+    }
+
+    /**
+     * If a seed user exists with this email and a claimable oauth_subject (demo-claim|...),
+     * update it to the real IdP subject and return it. Used so deployed demo accounts
+     * (V14__demo_two_teams) are claimed when the corresponding Auth0 user first signs in.
+     */
+    private Optional<User> claimDemoUserByEmail(String subject, String email, String name) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        return userRepository.findByEmail(email)
+                .filter(user -> user.getOauthSubject() != null && user.getOauthSubject().startsWith(DEMO_CLAIM_PREFIX))
+                .map(user -> {
+                    user.setOauthSubject(subject);
+                    if (name != null && !name.isBlank()) {
+                        user.setFullName(name);
+                    }
+                    return userRepository.save(user);
+                });
     }
 
     private User createNewUser(String subject, String email, String name) {

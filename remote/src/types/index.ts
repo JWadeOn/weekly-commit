@@ -7,7 +7,28 @@ export interface UserResponse {
   expiresAt: string
 }
 
-export type UserRole = 'EMPLOYEE' | 'MANAGER' | 'DUAL_ROLE'
+export type UserRole = 'EMPLOYEE' | 'MANAGER' | 'DUAL_ROLE' | 'ADMIN'
+
+export interface AdminUserResponse {
+  id: string
+  email: string
+  fullName: string
+  managerId: string | null
+  managerName: string | null
+  roles: string[]
+}
+
+export interface CreateUserRequest {
+  email: string
+  fullName: string
+  managerId: string | null
+  roles: string[]
+}
+
+export interface UpdateUserRequest {
+  managerId: string | null
+  roles: string[]
+}
 
 export type ChessPiece = 'KING' | 'QUEEN' | 'ROOK' | 'BISHOP' | 'KNIGHT' | 'PAWN'
 

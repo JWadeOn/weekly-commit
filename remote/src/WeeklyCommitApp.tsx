@@ -11,6 +11,7 @@ import { CommitDetailPage } from '@/pages/CommitDetailPage'
 import { CommitHistoryPage } from '@/pages/CommitHistoryPage'
 import { ResourcesPage } from '@/pages/ResourcesPage'
 import { BoardPage } from '@/pages/BoardPage'
+import { AdminPage } from '@/pages/AdminPage'
 import { AppNav } from '@/components/AppNav'
 import './index.css'
 
@@ -76,6 +77,7 @@ function AppContent({ onAuthExpired }: { onAuthExpired: () => void }): React.Rea
           <Route path="/board" element={<BoardPage />} />
           <Route path="/manager" element={<ManagerDashboard />} />
           <Route path="/manager/strategy" element={<StrategyPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </main>
     </div>

@@ -11,6 +11,7 @@ import {
   LogOut,
   Trophy,
   Grid3X3,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -22,8 +23,10 @@ export function AppNav(): React.ReactElement | null {
 
   const isEmployee = user.roles.includes('EMPLOYEE') || user.roles.includes('DUAL_ROLE')
   const isManager = user.roles.includes('MANAGER') || user.roles.includes('DUAL_ROLE')
+  const isAdmin = user.roles.includes('ADMIN')
 
   const frameworkItems: NavItem[] = ([] as NavItem[]).concat(
+    isAdmin ? [{ to: '/admin', label: 'Admin', Icon: ShieldCheck, end: true }] : [],
     isManager ? [{ to: '/manager/strategy', label: 'Strategy', Icon: Target, end: true }] : [],
     isManager ? [{ to: '/manager', label: 'My Team', Icon: Users, end: true }] : [],
     [{ to: '/history', label: 'History', Icon: Clock, end: true }],
@@ -46,7 +49,9 @@ export function AppNav(): React.ReactElement | null {
     : user.email.slice(0, 2).toUpperCase()
 
   const displayName = user.fullName ?? user.email
-  const roleLabel = isManager && isEmployee
+  const roleLabel = isAdmin
+    ? 'Admin'
+    : isManager && isEmployee
     ? 'Manager / Employee'
     : isManager
     ? 'Manager'

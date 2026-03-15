@@ -101,6 +101,28 @@ Register the redirect URI in your IdP. See [§6 Troubleshooting](#6-troubleshoot
 - **Auth0:** Use **New Universal Login** (not Classic). Ensure sign-ups are enabled for your Application (Auth0 Dashboard → Applications → your app; or Branding → Universal Login). The `screen_hint=signup` parameter is forwarded by the backend so Auth0 shows the sign-up tab.
 - **Other IdPs:** If your provider supports a similar hint (e.g. `screen_hint`, `prompt`, or a dedicated sign-up URL), configure the backend or IdP accordingly. If the IdP does not support it, **Sign Up** and **Sign In** may both show the same login screen; users can create an account via the IdP’s own “Sign up” link if the IdP offers one.
 
+**Demo teams (two teams, each with 1 manager + 3 employees):** Migration `V14__demo_two_teams.sql` seeds 8 users (Team 1 and Team 2) with placeholder identities. To use them on a deployed instance with Auth0 (or any OIDC IdP), create **8 users in your IdP** with these exact emails so they “claim” the seed accounts on first sign-in (the backend matches by email and assigns the existing user record, including MANAGER role and manager_id):
+
+| Email | Role | Reports to |
+|-------|------|------------|
+| `team1-manager@example.com` | MANAGER | — |
+| `team1-e1@example.com` | EMPLOYEE | Team 1 Manager |
+| `team1-e2@example.com` | EMPLOYEE | Team 1 Manager |
+| `team1-e3@example.com` | EMPLOYEE | Team 1 Manager |
+| `team2-manager@example.com` | MANAGER | — |
+| `team2-e1@example.com` | EMPLOYEE | Team 2 Manager |
+| `team2-e2@example.com` | EMPLOYEE | Team 2 Manager |
+| `team2-e3@example.com` | EMPLOYEE | Team 2 Manager |
+
+You can create these in Auth0 (Dashboard → User Management → Users → Create User) or invite real users and change the migration emails to match your domain before running it.
+
+**Admin account:** Migration `V15__add_admin_role.sql` seeds one admin user (`admin@example.com`, claimable on first sign-in). Create a user in your IdP with that email to become the org admin. Admins can:
+- **List users** — `GET /api/admin/users` (all users in the org with roles and manager)
+- **Add users** — `POST /api/admin/users` with `{ "email", "fullName", "managerId?", "roles" }`; the new user is “invited” and claims the account when they first sign in with that email
+- **Assign roles and teams** — `PATCH /api/admin/users/:id` with `{ "managerId", "roles" }` to set a user’s manager and/or replace their roles (EMPLOYEE, MANAGER, ADMIN)
+
+Only users with the **ADMIN** role can call `/api/admin/**`. Use the admin account to create the demo team users above or to add and assign new users and managers.
+
 ---
 
 ## Implementation plan: Production OAuth (Auth0)
