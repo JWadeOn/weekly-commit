@@ -329,6 +329,57 @@ Build host with `REMOTE_URL=https://weekly-commit.example.com/assets`. If fronte
 
 ---
 
+## 5.1 Production debugging (one service at a time)
+
+Debug in this order: **Backend → Remote → Host**. Each step assumes the previous one is working.
+
+### Step 1: Backend
+
+**What to verify:** The API is up, DB is connected, and OAuth is configured (no redirect yet).
+
+1. **Health (no auth):**  
+   `curl -s https://YOUR_BACKEND_RAILWAY_URL/api/health`  
+   Expected: `{"status":"ok"}`. If you get connection refused, timeout, or 502/503, the service isn’t reachable or isn’t running (check Railway deploy logs and root directory / port).
+
+2. **Deploy logs:** In Railway, open the backend service → Deployments → latest deploy → View logs. Look for:
+   - Spring Boot startup with no errors.
+   - No `"URL must start with 'jdbc'"` (DB URL is fixed by `JdbcUrlEnvironmentPostProcessor` if you use `DATABASE_URL`).
+   - No `"Unable to resolve Configuration with the provided Issuer"` (OAuth env vars set; issuer has trailing slash for Auth0).
+
+3. **Env (Railway dashboard):** Confirm at least: `DATABASE_URL` or `DB_*`, `OAUTH_ISSUER_URI`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, `OAUTH_REDIRECT_URI`, `JWT_SECRET`, `FRONTEND_URL` (host app URL), and optionally `OAUTH_AUTHORIZATION_URI`, `OAUTH_JWK_SET_URI`, `CORS_ALLOWED_ORIGINS`.
+
+Once `/api/health` returns 200 and logs are clean, move to **Step 2: Remote**.
+
+### Step 2: Remote
+
+**What to verify:** The remote serves its Module Federation entry and assets so the host can load them in the browser.
+
+1. **Remote entry (browser or curl):**  
+   `curl -sI https://YOUR_REMOTE_RAILWAY_URL/assets/remoteEntry.js`  
+   Expected: `200 OK` (or 304). If 404, the build didn’t output to `/assets/` or the server isn’t serving that path.
+
+2. **Deploy logs:** Container starts (e.g. Nginx), no immediate exit. If the service exits, check Dockerfile and `nginx.conf.template` (e.g. `listen 0.0.0.0:${PORT}` so the proxy can connect).
+
+Once `remoteEntry.js` is reachable, move to **Step 3: Host**.
+
+### Step 3: Host
+
+**What to verify:** The host shell loads, calls the backend for auth, and loads the remote module.
+
+1. **Open host URL in browser:**  
+   `https://YOUR_HOST_RAILWAY_URL/`  
+   Expected: Either “Sign In” or the app (if already logged in). If 502, the container may not be binding to `0.0.0.0` (see §6) or the deploy didn’t use the latest image.
+
+2. **Browser devtools → Network:**  
+   - Request to host origin (HTML + JS) should succeed.  
+   - Request to `YOUR_BACKEND_URL/api/auth/me` should return 200 (with cookie) or 401.  
+   - Request to `YOUR_REMOTE_URL/assets/remoteEntry.js` (and chunks) should return 200/304.  
+   If the host build used the wrong `REMOTE_URL` or `VITE_API_URL`, fix build env and redeploy.
+
+3. **Sign In:** Click Sign In; you should be redirected to Auth0, then back to the host. If redirect fails, check `FRONTEND_URL` on the backend and “Allowed Callback URLs” in Auth0 (must include backend callback URL).
+
+---
+
 ## 6. Troubleshooting
 
 ### Backend fails: "URL must start with 'jdbc'"

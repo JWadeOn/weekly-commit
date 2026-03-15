@@ -25,5 +25,6 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 3000
+# Match Railway's PORT (default 8080). Entrypoint uses PORT at runtime.
+EXPOSE 8080
 CMD ["/docker-entrypoint.sh"]
