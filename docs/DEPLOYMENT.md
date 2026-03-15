@@ -426,6 +426,28 @@ If the browser reports that the request to the backend was "blocked by CORS poli
 
 Redeploy the backend so it picks up the new value. No trailing slashes.
 
+### 401 on `/api/auth/me` after clicking Sign In
+
+OAuth completes and you are redirected back to the app, but the first request to `GET /api/auth/me` returns **401**. That usually means the browser is not sending the JWT cookie (or the backend never set it correctly).
+
+**1. Backend must set the cookie for cross-origin.** The backend only sets `SameSite=None; Secure` when **`FRONTEND_URL`** is a full URL starting with `http` (e.g. `https://your-host.up.railway.app`). If `FRONTEND_URL` is missing or wrong in production, the cookie may be `SameSite=Lax`, and the browser will **not** send it on the cross-origin `fetch()` from the host to the API.
+
+**Fix (backend service):** Set **`FRONTEND_URL`** to the **exact** URL where the host app is served (the page you land on after login), e.g. `https://weekly-commit-production.up.railway.app` or your separate host URL. No trailing slash. Redeploy the backend.
+
+**2. CORS must allow the host origin with credentials.** If the host and API are on different origins, the backend must allow that host in **`CORS_ALLOWED_ORIGINS`** (and the backend already sends `Access-Control-Allow-Credentials: true`). Otherwise the browser may omit the cookie or block the response.
+
+**Fix (backend service):** Set **`CORS_ALLOWED_ORIGINS`** to include the host origin, e.g. `https://weekly-commit-production.up.railway.app`. Redeploy the backend.
+
+**3. Same origin (host + API on one domain).** If you serve the host and API from the same origin (e.g. one Railway app with `/` → host and `/api` → backend), set **`FRONTEND_URL`** to that same origin (e.g. `https://weekly-commit-production.up.railway.app`). Then the redirect after login goes to the same origin and the cookie is same-site; no CORS/credentials issue.
+
+**Quick checklist (production):**
+
+| Variable | Where | Example |
+|----------|--------|---------|
+| `FRONTEND_URL` | Backend | `https://<host-origin>` (where users land after login) |
+| `CORS_ALLOWED_ORIGINS` | Backend | `https://<host-origin>` (and remote if different) |
+| `VITE_API_URL` | Host/remote build | `https://<backend-origin>/api` |
+
 ---
 
 ## 7. Security reminders
