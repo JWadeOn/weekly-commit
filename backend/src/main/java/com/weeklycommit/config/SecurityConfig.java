@@ -39,17 +39,20 @@ public class SecurityConfig {
     private final OAuthSuccessHandler oAuthSuccessHandler;
     private final SignUpAwareAuthorizationRequestResolver authorizationRequestResolver;
     private final String corsAllowedOrigins;
+    private final String frontendUrl;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
                           OAuthUserService oAuthUserService,
                           OAuthSuccessHandler oAuthSuccessHandler,
                           ClientRegistrationRepository clientRegistrationRepository,
-                          @Value("${app.cors-allowed-origins}") String corsAllowedOrigins) {
+                          @Value("${app.cors-allowed-origins}") String corsAllowedOrigins,
+                          @Value("${app.frontend-url:}") String frontendUrl) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.oAuthUserService = oAuthUserService;
         this.oAuthSuccessHandler = oAuthSuccessHandler;
         this.authorizationRequestResolver = new SignUpAwareAuthorizationRequestResolver(clientRegistrationRepository);
         this.corsAllowedOrigins = corsAllowedOrigins;
+        this.frontendUrl = frontendUrl != null ? frontendUrl : "";
     }
 
     @Bean
@@ -92,7 +95,8 @@ public class SecurityConfig {
                 .successHandler(oAuthSuccessHandler)
                 .failureHandler((request, response, exception) -> {
                     log.error("OAuth authentication failed: {}", exception.getMessage(), exception);
-                    response.sendRedirect("http://localhost:3000/auth-error");
+                    String base = (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl : "http://localhost:3000";
+                    response.sendRedirect(base + "/auth-error");
                 })
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

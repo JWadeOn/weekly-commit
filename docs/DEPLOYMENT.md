@@ -69,6 +69,7 @@ Run the full stack with Docker Compose; use a reverse proxy (Nginx or Traefik) o
 | `JWT_EXPIRY_HOURS` | JWT lifetime | `24` |
 | `FRONTEND_URL` | Origin of the host app (for redirects) | `https://app-weekly.example.com` |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated origins for CORS (host + remote in production) | `https://app-weekly.example.com,https://remote.example.com` |
+| `IDP_LOGOUT_URL` | Optional. Full IdP logout URL (e.g. Keycloak). If unset and issuer is Auth0, backend builds `https://tenant.auth0.com/v2/logout?client_id=...&returnTo=FRONTEND_URL`. For Auth0, add `FRONTEND_URL` to **Allowed Logout URLs** in the Auth0 dashboard. | — |
 
 **Host build (build-time only):**
 
@@ -366,7 +367,8 @@ Debug in this order: **Backend → Remote → Host**. Each step assumes the prev
 
 1. **Health (no auth):**  
    `curl -s https://YOUR_BACKEND_RAILWAY_URL/api/health`  
-   Expected: `{"status":"ok"}`. If you get connection refused, timeout, or 502/503, the service isn’t reachable or isn’t running (check Railway deploy logs and root directory / port).
+   Expected: `{"status":"ok"}`. If you get connection refused, timeout, or 502/503, the service isn’t reachable or isn’t running (check Railway deploy logs and root directory / port).  
+   For programmatic smoke tests of the full deployed stack (backend + remote + host), see [PRODUCTION_TESTING.md](PRODUCTION_TESTING.md).
 
 2. **Deploy logs:** In Railway, open the backend service → Deployments → latest deploy → View logs. Look for:
    - Spring Boot startup with no errors.
@@ -462,6 +464,8 @@ OAuth completes and you are redirected back to the app, but the first request to
 **Fix (backend service):** Set **`FRONTEND_URL`** to the **exact** URL where the host app is served (the page you land on after login), e.g. `https://weekly-commit-production.up.railway.app` or your separate host URL. No trailing slash. Redeploy the backend.
 
 **2. CORS must allow the host origin with credentials.** If the host and API are on different origins, the backend must allow that host in **`CORS_ALLOWED_ORIGINS`** (and the backend already sends `Access-Control-Allow-Credentials: true`). Otherwise the browser may omit the cookie or block the response.
+
+**3. Intermittent 401 (sometimes works, sometimes fails).** This can be a timing issue: the app calls `/api/auth/me` as soon as it loads after the OAuth redirect, before the browser has fully applied the `Set-Cookie` from the redirect response. The host and remote now **retry** `/api/auth/me` once after 500 ms on 401; if it still fails, ensure `FRONTEND_URL` and `CORS_ALLOWED_ORIGINS` are set correctly (see above). The backend also sets the JWT cookie with `Secure` when the request is HTTPS, so production always gets a cookie the browser will send on subsequent requests.
 
 **Fix (backend service):** Set **`CORS_ALLOWED_ORIGINS`** to include the host origin, e.g. `https://weekly-commit-production.up.railway.app`. Redeploy the backend.
 

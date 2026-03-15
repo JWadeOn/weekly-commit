@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +32,20 @@ public class AuthController {
     @Value("${app.frontend-url:}")
     private String frontendUrl;
 
+    @Value("${app.idp-logout-url:}")
+    private String idpLogoutUrl;
+
+    @Value("${spring.security.oauth2.client.provider.oidc-provider.issuer-uri:}")
+    private String oauthIssuerUri;
+
+    @Value("${spring.security.oauth2.client.registration.oidc.client-id:}")
+    private String oauthClientId;
+
     /**
      * POST /api/auth/logout
-     * Clears JWT and session cookies and invalidates the server session.
+     * Clears JWT and session cookies, invalidates the server session, and returns
+     * the IdP logout URL so the frontend can redirect and clear the IdP session
+     * (e.g. Auth0). Otherwise "Sign In" would reuse the IdP session and auto-sign in.
      */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletRequest request, HttpServletResponse response) {
@@ -42,10 +56,11 @@ public class AuthController {
         }
 
         // Match SameSite/Secure used when setting cookie so browser clears it
-        boolean crossOrigin = frontendUrl != null && frontendUrl.startsWith("http");
+        boolean crossOrigin = frontendUrl != null && !frontendUrl.isBlank() && frontendUrl.startsWith("http");
+        boolean secure = crossOrigin || request.isSecure();
         ResponseCookie clearJwt = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(crossOrigin)
+                .secure(secure)
                 .path("/")
                 .maxAge(0)
                 .sameSite(crossOrigin ? "None" : "Lax")
@@ -55,16 +70,54 @@ public class AuthController {
         // Clear JSESSIONID so the browser drops the session cookie
         ResponseCookie clearSession = ResponseCookie.from("JSESSIONID", "")
                 .httpOnly(true)
-                .secure(crossOrigin)
+                .secure(secure)
                 .path("/")
                 .maxAge(0)
                 .sameSite(crossOrigin ? "None" : "Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, clearSession.toString());
 
+        String idpRedirect = resolveIdpLogoutUrl();
+        Map<String, String> body = new java.util.HashMap<>();
+        body.put("message", "Logged out successfully");
+        if (idpRedirect != null) {
+            body.put("idpLogoutUrl", idpRedirect);
+        }
+
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore().mustRevalidate())
-                .body(Map.of("message", "Logged out successfully"));
+                .body(body);
+    }
+
+    /**
+     * Resolve the IdP logout URL so the client can redirect and clear the IdP session.
+     * Uses app.idp-logout-url if set; otherwise builds Auth0-style URL from issuer + client-id.
+     */
+    private String resolveIdpLogoutUrl() {
+        if (idpLogoutUrl != null && !idpLogoutUrl.isBlank()) {
+            return idpLogoutUrl;
+        }
+        if (oauthIssuerUri == null || oauthIssuerUri.isBlank() || oauthClientId == null || oauthClientId.isBlank()
+                || frontendUrl == null || frontendUrl.isBlank()) {
+            return null;
+        }
+        try {
+            URI issuer = URI.create(oauthIssuerUri.trim());
+            String host = issuer.getScheme() + "://" + issuer.getHost();
+            if (issuer.getPort() > 0 && issuer.getPort() != ("https".equals(issuer.getScheme()) ? 443 : 80)) {
+                host += ":" + issuer.getPort();
+            }
+            // Auth0: https://tenant.auth0.com/v2/logout?client_id=...&returnTo=...
+            if (host.contains("auth0.com")) {
+                String returnTo = URLEncoder.encode(frontendUrl, StandardCharsets.UTF_8);
+                return host + "/v2/logout?client_id=" + URLEncoder.encode(oauthClientId, StandardCharsets.UTF_8)
+                        + "&returnTo=" + returnTo;
+            }
+            // Optional: add Keycloak etc. here via end_session_endpoint
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

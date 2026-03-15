@@ -30,34 +30,51 @@ export default function App(): JSX.Element {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    fetch(`${API_BASE}/auth/me`, { credentials: 'include' })
-      .then((res) => {
-        if (!res.ok) throw new Error('Not authenticated')
-        return res.json() as Promise<UserInfo>
-      })
-      .then((data) => {
-        setUser(data)
-      })
-      .catch(() => {
-        setUser(null)
-      })
-      .finally(() => setChecking(false))
+    let skipFinally = false
+    const checkAuth = (retry = false): void => {
+      if (retry) skipFinally = false
+      fetch(`${API_BASE}/auth/me`, { credentials: 'include' })
+        .then((res) => {
+          if (res.status === 401 && !retry) {
+            // Cookie may not be visible yet after OAuth redirect; retry once
+            skipFinally = true
+            setTimeout(() => checkAuth(true), 500)
+            return
+          }
+          if (!res.ok) throw new Error('Not authenticated')
+          return res.json() as Promise<UserInfo>
+        })
+        .then((data) => {
+          if (data) setUser(data)
+          else setUser(null)
+        })
+        .catch(() => {
+          setUser(null)
+        })
+        .finally(() => {
+          if (!skipFinally) setChecking(false)
+        })
+    }
+    checkAuth()
   }, [])
 
   const handleLogout = async (): Promise<void> => {
     try {
       const res = await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' })
+      setUser(null)
       if (res.ok) {
-        setUser(null)
-        // Full navigation so host re-fetches /auth/me and shows login
-        window.location.href = window.location.origin + '/'
-      } else {
-        setUser(null)
-        window.location.href = oauthUrl()
+        const data = (await res.json()) as { message?: string; idpLogoutUrl?: string }
+        // Redirect to IdP logout so next Sign In shows login screen instead of reusing IdP session
+        if (data.idpLogoutUrl) {
+          window.location.href = data.idpLogoutUrl
+          return
+        }
       }
+      // No IdP logout URL or request failed: just go home (or login)
+      window.location.href = window.location.origin + '/'
     } catch {
       setUser(null)
-      window.location.href = oauthUrl()
+      window.location.href = window.location.origin + '/'
     }
   }
 

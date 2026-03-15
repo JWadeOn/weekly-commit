@@ -32,21 +32,30 @@ export const useAuthStore = create<AuthState>((set) => {
     },
 
     logout: async (): Promise<void> => {
+      set({ user: null, isAuthenticated: false })
       try {
-        await auth.logout()
+        const data = await auth.logout()
+        // Redirect to IdP logout so next Sign In shows login screen instead of reusing IdP session
+        if (data.idpLogoutUrl) {
+          window.location.href = data.idpLogoutUrl
+          return
+        }
       } finally {
-        set({ user: null, isAuthenticated: false })
-        // Full navigation so host shell re-fetches auth and shows login
         window.location.href = window.location.origin + '/'
       }
     },
 
-    fetchUser: async (): Promise<void> => {
+    fetchUser: async (retry = false): Promise<void> => {
       set({ isLoading: true })
       try {
         const user = await auth.me()
         set({ user, isAuthenticated: true, isLoading: false })
       } catch {
+        if (!retry) {
+          // Cookie may not be visible yet after OAuth redirect; retry once
+          setTimeout(() => useAuthStore.getState().fetchUser(true), 500)
+          return
+        }
         set({ user: null, isAuthenticated: false, isLoading: false })
       }
     },
