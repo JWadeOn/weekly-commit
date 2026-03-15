@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,7 +62,9 @@ public class AuthController {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, clearSession.toString());
 
-        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore().mustRevalidate())
+                .body(Map.of("message", "Logged out successfully"));
     }
 
     /**
@@ -89,6 +92,8 @@ public class AuthController {
 
         Instant expiresAt = (Instant) details.get("expiresAt");
 
-        return ResponseEntity.ok(new UserResponse(userId, orgId, email, fullName, roles, expiresAt));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore().mustRevalidate())
+                .body(new UserResponse(userId, orgId, email, fullName, roles, expiresAt));
     }
 }

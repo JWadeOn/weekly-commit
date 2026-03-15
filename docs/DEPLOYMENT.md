@@ -96,6 +96,11 @@ If you use **Option A** (single domain), set `VITE_API_URL` to empty or `/` so t
 
 Register the redirect URI in your IdP. See [§6 Troubleshooting](#6-troubleshooting) for the "Unable to resolve Configuration" error.
 
+**Sign-up (new team members):** This app does not have its own sign-up form. Sign-up is handled by your **identity provider (IdP)**. When a user clicks **Sign Up**, the app redirects to the IdP with `screen_hint=signup`; the IdP should show its sign-up screen (create account). After they complete sign-up at the IdP, they are redirected back to the app and the backend creates their user record automatically (see `OAuthUserService.findOrCreate`). To support this:
+
+- **Auth0:** Use **New Universal Login** (not Classic). Ensure sign-ups are enabled for your Application (Auth0 Dashboard → Applications → your app; or Branding → Universal Login). The `screen_hint=signup` parameter is forwarded by the backend so Auth0 shows the sign-up tab.
+- **Other IdPs:** If your provider supports a similar hint (e.g. `screen_hint`, `prompt`, or a dedicated sign-up URL), configure the backend or IdP accordingly. If the IdP does not support it, **Sign Up** and **Sign In** may both show the same login screen; users can create an account via the IdP’s own “Sign up” link if the IdP offers one.
+
 ---
 
 ## Implementation plan: Production OAuth (Auth0)
