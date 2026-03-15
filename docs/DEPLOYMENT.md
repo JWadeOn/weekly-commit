@@ -338,6 +338,12 @@ Spring Boot’s datasource expects a JDBC URL (e.g. `jdbc:postgresql://host:5432
 - **Railway:** Use the Postgres service reference so the backend gets `DATABASE_URL` (and `PGUSER`, `PGPASSWORD`). The app normalizes `postgresql://` or `postgres://` to `jdbc:postgresql://` automatically. Ensure the backend service has the Postgres plugin linked and **do not** override `DB_URL` with a non-JDBC value.
 - **Manual:** Set `DB_URL` to a full JDBC URL: `jdbc:postgresql://<host>:<port>/<database>` and set `DB_USERNAME` and `DB_PASSWORD` (or use the same variables your platform provides, e.g. `PGUSER` / `PGPASSWORD`).
 
+### Backend fails: "The Issuer ... provided in the configuration metadata did not match the requested issuer"
+
+Auth0’s discovery document returns an issuer **with** a trailing slash (e.g. `https://tenant.us.auth0.com/`). Spring compares that to your `OAUTH_ISSUER_URI`. They must match exactly.
+
+**Fix:** Set `OAUTH_ISSUER_URI` **with** the trailing slash, e.g. `https://dev-z33frvwxypyb8hix.us.auth0.com/` (not `...auth0.com`). Redeploy the backend.
+
 ### Backend fails: "Unable to resolve Configuration with the provided Issuer of http://localhost:8090"
 
 The backend is still using the **local dev** OAuth issuer (mock server at `localhost:8090`). In production that server does not exist, so Spring cannot fetch OIDC discovery and the app fails to start.
