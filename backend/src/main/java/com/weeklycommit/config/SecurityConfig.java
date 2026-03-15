@@ -3,6 +3,7 @@ package com.weeklycommit.config;
 import com.weeklycommit.security.JwtAuthFilter;
 import com.weeklycommit.security.OAuthSuccessHandler;
 import com.weeklycommit.security.OAuthUserService;
+import com.weeklycommit.security.SignUpAwareAuthorizationRequestResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.cors.CorsConfiguration;
@@ -35,15 +37,18 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final OAuthUserService oAuthUserService;
     private final OAuthSuccessHandler oAuthSuccessHandler;
+    private final SignUpAwareAuthorizationRequestResolver authorizationRequestResolver;
     private final String corsAllowedOrigins;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
                           OAuthUserService oAuthUserService,
                           OAuthSuccessHandler oAuthSuccessHandler,
+                          ClientRegistrationRepository clientRegistrationRepository,
                           @Value("${app.cors-allowed-origins}") String corsAllowedOrigins) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.oAuthUserService = oAuthUserService;
         this.oAuthSuccessHandler = oAuthSuccessHandler;
+        this.authorizationRequestResolver = new SignUpAwareAuthorizationRequestResolver(clientRegistrationRepository);
         this.corsAllowedOrigins = corsAllowedOrigins;
     }
 
@@ -80,6 +85,8 @@ public class SecurityConfig {
             //   Callback:  GET /login/oauth2/code/oidc     → Spring Security exchanges code,
             //              calls OAuthUserService, then OAuthSuccessHandler issues JWT cookie
             .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(auth -> auth
+                    .authorizationRequestResolver(authorizationRequestResolver))
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oAuthUserService))
                 .successHandler(oAuthSuccessHandler)
                 .failureHandler((request, response, exception) -> {

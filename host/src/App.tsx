@@ -13,6 +13,11 @@ function oauthUrl(): string {
   return u + '/oauth2/authorization/oidc'
 }
 
+/** Sign-up URL: passes screen_hint=signup so Auth0 (and similar IdPs) show sign-up instead of sign-in. */
+function oauthSignUpUrl(): string {
+  return oauthUrl() + '?screen_hint=signup'
+}
+
 interface UserInfo {
   userId: string
   orgId: string
@@ -70,24 +75,31 @@ export default function App(): JSX.Element {
   }
 
   if (!user) {
+    const linkStyle = {
+      display: 'inline-block',
+      padding: '0.5rem 1.5rem',
+      borderRadius: '0.375rem',
+      textDecoration: 'none' as const,
+      fontWeight: 500,
+    }
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', fontFamily: 'system-ui, sans-serif' }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Weekly Commit</h1>
-        <p style={{ color: '#6b7280' }}>Sign in to access your weekly commits.</p>
-        <a
-          href={oauthUrl()}
-          style={{
-            display: 'inline-block',
-            padding: '0.5rem 1.5rem',
-            backgroundColor: '#1e293b',
-            color: 'white',
-            borderRadius: '0.375rem',
-            textDecoration: 'none',
-            fontWeight: '500',
-          }}
-        >
-          Sign In
-        </a>
+        <p style={{ color: '#6b7280' }}>Sign in or create an account to access your weekly commits.</p>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a
+            href={oauthUrl()}
+            style={{ ...linkStyle, backgroundColor: '#1e293b', color: 'white' }}
+          >
+            Sign In
+          </a>
+          <a
+            href={oauthSignUpUrl()}
+            style={{ ...linkStyle, backgroundColor: 'white', color: '#1e293b', border: '1px solid #1e293b' }}
+          >
+            Sign Up
+          </a>
+        </div>
       </div>
     )
   }
