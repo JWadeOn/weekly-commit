@@ -8,7 +8,7 @@ interface AuthState {
   isAuthenticated: boolean
   login: () => void
   logout: () => Promise<void>
-  fetchUser: () => Promise<void>
+  fetchUser: (retry?: boolean) => Promise<void>
   onAuthExpired: () => void
 }
 
