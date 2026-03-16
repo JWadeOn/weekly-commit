@@ -24,7 +24,7 @@ public class CreateUnplannedItemRequest {
     private String description;
 
     /**
-     * Required for STRATEGIC items. Must be null for KLO items.
+     * Required for STRATEGIC items. Must be null for KTLO items.
      * Validated in service based on taskType.
      */
     private UUID outcomeId;
@@ -45,7 +45,7 @@ public class CreateUnplannedItemRequest {
     /** Defaults to STRATEGIC if omitted. */
     private TaskType taskType;
 
-    /** Required when taskType is KLO. */
+    /** Required when taskType is KTLO. */
     private KloCategory kloCategory;
 
     /**

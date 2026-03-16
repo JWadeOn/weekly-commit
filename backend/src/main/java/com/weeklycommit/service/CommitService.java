@@ -512,7 +512,7 @@ public class CommitService {
 
     /**
      * Alignment = (weight of STRATEGIC items / total weight) * 100.
-     * KLO items count in the denominator (total capacity) but NOT the numerator.
+     * KTLO items count in the denominator (total capacity) but NOT the numerator.
      */
     public static Integer computeAlignmentScore(List<CommitItem> items) {
         int totalWeight = items.stream().mapToInt(CommitItem::getChessWeight).sum();
@@ -600,7 +600,7 @@ public class CommitService {
         List<Object[]> rows = commitItemRepository
                 .sumWeightsByOutcomeForOrgAndWeek(orgId, monday);
 
-        // KLO items have outcomeId = null; filter them out before building the map
+        // KTLO items have outcomeId = null; filter them out before building the map
         // to avoid NullPointerException from Collectors.toMap (null keys are illegal).
         Map<UUID, Integer> weights = rows.stream()
                 .filter(row -> row[0] != null)

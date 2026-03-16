@@ -5,5 +5,5 @@ public enum TaskType {
     STRATEGIC,
     /** Keep-the-lights-on work (bugs, maintenance, security, admin).
      *  Counts in total capacity but NOT in alignment numerator. */
-    KLO
+    KTLO
 }

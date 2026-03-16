@@ -76,9 +76,9 @@ export interface CommitItemResponse {
   carryForwardCount: number
   carriedFromId: string | null
   unplanned: boolean
-  /** STRATEGIC (default) or KLO */
+  /** STRATEGIC (default) or KTLO */
   taskType: TaskType
-  /** Non-null only for KLO items */
+  /** Non-null only for KTLO items */
   kloCategory: KloCategory | null
   bumpedItemId: string | null
   bumpedItemTitle: string | null
@@ -128,11 +128,11 @@ export interface PagedResponse<T> {
 
 export type UnitType = 'NUMERIC' | 'PERCENT' | 'CURRENCY' | 'TIME'
 
-export type TaskType = 'STRATEGIC' | 'KLO'
+export type TaskType = 'STRATEGIC' | 'KTLO'
 
 export type KloCategory = 'BUGFIX' | 'MAINTENANCE' | 'SECURITY' | 'ADMIN'
 
-export const KLO_CATEGORY_LABELS: Record<KloCategory, string> = {
+export const KTLO_CATEGORY_LABELS: Record<KloCategory, string> = {
   BUGFIX: 'Bug Fix',
   MAINTENANCE: 'Maintenance',
   SECURITY: 'Security',
@@ -454,7 +454,7 @@ export interface CreateCommitItemRequest {
 export interface CreateUnplannedItemRequest {
   title: string
   description?: string
-  /** Required for STRATEGIC; omit for KLO. */
+  /** Required for STRATEGIC; omit for KTLO. */
   outcomeId?: string
   chessPiece: ChessPiece
   /** Omit when adding into existing ghost capacity (no new displacement needed). */

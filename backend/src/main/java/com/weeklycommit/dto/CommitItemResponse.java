@@ -28,9 +28,9 @@ public class CommitItemResponse {
     private int carryForwardCount;
     private UUID carriedFromId;
     private boolean unplanned;
-    /** STRATEGIC (default) or KLO — determines alignment score treatment. */
+    /** STRATEGIC (default) or KTLO — determines alignment score treatment. */
     private String taskType;
-    /** Non-null only for KLO items: BUGFIX, MAINTENANCE, SECURITY, ADMIN. */
+    /** Non-null only for KTLO items: BUGFIX, MAINTENANCE, SECURITY, ADMIN. */
     private String kloCategory;
     private UUID bumpedItemId;
     private String bumpedItemTitle;

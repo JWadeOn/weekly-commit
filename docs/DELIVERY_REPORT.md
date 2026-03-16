@@ -52,7 +52,7 @@ Replace 15-Five with a **structured weekly planning system** that:
 | **Dual role** | **Met** | Role derived from org structure; nav shows My Week / History and My Team / Strategy for users with both roles. |
 | **MFE contract** | **Met** (host context **partial**) | Remote exposes `WeeklyCommitApp` with userId, orgId, authToken, onAuthExpired, optional activeRallyCryId. Host passes all except activeRallyCryId; remote supports it when provided. |
 | **Security & reliability** | **Met** | JWT in httpOnly cookie; Bean Validation; parameterized queries; CORS; state transitions only via backend; immutable state_transitions; org scoping from JWT. |
-| **KLO (Keep the Lights On) isolation** | **Met** | Task type STRATEGIC vs KLO; KLO items can have null outcomeId; alignment numerator excludes KLO weight; KLO weight included in total/capacity; KLO category (e.g. Bugfix, Maintenance) in UI and API. |
+| **KTLO (Keep the Lights On) isolation** | **Met** | Task type STRATEGIC vs KTLO; KTLO items can have null outcomeId; alignment numerator excludes KTLO weight; KTLO weight included in total/capacity; KTLO category (e.g. Bugfix, Maintenance) in UI and API. |
 | **Outcome audit trail** | **Met** | `outcome_updates` table; manager updates outcome “current value” with method/evidence; GET `/api/manager/rcdo/outcomes/:id/history` for audit. |
 | **Locked weight snapshot** | **Met** | `weekly_commits.total_locked_weight` set on LOCKED; used for capacity/ghost-capacity rules when adding unplanned items. |
 
@@ -80,7 +80,7 @@ Replace 15-Five with a **structured weekly planning system** that:
 ### 3.2 Key Design Decisions
 
 1. **RCDO as single hierarchy**  
-   One chain: Rally Cry → Defining Objectives → Outcomes → Commit Items. Every item has `outcome_id` (nullable only for KLO). Enables alignment roll-up by Rally Cry and prevents “floating” work.
+   One chain: Rally Cry → Defining Objectives → Outcomes → Commit Items. Every item has `outcome_id` (nullable only for KTLO). Enables alignment roll-up by Rally Cry and prevents “floating” work.
 
 2. **Chess weights (not Fibonacci)**  
    PRD and spec use a chess metaphor; implementation uses fixed weights (100 down to 10). This keeps ranking and alignment math simple and avoids “pawn padding” by making high-value pieces dominate the score.
@@ -91,8 +91,8 @@ Replace 15-Five with a **structured weekly planning system** that:
 4. **Unplanned items and bumping**  
    When the week is LOCKED or RECONCILING, IC can add an “unplanned” item. They must either choose a “bumped” item (displacement) or use “ghost capacity” (active weight &lt; total_locked_weight). New item is locked immediately; bumped item gets completion_status BUMPED. Manager sees these in Pivot Radar.
 
-5. **KLO isolation**  
-   Task type STRATEGIC vs KLO. KLO items can have null outcomeId and don’t count in the alignment numerator; they do count in total weight and capacity. Ensures “firefighting” is visible but doesn’t distort strategic alignment metrics.
+5. **KTLO isolation**  
+   Task type STRATEGIC vs KTLO. KTLO items can have null outcomeId and don’t count in the alignment numerator; they do count in total weight and capacity. Ensures “firefighting” is visible but doesn’t distort strategic alignment metrics.
 
 6. **Locked weight snapshot**  
    On DRAFT→LOCKED, `total_locked_weight` is stored. Unplanned-item and capacity logic use this snapshot so mid-week adds don’t exceed the committed capacity and displacement is explicit.
@@ -114,4 +114,4 @@ Replace 15-Five with a **structured weekly planning system** that:
 
 ## 4. Conclusion
 
-The **intended solution has been delivered**: a weekly commit module that ties individual work to strategy (RCDO + Chess), enforces accountability (state machine, reconciliation, carry forward), supports both IC and manager workflows including mid-week pivots and KLO, and runs as a federated micro-frontend with a secure, auditable backend. Partial items (time triggers, host `activeRallyCryId`, status naming) are minor and do not affect the core product vision or success criteria. The implementation aligns with the PRD and The Advantage framing documented in THE_ADVANTAGE.md and SPEC_COMPLIANCE_REVIEW.md.
+The **intended solution has been delivered**: a weekly commit module that ties individual work to strategy (RCDO + Chess), enforces accountability (state machine, reconciliation, carry forward), supports both IC and manager workflows including mid-week pivots and KTLO, and runs as a federated micro-frontend with a secure, auditable backend. Partial items (time triggers, host `activeRallyCryId`, status naming) are minor and do not affect the core product vision or success criteria. The implementation aligns with the PRD and The Advantage framing documented in THE_ADVANTAGE.md and SPEC_COMPLIANCE_REVIEW.md.

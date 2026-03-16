@@ -24,7 +24,7 @@ public class CommitItem {
     @Column(name = "weekly_commit_id", nullable = false)
     private UUID weeklyCommitId;
 
-    /** Null only for KLO items which are not tied to an RCDO outcome. */
+    /** Null only for KTLO items which are not tied to an RCDO outcome. */
     @Column(name = "outcome_id")
     private UUID outcomeId;
 

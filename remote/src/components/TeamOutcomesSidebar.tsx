@@ -1,7 +1,7 @@
 import React from 'react'
 import { User, X, PanelRight, Wrench } from 'lucide-react'
 import type { RallyCryDto, CommitItemResponse, UnitType, KloCategory } from '@/types'
-import { KLO_CATEGORY_LABELS } from '@/types'
+import { KTLO_CATEGORY_LABELS } from '@/types'
 import { SuccessGauge } from '@/components/SuccessGauge'
 
 interface OutcomeRow {
@@ -66,10 +66,10 @@ export function TeamOutcomesSidebar({
   mobileOpen,
   onMobileClose,
 }: TeamOutcomesSidebarProps): React.ReactElement {
-  // KLO items — unplanned items tagged as operational work
-  const kloItems = commitItems.filter((i) => i.taskType === 'KLO')
-  const kloTotalWeight = kloItems.reduce((sum, i) => sum + i.chessWeight, 0)
-  const kloByCat = kloItems.reduce<Partial<Record<KloCategory, number>>>((acc, i) => {
+  // KTLO items — unplanned items tagged as operational work
+  const ktloItems = commitItems.filter((i) => i.taskType === 'KTLO')
+  const ktloTotalWeight = ktloItems.reduce((sum, i) => sum + i.chessWeight, 0)
+  const ktloByCat = ktloItems.reduce<Partial<Record<KloCategory, number>>>((acc, i) => {
     if (i.kloCategory) {
       acc[i.kloCategory] = (acc[i.kloCategory] ?? 0) + i.chessWeight
     }
@@ -224,31 +224,31 @@ export function TeamOutcomesSidebar({
         })}
       </div>
 
-      {/* ── KLO / Whirlwind section ── */}
+      {/* ── KTLO / Whirlwind section ── */}
       <div className="border-t border-white/10">
         <div className="px-4 py-2.5 flex items-center gap-2">
           <Wrench className="h-3 w-3 text-slate-500 shrink-0" />
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">
-            Whirlwind / KLO
+            Whirlwind / KTLO
           </p>
-          {kloTotalWeight > 0 && (
+          {ktloTotalWeight > 0 && (
             <span
               className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded"
               style={{ backgroundColor: 'rgba(100,116,139,0.3)', color: '#94a3b8' }}
             >
-              {kloTotalWeight} wt
+              {ktloTotalWeight} wt
             </span>
           )}
         </div>
 
-        {kloTotalWeight === 0 ? (
-          <p className="px-4 pb-3 text-[10px] text-slate-600 italic">No KLO work this week.</p>
+        {ktloTotalWeight === 0 ? (
+          <p className="px-4 pb-3 text-[10px] text-slate-600 italic">No KTLO work this week.</p>
         ) : (
           <div className="px-4 pb-3 space-y-1.5">
-            {(Object.keys(kloByCat) as KloCategory[]).map((cat) => (
+            {(Object.keys(ktloByCat) as KloCategory[]).map((cat) => (
               <div key={cat} className="flex items-center justify-between">
-                <span className="text-[10px] text-slate-400">{KLO_CATEGORY_LABELS[cat]}</span>
-                <span className="text-[10px] font-bold text-slate-500">{kloByCat[cat]} wt</span>
+                <span className="text-[10px] text-slate-400">{KTLO_CATEGORY_LABELS[cat]}</span>
+                <span className="text-[10px] font-bold text-slate-500">{ktloByCat[cat]} wt</span>
               </div>
             ))}
             <div className="mt-2 pt-2 border-t border-white/5">
@@ -256,7 +256,7 @@ export function TeamOutcomesSidebar({
                 <div
                   className="h-full rounded-full bg-slate-500 transition-all duration-500"
                   style={{
-                    width: `${Math.min(100, (kloTotalWeight / Math.max(1, kloTotalWeight + outcomeRows.reduce((s, r) => s + r.teamWeight, 0))) * 100)}%`
+                    width: `${Math.min(100, (ktloTotalWeight / Math.max(1, ktloTotalWeight + outcomeRows.reduce((s, r) => s + r.teamWeight, 0))) * 100)}%`
                   }}
                 />
               </div>

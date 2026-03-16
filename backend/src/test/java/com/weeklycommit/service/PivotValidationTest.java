@@ -357,13 +357,13 @@ class PivotValidationTest {
     }
 
     // =========================================================================
-    // TC-PV-4  KLO unplanned item: outcomeId is optional for KLO pivots
-    //   An on-call incident (KLO) can be added mid-week without an outcome.
+    // TC-PV-4  KTLO unplanned item: outcomeId is optional for KTLO pivots
+    //   An on-call incident (KTLO) can be added mid-week without an outcome.
     //   It still displaces a planned item or uses ghost capacity.
     // =========================================================================
 
     @Test
-    @DisplayName("TC-PV-4 KLO pivot: outcomeId=null accepted; displacement recorded")
+    @DisplayName("TC-PV-4 KTLO pivot: outcomeId=null accepted; displacement recorded")
     void kloPivot_noOutcomeId_acceptedWhenDisplacing() {
         UUID bumpedId = UUID.randomUUID();
 
@@ -377,7 +377,7 @@ class PivotValidationTest {
         CommitItem savedKlo = CommitItem.builder()
                 .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(null)
                 .chessPiece("PAWN").chessWeight(1).priorityOrder(2)
-                .taskType(TaskType.KLO).kloCategory(KloCategory.BUGFIX)
+                .taskType(TaskType.KTLO).kloCategory(KloCategory.BUGFIX)
                 .carryForward(false).carryForwardCount(0)
                 .unplanned(true).bumpedItemId(bumpedId).build();
 
@@ -391,24 +391,24 @@ class PivotValidationTest {
 
         CreateUnplannedItemRequest req = CreateUnplannedItemRequest.builder()
                 .title("On-call P1 production incident")
-                .outcomeId(null)           // KLO items don't link to outcomes
+                .outcomeId(null)           // KTLO items don't link to outcomes
                 .chessPiece("PAWN")
                 .bumpedItemId(bumpedId)
-                .taskType(TaskType.KLO)
+                .taskType(TaskType.KTLO)
                 .kloCategory(KloCategory.BUGFIX)
                 .build();
 
         assertThatNoException()
-                .as("TC-PV-4: KLO pivot with null outcomeId + valid bumpedItemId must be accepted")
+                .as("TC-PV-4: KTLO pivot with null outcomeId + valid bumpedItemId must be accepted")
                 .isThrownBy(() -> commitService.createUnplannedItem(commitId, userId, req));
 
         ArgumentCaptor<CommitItem> captor = ArgumentCaptor.forClass(CommitItem.class);
         verify(commitItemRepository).save(captor.capture());
         assertThat(captor.getValue().getTaskType())
-                .as("TC-PV-4: saved item must carry KLO task type")
-                .isEqualTo(TaskType.KLO);
+                .as("TC-PV-4: saved item must carry KTLO task type")
+                .isEqualTo(TaskType.KTLO);
         assertThat(captor.getValue().getOutcomeId())
-                .as("TC-PV-4: KLO item must have null outcomeId")
+                .as("TC-PV-4: KTLO item must have null outcomeId")
                 .isNull();
     }
 }

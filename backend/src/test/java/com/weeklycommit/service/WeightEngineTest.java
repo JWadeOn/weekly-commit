@@ -54,10 +54,10 @@ class WeightEngineTest {
         return CommitItem.builder()
                 .id(UUID.randomUUID())
                 .weeklyCommitId(UUID.randomUUID())
-                .outcomeId(null)                // KLO items have no outcome
+                .outcomeId(null)                // KTLO items have no outcome
                 .chessPiece(piece)
                 .chessWeight(weight)
-                .taskType(TaskType.KLO)
+                .taskType(TaskType.KTLO)
                 .priorityOrder(1)
                 .carryForward(false)
                 .carryForwardCount(0)

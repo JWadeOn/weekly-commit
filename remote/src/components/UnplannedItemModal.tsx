@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Check, Lock, Wrench, Target, AlertTriangle, RotateCcw, Zap } from 'lucide-react'
 import { useRcdo } from '@/hooks/useRcdo'
-import { CHESS_ICON, CHESS_WEIGHT, KLO_CATEGORY_LABELS } from '@/types'
+import { CHESS_ICON, CHESS_WEIGHT, KTLO_CATEGORY_LABELS } from '@/types'
 import type { ChessPiece, CreateUnplannedItemRequest, CommitItemResponse, TaskType, KloCategory } from '@/types'
 
 const CHESS_PIECES: ChessPiece[] = ['KING', 'QUEEN', 'ROOK', 'BISHOP', 'KNIGHT', 'PAWN']
@@ -32,7 +32,7 @@ const CHESS_DESCRIPTION: Record<ChessPiece, string> = {
   PAWN: 'Lowest — small but valuable.',
 }
 
-const KLO_CATEGORIES = Object.keys(KLO_CATEGORY_LABELS) as KloCategory[]
+const KTLO_CATEGORIES = Object.keys(KTLO_CATEGORY_LABELS) as KloCategory[]
 
 /** Sentinel for "no displacement needed" radio selection */
 const NO_BUMP = '__none__'
@@ -100,7 +100,7 @@ export function UnplannedItemModal({
     setOutcomeId('')
   }
 
-  const isKlo = taskType === 'KLO'
+  const isKtlo = taskType === 'KTLO'
 
   // ── Capacity & Strategic Debt ──────────────────────────────────────────────
   const activeWeight = useMemo(
@@ -129,7 +129,7 @@ export function UnplannedItemModal({
     return (activeWeight + newTaskWeight) / totalLockedWeight
   }, [activeWeight, newTaskWeight, totalLockedWeight])
 
-  const showIntegrityWarning = !isKlo && projectedIntegrity !== null && projectedIntegrity < 0.5
+  const showIntegrityWarning = !isKtlo && projectedIntegrity !== null && projectedIntegrity < 0.5
 
   // ── Effective bumped item for submission ───────────────────────────────────
   // When capacity is available (bumpRequired = false), use undefined so the
@@ -141,12 +141,12 @@ export function UnplannedItemModal({
   const canConfirm =
     !submitting &&
     title.trim() !== '' &&
-    (isKlo || outcomeId !== '') &&
+    (isKtlo || outcomeId !== '') &&
     (!bumpRequired || (bumpedItemId !== '' && bumpedItemId !== NO_BUMP))
 
   const handleSubmit = async (): Promise<void> => {
     if (!title.trim()) { setError('Title is required'); return }
-    if (!isKlo && !outcomeId) { setError('Outcome is required for strategic items'); return }
+    if (!isKtlo && !outcomeId) { setError('Outcome is required for strategic items'); return }
     if (bumpRequired && (!bumpedItemId || bumpedItemId === NO_BUMP)) {
       setError('You must select which Monday commit item you are displacing.')
       return
@@ -158,11 +158,11 @@ export function UnplannedItemModal({
       await onSubmit({
         title: title.trim(),
         description: description.trim() || undefined,
-        outcomeId: isKlo ? undefined : outcomeId,
+        outcomeId: isKtlo ? undefined : outcomeId,
         chessPiece,
         bumpedItemId: effectiveBumpedItemId,
         taskType,
-        kloCategory: isKlo ? kloCategory : undefined,
+        kloCategory: isKtlo ? kloCategory : undefined,
         pivotReason: !bumpRequired ? 'Added into existing strategic debt margin — no new displacement' : undefined,
       })
       setSubmitted(true)
@@ -206,7 +206,7 @@ export function UnplannedItemModal({
                 type="button"
                 onClick={() => setTaskType('STRATEGIC')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 transition-colors ${
-                  !isKlo
+                  !isKtlo
                     ? 'bg-[#1152d4] text-white'
                     : 'bg-white text-slate-500 hover:bg-slate-50'
                 }`}
@@ -216,18 +216,18 @@ export function UnplannedItemModal({
               </button>
               <button
                 type="button"
-                onClick={() => setTaskType('KLO')}
+                onClick={() => setTaskType('KTLO')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 transition-colors border-l border-slate-200 ${
-                  isKlo
+                  isKtlo
                     ? 'bg-slate-700 text-white'
                     : 'bg-white text-slate-500 hover:bg-slate-50'
                 }`}
               >
                 <Wrench className="h-3.5 w-3.5" />
-                Operational (KLO)
+                Operational (KTLO)
               </button>
             </div>
-            {isKlo && (
+            {isKtlo && (
               <p className="text-[10px] text-slate-400 mt-1.5 italic">
                 Keep-the-lights-on work. Counts toward capacity but not alignment score.
               </p>
@@ -237,16 +237,16 @@ export function UnplannedItemModal({
           {/* New commitment form */}
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">The New Commitment</p>
-            <div className={`border rounded-xl p-4 space-y-3 ${isKlo ? 'border-slate-200 bg-slate-50/50' : 'border-amber-200 bg-amber-50/30'}`}>
+            <div className={`border rounded-xl p-4 space-y-3 ${isKtlo ? 'border-slate-200 bg-slate-50/50' : 'border-amber-200 bg-amber-50/30'}`}>
               <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isKlo ? 'bg-slate-200' : 'bg-amber-100'}`}>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isKtlo ? 'bg-slate-200' : 'bg-amber-100'}`}>
                   <span className="text-lg">{CHESS_ICON[chessPiece]}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder={isKlo ? 'What operational task are you adding?' : 'What unplanned item are you adding?'}
+                    placeholder={isKtlo ? 'What operational task are you adding?' : 'What unplanned item are you adding?'}
                     className="border-0 bg-transparent p-0 h-auto text-sm font-semibold text-[#1e293b] focus-visible:ring-0 placeholder:text-slate-400"
                   />
                   <p className="text-xs text-slate-500 mt-0.5">Chess Move: {chessPiece.charAt(0) + chessPiece.slice(1).toLowerCase()} ({CHESS_DESCRIPTION[chessPiece].split(' — ')[0]})</p>
@@ -256,7 +256,7 @@ export function UnplannedItemModal({
                 <span className="px-2 py-0.5 bg-orange-600 text-white text-[10px] font-bold uppercase rounded flex items-center gap-1">
                   ▌▌▌ Resource Impact: High
                 </span>
-                {isKlo && (
+                {isKtlo && (
                   <span className="px-2 py-0.5 bg-slate-600 text-white text-[10px] font-bold uppercase rounded">
                     Whirlwind
                   </span>
@@ -274,7 +274,7 @@ export function UnplannedItemModal({
               id="unplanned-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={isKlo ? 'Describe the operational issue...' : 'Context for the mid-week pivot...'}
+              placeholder={isKtlo ? 'Describe the operational issue...' : 'Context for the mid-week pivot...'}
               rows={2}
               className="resize-none text-sm"
             />
@@ -301,7 +301,7 @@ export function UnplannedItemModal({
           </div>
 
           {/* ── STRATEGIC: Outcome picker ── */}
-          {!isKlo && (
+          {!isKtlo && (
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Aligned Outcome (Mandatory)
@@ -361,14 +361,14 @@ export function UnplannedItemModal({
             </div>
           )}
 
-          {/* ── KLO: Category picker ── */}
-          {isKlo && (
+          {/* ── KTLO: Category picker ── */}
+          {isKtlo && (
             <div className="space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                KLO Category
+                KTLO Category
               </Label>
               <div className="grid grid-cols-2 gap-2">
-                {KLO_CATEGORIES.map((cat) => (
+                {KTLO_CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     type="button"
@@ -382,7 +382,7 @@ export function UnplannedItemModal({
                     <span className="block text-xs font-black uppercase tracking-wider mb-0.5" style={{ color: '#94a3b8' }}>
                       {cat}
                     </span>
-                    {KLO_CATEGORY_LABELS[cat]}
+                    {KTLO_CATEGORY_LABELS[cat]}
                   </button>
                 ))}
               </div>
@@ -402,7 +402,7 @@ export function UnplannedItemModal({
               )}
             </div>
             <p className="text-xs text-slate-400 italic mb-3">
-              {isKlo
+              {isKtlo
                 ? 'Even operational work displaces capacity — record what gets pushed.'
                 : bumpRequired
                   ? 'Mandatory selection to maintain velocity tracking.'
@@ -417,7 +417,7 @@ export function UnplannedItemModal({
                   Recently Bumped
                 </p>
                 <p className="text-[11px] text-amber-700/80 italic -mt-1">
-                  {isKlo
+                  {isKtlo
                     ? "You've already displaced items — consider restoring your original plan."
                     : "You've already displaced items this week. Should you restore one of these instead?"}
                 </p>
@@ -507,8 +507,8 @@ export function UnplannedItemModal({
                       <p className="text-sm font-semibold text-[#1e293b] truncate">{item.title}</p>
                       <p className="text-xs text-slate-400">
                         {CHESS_ICON[item.chessPiece]} {item.chessPiece.charAt(0) + item.chessPiece.slice(1).toLowerCase()}
-                        {item.taskType === 'KLO' && (
-                          <span className="ml-1.5 px-1 py-0 bg-slate-100 text-slate-500 rounded text-[9px] font-bold uppercase">KLO</span>
+                        {item.taskType === 'KTLO' && (
+                          <span className="ml-1.5 px-1 py-0 bg-slate-100 text-slate-500 rounded text-[9px] font-bold uppercase">KTLO</span>
                         )}
                       </p>
                     </div>
@@ -552,9 +552,9 @@ export function UnplannedItemModal({
                         </div>
                       </>
                     )}
-                    {isKlo && (
+                    {isKtlo && (
                       <span className="text-[10px] text-slate-500 italic">
-                        (KLO — intent not penalised)
+                        (KTLO — intent not penalised)
                       </span>
                     )}
                   </div>

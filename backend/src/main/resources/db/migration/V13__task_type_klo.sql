@@ -1,5 +1,5 @@
--- V11: Add task_type and klo_category to commit_items for KLO (Keep-the-Lights-On) support.
---      Relax outcome_id NOT NULL so KLO items can exist without an RCDO outcome link.
+-- V11: Add task_type and klo_category to commit_items for KTLO (Keep-the-Lights-On) support.
+--      Relax outcome_id NOT NULL so KTLO items can exist without an RCDO outcome link.
 
 ALTER TABLE commit_items
     ALTER COLUMN outcome_id DROP NOT NULL,

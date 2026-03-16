@@ -21,39 +21,39 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * TC-KLO-x  KLO Isolation — Alignment Gauge vs. Capacity.
+ * TC-KTLO-x  KTLO Isolation — Alignment Gauge vs. Capacity.
  *
- * Keep-the-Lights-On (KLO) items represent operational work (bug fixes,
+ * Keep-the-Lights-On (KTLO) items represent operational work (bug fixes,
  * maintenance, security patches, admin).  The system enforces two rules:
  *
  *   Rule 1 — Alignment purity:
- *     KLO items must NOT appear in the aligned-weight numerator.
+ *     KTLO items must NOT appear in the aligned-weight numerator.
  *     They are excluded because they are not driven by strategic outcomes.
  *
  *   Rule 2 — Capacity honesty:
- *     KLO items MUST appear in the total-weight denominator.
+ *     KTLO items MUST appear in the total-weight denominator.
  *     All time spent must be visible to the manager.
  *
  * ─── Test scenario (per spec) ──────────────────────────────────────────────
  *   Week contains:
  *     • 10 pts STRATEGIC  (QUEEN, taskType=STRATEGIC, outcomeId≠null)
- *     • 10 pts KLO        (QUEEN, taskType=KLO,       outcomeId=null)
+ *     • 10 pts KTLO       (QUEEN, taskType=KTLO,     outcomeId=null)
  *
  *   Expected metrics:
  *     ┌──────────────────────────────────────────────────────────────────┐
  *     │ Metric                            │ Expected │ Formula           │
  *     ├──────────────────────────────────────────────────────────────────┤
  *     │ computeAlignmentScore             │  50 %    │ 10/(10+10) × 100  │
- *     │ Strategic-purity (KLO-excluded)   │ 100 %    │ 10/10 × 100       │
+ *     │ Strategic-purity (KTLO-excluded)  │ 100 %    │ 10/10 × 100       │
  *     │ Total capacity used               │  20 pts  │ 10 + 10           │
  *     │ Capacity utilisation (vs locked)  │ 20/40    │ 20 / 40           │
  *     └──────────────────────────────────────────────────────────────────┘
  *
  * The "Alignment Gauge = 100 % (Strategic only)" in the UI is derived from
  * the strategic-purity calculation: of items flagged STRATEGIC, 100 % are
- * tied to measurable outcomes.  KLO items do not dilute this score.
+ * tied to measurable outcomes.  KTLO items do not dilute this score.
  */
-@DisplayName("KLO Isolation — Alignment Gauge vs. Capacity")
+@DisplayName("KTLO Isolation — Alignment Gauge vs. Capacity")
 @ExtendWith(MockitoExtension.class)
 class KloIsolationTest {
 
@@ -80,8 +80,8 @@ class KloIsolationTest {
 
     /** 10-pt STRATEGIC item tied to an outcome (counts in alignment numerator). */
     private CommitItem strategicQueen;
-    /** 10-pt KLO item with no outcome (counts in capacity denominator ONLY). */
-    private CommitItem kloQueen;
+    /** 10-pt KTLO item with no outcome (counts in capacity denominator ONLY). */
+    private CommitItem ktloQueen;
 
     @BeforeEach
     void setUp() {
@@ -106,35 +106,35 @@ class KloIsolationTest {
                 .priorityOrder(1).carryForward(false).carryForwardCount(0).unplanned(false)
                 .build();
 
-        kloQueen = CommitItem.builder()
+        ktloQueen = CommitItem.builder()
                 .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(null)
                 .chessPiece("QUEEN").chessWeight(10)
-                .taskType(TaskType.KLO).kloCategory(KloCategory.MAINTENANCE)
+                .taskType(TaskType.KTLO).kloCategory(KloCategory.MAINTENANCE)
                 .priorityOrder(2).carryForward(false).carryForwardCount(0).unplanned(false)
                 .build();
     }
 
     // =========================================================================
-    // TC-KLO-1  computeAlignmentScore — 10pts Strategic + 10pts KLO → 50 %
+    // TC-KTLO-1  computeAlignmentScore — 10pts Strategic + 10pts KTLO → 50 %
     //
-    //   Validates Rule 2: KLO weight IS included in the denominator.
+    //   Validates Rule 2: KTLO weight IS included in the denominator.
     //   alignedWeight = 10, totalWeight = 20, score = 10/20×100 = 50 %
     // =========================================================================
 
     @Test
-    @DisplayName("TC-KLO-1 computeAlignmentScore: 10pts Strategic + 10pts KLO = 50 %")
-    void alignmentScore_tenStrategicPlusTenKlo_returns50() {
-        List<CommitItem> items = List.of(strategicQueen, kloQueen);
+    @DisplayName("TC-KTLO-1 computeAlignmentScore: 10pts Strategic + 10pts KTLO = 50 %")
+    void alignmentScore_tenStrategicPlusTenKtlo_returns50() {
+        List<CommitItem> items = List.of(strategicQueen, ktloQueen);
 
         Integer score = CommitService.computeAlignmentScore(items);
 
         assertThat(score)
-                .as("TC-KLO-1: KLO is in denominator — 10/(10+10) = 50 %%")
+                .as("TC-KTLO-1: KTLO is in denominator — 10/(10+10) = 50 %%")
                 .isEqualTo(50);
     }
 
     // =========================================================================
-    // TC-KLO-2  Strategic-purity = 100 % (KLO items fully excluded)
+    // TC-KTLO-2  Strategic-purity = 100 % (KTLO items fully excluded)
     //
     //   Of items flagged STRATEGIC with a non-null outcomeId:
     //     aligned strategic weight = 10
@@ -142,15 +142,15 @@ class KloIsolationTest {
     //     → strategic alignment purity = 100 %
     //
     //   This is the metric the "Alignment Gauge (Strategic only)" displays.
-    //   The KLO item does NOT appear here at all.
+    //   The KTLO item does NOT appear here at all.
     // =========================================================================
 
     @Test
-    @DisplayName("TC-KLO-2 Strategic-purity: KLO excluded → 10/10 = 100 %")
+    @DisplayName("TC-KTLO-2 Strategic-purity: KTLO excluded → 10/10 = 100 %")
     void strategicPurity_kloExcluded_returns100() {
-        List<CommitItem> items = List.of(strategicQueen, kloQueen);
+        List<CommitItem> items = List.of(strategicQueen, ktloQueen);
 
-        // Compute strategic-only alignment: filter KLO first, then measure alignment
+        // Compute strategic-only alignment: filter KTLO first, then measure alignment
         int totalStrategic = items.stream()
                 .filter(i -> i.getTaskType() == null || i.getTaskType() == TaskType.STRATEGIC)
                 .mapToInt(CommitItem::getChessWeight)
@@ -167,22 +167,22 @@ class KloIsolationTest {
                 : 0;
 
         assertThat(purity)
-                .as("TC-KLO-2: Alignment Gauge (Strategic only) — all 10 strategic pts are outcome-linked → 100 %%")
+                .as("TC-KTLO-2: Alignment Gauge (Strategic only) — all 10 strategic pts are outcome-linked → 100 %%")
                 .isEqualTo(100);
     }
 
     // =========================================================================
-    // TC-KLO-3  Capacity = 20 pts; utilisation = 20/40 against locked snapshot
+    // TC-KTLO-3  Capacity = 20 pts; utilisation = 20/40 against locked snapshot
     //
-    //   totalWeight = 10 (strategic) + 10 (KLO) = 20
+    //   totalWeight = 10 (strategic) + 10 (KTLO) = 20
     //   totalLockedWeight (locked snapshot) = 40
     //   → capacity used = 20/40 (50 % of committed bandwidth consumed)
     // =========================================================================
 
     @Test
-    @DisplayName("TC-KLO-3 Capacity = 20 pts total; utilisation = 20 / 40")
+    @DisplayName("TC-KTLO-3 Capacity = 20 pts total; utilisation = 20 / 40")
     void capacity_twentyUsedOutOfFortyLocked() {
-        List<CommitItem> items = List.of(strategicQueen, kloQueen);
+        List<CommitItem> items = List.of(strategicQueen, ktloQueen);
 
         int totalWeight = items.stream().mapToInt(CommitItem::getChessWeight).sum();
 
@@ -190,29 +190,29 @@ class KloIsolationTest {
         int totalLockedWeight = 40;
 
         assertThat(totalWeight)
-                .as("TC-KLO-3: capacity used = strategic(10) + KLO(10) = 20 pts")
+                .as("TC-KTLO-3: capacity used = strategic(10) + KTLO(10) = 20 pts")
                 .isEqualTo(20);
 
         assertThat(totalLockedWeight)
-                .as("TC-KLO-3: locked capacity snapshot = 40 pts")
+                .as("TC-KTLO-3: locked capacity snapshot = 40 pts")
                 .isEqualTo(40);
 
         // Capacity utilisation (expressed as a fraction for dashboard display)
         double utilisationPct = (double) totalWeight / totalLockedWeight * 100.0;
         assertThat(utilisationPct)
-                .as("TC-KLO-3: 20/40 = 50 %% capacity utilisation")
+                .as("TC-KTLO-3: 20/40 = 50 %% capacity utilisation")
                 .isEqualTo(50.0);
     }
 
     // =========================================================================
-    // TC-KLO-4  KLO item with null outcomeId must NOT enter alignment numerator
+    // TC-KTLO-4  KTLO item with null outcomeId must NOT enter alignment numerator
     //
-    //   Even if a KLO item somehow ends up with a non-null taskType=STRATEGIC,
+    //   Even if a KTLO item somehow ends up with a non-null taskType=STRATEGIC,
     //   a null outcomeId must prevent it from being counted as aligned.
     // =========================================================================
 
     @Test
-    @DisplayName("TC-KLO-4 Null outcomeId always excluded from aligned weight")
+    @DisplayName("TC-KTLO-4 Null outcomeId always excluded from aligned weight")
     void nullOutcomeId_neverCountsAsAligned() {
         // Item with no outcome — regardless of taskType, cannot be aligned
         CommitItem noOutcome = CommitItem.builder()
@@ -225,19 +225,19 @@ class KloIsolationTest {
         Integer score = CommitService.computeAlignmentScore(List.of(noOutcome));
 
         assertThat(score)
-                .as("TC-KLO-4: STRATEGIC item with null outcomeId must yield 0 %% alignment (not null — item exists)")
+                .as("TC-KTLO-4: STRATEGIC item with null outcomeId must yield 0 %% alignment (not null — item exists)")
                 .isEqualTo(0);
     }
 
     // =========================================================================
-    // TC-KLO-5  ManagerService alignment aggregation isolates KLO correctly
+    // TC-KTLO-5  ManagerService alignment aggregation isolates KTLO correctly
     //
-    //   getTeamAlignment() must exclude KLO items from alignedWeight,
-    //   while both STRATEGIC and KLO items appear in totalWeight.
+    //   getTeamAlignment() must exclude KTLO items from alignedWeight,
+    //   while both STRATEGIC and KTLO items appear in totalWeight.
     // =========================================================================
 
     @Test
-    @DisplayName("TC-KLO-5 ManagerService.getTeamAlignment: KLO excluded from aligned, included in total")
+    @DisplayName("TC-KTLO-5 ManagerService.getTeamAlignment: KTLO excluded from aligned, included in total")
     void managerAlignment_kloExcludedFromNumeratorIncludedInDenominator() {
         UUID reportId = UUID.randomUUID();
         UUID wcId     = UUID.randomUUID();
@@ -257,7 +257,7 @@ class KloIsolationTest {
 
         CommitItem kloItem = CommitItem.builder()
                 .id(UUID.randomUUID()).weeklyCommitId(wcId).outcomeId(null)
-                .chessPiece("QUEEN").chessWeight(10).taskType(TaskType.KLO)
+                .chessPiece("QUEEN").chessWeight(10).taskType(TaskType.KTLO)
                 .kloCategory(KloCategory.MAINTENANCE)
                 .priorityOrder(2).carryForward(false).carryForwardCount(0).unplanned(false).build();
 
@@ -269,38 +269,38 @@ class KloIsolationTest {
         TeamAlignmentResponse result = managerService.getTeamAlignment(managerId, orgId);
 
         assertThat(result.getTotalWeight())
-                .as("TC-KLO-5: total weight includes both STRATEGIC and KLO = 20")
+                .as("TC-KTLO-5: total weight includes both STRATEGIC and KTLO = 20")
                 .isEqualTo(20L);
 
         assertThat(result.getAlignedWeight())
-                .as("TC-KLO-5: aligned weight includes ONLY STRATEGIC-with-outcome = 10")
+                .as("TC-KTLO-5: aligned weight includes ONLY STRATEGIC-with-outcome = 10")
                 .isEqualTo(10L);
 
         assertThat(result.getAlignmentPercentage())
-                .as("TC-KLO-5: alignmentPercentage = 10/20 × 100 = 50 %%")
+                .as("TC-KTLO-5: alignmentPercentage = 10/20 × 100 = 50 %%")
                 .isEqualTo(50);
     }
 
     // =========================================================================
-    // TC-KLO-6  KLO items get null outcomeBreadcrumb (no hierarchy link)
-    //   Verifies that taskType=KLO + outcomeId=null items are handled without
+    // TC-KTLO-6  KTLO items get null outcomeBreadcrumb (no hierarchy link)
+    //   Verifies that taskType=KTLO + outcomeId=null items are handled without
     //   NPE in the response builder — they must return null breadcrumb.
     // =========================================================================
 
     @Test
-    @DisplayName("TC-KLO-6 KLO item produces null alignment score when it is the only item")
+    @DisplayName("TC-KTLO-6 KTLO item produces null alignment score when it is the only item")
     void kloOnlyCommit_alignmentScoreIsZero() {
-        // A commit that has ONLY KLO work — no strategic items
-        CommitItem onlyKlo = CommitItem.builder()
+        // A commit that has ONLY KTLO work — no strategic items
+        CommitItem onlyKtlo = CommitItem.builder()
                 .id(UUID.randomUUID()).weeklyCommitId(commitId).outcomeId(null)
                 .chessPiece("KING").chessWeight(20)
-                .taskType(TaskType.KLO)
+                .taskType(TaskType.KTLO)
                 .priorityOrder(1).carryForward(false).carryForwardCount(0).unplanned(false).build();
 
-        Integer score = CommitService.computeAlignmentScore(List.of(onlyKlo));
+        Integer score = CommitService.computeAlignmentScore(List.of(onlyKtlo));
 
         assertThat(score)
-                .as("TC-KLO-6: KLO-only commit → 0 strategic weight → alignment = 0 %% (not null)")
+                .as("TC-KTLO-6: KTLO-only commit → 0 strategic weight → alignment = 0 %% (not null)")
                 .isEqualTo(0);
     }
 }
