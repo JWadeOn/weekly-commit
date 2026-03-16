@@ -98,9 +98,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>
 }
 
+export interface LogoutResponse {
+  message: string
+  idpLogoutUrl?: string
+}
+
 export const auth = {
   me: (): Promise<UserResponse> => request('/auth/me'),
-  logout: (): Promise<{ message: string }> =>
+  logout: (): Promise<LogoutResponse> =>
     request('/auth/logout', { method: 'POST' }),
 }
 
@@ -118,6 +123,8 @@ export const rcdo = {
 
 export const commits = {
   current: (): Promise<WeeklyCommitResponse> => request('/commits/current'),
+
+  next: (): Promise<WeeklyCommitResponse> => request('/commits/next'),
 
   getById: (id: string): Promise<WeeklyCommitResponse> => request(`/commits/${id}`),
 

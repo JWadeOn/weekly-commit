@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { ActiveRallyCryContext } from '@/context/ActiveRallyCryContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { setAuthExpiredHandler } from '@/api/client'
 import { CommitPage } from '@/pages/CommitPage'
@@ -14,6 +14,13 @@ import { BoardPage } from '@/pages/BoardPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { AppNav } from '@/components/AppNav'
 import './index.css'
+
+/** Renders CommitPage (full UI + reconcile) for employee's own commit, or CommitDetailPage (read-only) for manager review. */
+function CommitByIdOrDetail(): React.ReactElement {
+  const [searchParams] = useSearchParams()
+  const userId = searchParams.get('userId')
+  return userId ? <CommitDetailPage /> : <CommitPage />
+}
 
 export interface WeeklyCommitAppProps {
   userId: string
@@ -71,7 +78,7 @@ function AppContent({ onAuthExpired }: { onAuthExpired: () => void }): React.Rea
         <Routes>
           <Route path="/" element={<RoleRedirect />} />
           <Route path="/commits" element={<CommitPage />} />
-          <Route path="/commits/:id" element={<CommitDetailPage />} />
+          <Route path="/commits/:id" element={<CommitByIdOrDetail />} />
           <Route path="/history" element={<CommitHistoryPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
           <Route path="/board" element={<BoardPage />} />

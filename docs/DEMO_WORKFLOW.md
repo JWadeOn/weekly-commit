@@ -31,6 +31,8 @@ Demo data starts **empty** (no tasks, outcome gauges at 0%) so you can show how 
 
 So: **use “Start Early Reconciliation”** on the commit page when the week is LOCKED to show the reconciliation step without waiting for Friday. The only day-dependent behavior is cosmetic: on the manager **My Team** page, the Outcome Pulse header shows “📅 Friday —” in amber only on real Fridays (otherwise it just says “Outcome Pulse”).
 
+**Demo on Saturday or Sunday:** On weekends, "current week" is the week that just ended (so you can still reconcile it). To run the full flow from scratch (add items, lock, add unplanned/bump, reconcile), click **Plan next week (full demo flow)** at the top of the Weekly Commits page to open the upcoming week's empty DRAFT.
+
 ---
 
 **Opening line:**  

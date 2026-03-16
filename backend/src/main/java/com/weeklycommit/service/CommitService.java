@@ -51,8 +51,27 @@ public class CommitService {
         this.rallyCryRepository = rallyCryRepository;
     }
 
+    /**
+     * Monday of the current work week (Mon–Fri). On Saturday or Sunday we use the week that just ended
+     * so the locked commit stays visible (e.g. Sunday Mar 15 → Mar 9, not Mar 16).
+     */
+    public static LocalDate getCurrentWeekMonday() {
+        LocalDate today = LocalDate.now();
+        if (today.getDayOfWeek() == DayOfWeek.SATURDAY) {
+            return today.minusDays(5);
+        }
+        if (today.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            return today.minusDays(6);
+        }
+        return today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+    }
+
+    /**
+     * Returns the commit for the current work week (Monday–Friday).
+     * If a commit exists for that week (e.g. LOCKED with items), it is returned; otherwise a new DRAFT is created.
+     */
     public WeekResponse getCurrentWeek(UUID userId, UUID orgId) {
-        LocalDate monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate monday = getCurrentWeekMonday();
         WeeklyCommit commit = weeklyCommitRepository
                 .findByUserIdAndWeekStartDate(userId, monday)
                 .orElseGet(() -> {
@@ -60,6 +79,27 @@ public class CommitService {
                             .userId(userId)
                             .orgId(orgId)
                             .weekStartDate(monday)
+                            .status("DRAFT")
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    return weeklyCommitRepository.save(newCommit);
+                });
+        return toWeekResponse(commit);
+    }
+
+    /**
+     * Returns the commit for the next work week (Monday + 7 days). Use this to "plan next week" or
+     * run a full demo on Saturday/Sunday when you want an empty DRAFT. Creates a DRAFT if none exists.
+     */
+    public WeekResponse getNextWeek(UUID userId, UUID orgId) {
+        LocalDate nextMonday = getCurrentWeekMonday().plusWeeks(1);
+        WeeklyCommit commit = weeklyCommitRepository
+                .findByUserIdAndWeekStartDate(userId, nextMonday)
+                .orElseGet(() -> {
+                    WeeklyCommit newCommit = WeeklyCommit.builder()
+                            .userId(userId)
+                            .orgId(orgId)
+                            .weekStartDate(nextMonday)
                             .status("DRAFT")
                             .updatedAt(LocalDateTime.now())
                             .build();

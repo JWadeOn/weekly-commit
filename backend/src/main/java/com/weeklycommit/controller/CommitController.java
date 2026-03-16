@@ -12,9 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,6 +43,16 @@ public class CommitController {
     }
 
     /**
+     * GET /api/commits/next — commit for the next work week (for "plan next week" / demo on weekend).
+     */
+    @GetMapping("/next")
+    public ResponseEntity<WeekResponse> getNext() {
+        UUID userId = SecurityContextHelper.getCurrentUserId();
+        UUID orgId = SecurityContextHelper.getCurrentOrgId();
+        return ResponseEntity.ok(commitService.getNextWeek(userId, orgId));
+    }
+
+    /**
      * GET /api/commits/team-outcomes/weight
      *
      * Returns aggregate chess-weight totals per Outcome for the current week across
@@ -66,8 +74,7 @@ public class CommitController {
             @RequestParam(defaultValue = "10") int size) {
 
         UUID userId = SecurityContextHelper.getCurrentUserId();
-        LocalDate currentMonday = LocalDate.now()
-                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate currentMonday = CommitService.getCurrentWeekMonday();
 
         List<WeeklyCommit> all = weeklyCommitRepository.findByUserIdOrderByWeekStartDateDesc(userId);
         List<WeeklyCommit> past = all.stream()

@@ -19,6 +19,13 @@ export function useCurrentCommit() {
   })
 }
 
+export function useNextCommit() {
+  return useQuery<WeeklyCommitResponse>({
+    queryKey: ['commits', 'next'],
+    queryFn: () => commits.next(),
+  })
+}
+
 export function useCommit(id: string) {
   return useQuery<WeeklyCommitResponse>({
     queryKey: ['commits', id],
@@ -48,7 +55,7 @@ export function useUpdateStatus() {
   return useMutation<WeeklyCommitResponse, Error, { id: string; body: UpdateStatusRequest }>({
     mutationFn: ({ id, body }) => commits.updateStatus(id, body),
     onSuccess: (data) => {
-      queryClient.setQueryData(['commits', 'current'], data)
+      queryClient.setQueryData(['commits', data.id], data)
       queryClient.invalidateQueries({ queryKey: ['commits'] })
     },
   })
@@ -58,8 +65,10 @@ export function useCreateItem() {
   const queryClient = useQueryClient()
   return useMutation<CommitItemResponse, Error, { commitId: string; item: CreateCommitItemRequest }>({
     mutationFn: ({ commitId, item }) => commits.createItem(commitId, item),
-    onSuccess: () => {
+    onSuccess: (_, { commitId }) => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', 'next'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', commitId] })
     },
   })
 }
@@ -72,8 +81,10 @@ export function useCreateUnplannedItem() {
     { commitId: string; item: CreateUnplannedItemRequest }
   >({
     mutationFn: ({ commitId, item }) => commits.createUnplannedItem(commitId, item),
-    onSuccess: () => {
+    onSuccess: (_, { commitId }) => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', 'next'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', commitId] })
     },
   })
 }
@@ -86,8 +97,10 @@ export function useUpdateItem() {
     { commitId: string; itemId: string; item: UpdateCommitItemRequest }
   >({
     mutationFn: ({ commitId, itemId, item }) => commits.updateItem(commitId, itemId, item),
-    onSuccess: () => {
+    onSuccess: (_, { commitId }) => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', 'next'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', commitId] })
     },
   })
 }
@@ -96,8 +109,10 @@ export function useDeleteItem() {
   const queryClient = useQueryClient()
   return useMutation<void, Error, { commitId: string; itemId: string }>({
     mutationFn: ({ commitId, itemId }) => commits.deleteItem(commitId, itemId),
-    onSuccess: () => {
+    onSuccess: (_, { commitId }) => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', 'next'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', commitId] })
     },
   })
 }
@@ -132,8 +147,10 @@ export function useReorderItems() {
         queryClient.setQueryData(['commits', 'current'], context.previous)
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _err, { commitId }) => {
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', 'next'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', commitId] })
     },
   })
 }
@@ -149,6 +166,7 @@ export function useReconcileItem() {
     onSuccess: (_, { commitId }) => {
       queryClient.invalidateQueries({ queryKey: ['commits', commitId] })
       queryClient.invalidateQueries({ queryKey: ['commits', 'current'] })
+      queryClient.invalidateQueries({ queryKey: ['commits', 'next'] })
     },
   })
 }

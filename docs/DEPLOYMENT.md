@@ -479,6 +479,20 @@ OAuth completes and you are redirected back to the app, but the first request to
 | `CORS_ALLOWED_ORIGINS` | Backend | `https://<host-origin>` (and remote if different) |
 | `VITE_API_URL` | Host/remote build | `https://<backend-origin>/api` |
 
+### Sign out returns 400 Bad Request (Auth0 logout)
+
+When you click **Sign Out**, the app redirects to Auth0’s logout URL with `returnTo=<FRONTEND_URL>`. If Auth0 returns **400 Bad Request**, the `returnTo` URL is not allowed.
+
+**Fix (Auth0 Dashboard):**
+
+1. Open [Auth0 Dashboard](https://manage.auth0.com/) → **Applications** → **Applications** → your application.
+2. In **Settings**, find **Allowed Logout URLs**.
+3. Add the **exact** URL your backend uses for `FRONTEND_URL`, e.g. `https://lavish-integrity-production-4e45.up.railway.app` (no trailing slash, unless you use one in `FRONTEND_URL`).
+4. If you use multiple frontend origins (e.g. staging + production), add each one.
+5. Click **Save Changes**.
+
+After saving, Sign Out should redirect back to your app instead of returning 400.
+
 ---
 
 ## 7. Security reminders

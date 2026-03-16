@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { ActiveRallyCryContext } from '@/context/ActiveRallyCryContext'
 import {
   DndContext,
@@ -60,6 +61,8 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { TeamOutcomesSidebar } from '@/components/TeamOutcomesSidebar'
 import {
   useCurrentCommit,
+  useNextCommit,
+  useCommit,
   useUpdateStatus,
   useCreateItem,
   useCreateUnplannedItem,
@@ -170,8 +173,26 @@ function StrategySummary({
 }
 
 export function CommitPage(): React.ReactElement {
+  const { id: commitIdParam } = useParams<{ id?: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const weekNext = searchParams.get('week') === 'next'
   const activeRallyCryId = useContext(ActiveRallyCryContext)
-  const { data: commit, isLoading, error } = useCurrentCommit()
+  const { data: currentCommit, isLoading: currentLoading, error: currentError } = useCurrentCommit()
+  const { data: nextCommit, isLoading: nextLoading, error: nextError } = useNextCommit()
+  const { data: commitById, isLoading: byIdLoading, error: byIdError } = useCommit(commitIdParam ?? '')
+
+  const byId = Boolean(commitIdParam)
+  const commit = byId
+    ? commitById
+    : weekNext
+      ? nextCommit
+      : currentCommit
+  const isLoading = byId ? byIdLoading : weekNext ? nextLoading : currentLoading
+  const error = byId ? byIdError : weekNext ? nextError : currentError
+  const isWeekend = (): boolean => {
+    const d = new Date().getDay()
+    return d === 0 || d === 6
+  }
   const { data: rcdoData } = useRcdo()
   const updateStatus = useUpdateStatus()
   const createItem = useCreateItem()
@@ -362,6 +383,45 @@ export function CommitPage(): React.ReactElement {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      {/* When viewing a specific week by id (e.g. from History), link back to current week */}
+      {byId && (
+        <div className="flex items-center gap-2 text-sm">
+          <Link
+            to="/commits"
+            className="text-[#1152d4] hover:underline font-medium"
+          >
+            ← Back to current week
+          </Link>
+        </div>
+      )}
+
+      {/* On weekend: offer "Plan next week" for full demo (empty DRAFT), or "Back to current week" when on next */}
+      {!byId && isWeekend() && (
+        <div className="flex items-center gap-2 text-sm">
+          {weekNext ? (
+            <button
+              type="button"
+              onClick={() => {
+                const p = new URLSearchParams(searchParams)
+                p.delete('week')
+                setSearchParams(p)
+              }}
+              className="text-[#1152d4] hover:underline font-medium"
+            >
+              ← Back to current week
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSearchParams({ week: 'next' })}
+              className="text-[#1152d4] hover:underline font-medium"
+            >
+              Plan next week (full demo flow) →
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Rally Cry context */}
       <StrategySummary rallyCries={rcdoData?.rallyCries ?? []} activeRallyCryId={activeRallyCryId} />
 
